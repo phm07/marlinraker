@@ -7,7 +7,7 @@ on low-power SBCs like the Raspberry Pi Zero W and even on Windows machines.
 
 ## Installation
 There is a pre-built image available for easy installation on common
-Raspberry Pi SBCs. You can download it here. You can use the
+Raspberry Pi SBCs. You can download it [here](https://www.youtube.com/watch?v=gDjMZvYWUdo). You can use the
 [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to flash
 it onto your SD card.
 
@@ -26,7 +26,7 @@ User-uploaded Gcode files will be stored in this folder. It will too be exposed 
 
 #### ``logs/``
 Logs are stored here. The most recent log file will always be called ``marlinraker.log``.
-Log files will be rotated after they reach a size of 5 megabytes. If there are more than
+Log files will be rotated after they reach a size of 1 megabyte. If there are more than
 5 files, old logs will be deleted.
 
 #### ``www/``
@@ -65,7 +65,8 @@ like by default:
     }
   },
   "update_manager": {
-    "interface_repo": "mainsail-crew/mainsail"
+    "marlinraker_repo": "pauhull/marlinraker",
+    "client_repo": "mainsail-crew/mainsail"
   },
   "macros": {
     "pause": {
@@ -142,7 +143,11 @@ Minimum bed temperature. Default is ``0``.
 #### ``printer.heater_bed.max_temp: number``
 Maximum bed temperature. Default is ``100``.
 
-#### ``update_manager.interface_repo: string``
+#### ``update_manager.marlinraker_repo: string``
+This is the repository where Marlinraker will look for updates. Repository format
+is ``owner/repository``. Default is ``"pauhull/marlinraker"``.
+
+#### ``update_manager.client_repo: string``
 GitHub repository that contains the web interface to be served in the ``www``
 directory in the format ``owner/repository``. Default is ``"mainsail-crew/mainsail"``.
 It will download automatically on first startup so that the machine is accessible
@@ -172,5 +177,5 @@ This will create very large log files quickly and will impact print performance.
 - ``--serve-static`` Serve ``www`` directory (useful for development)
 
 ## Disclaimer
-Never leave your machine unattended. Do not make the API accessible from outside your local network. This software is in early development, bugs
-are expected.
+Never leave your machine unattended. Do not make the API accessible from outside your local network. 
+This software is in early development, bugs are expected.
