@@ -1,0 +1,7 @@
+.idea/
+node_modules/
+marlinraker_files/
+build/
+dist/
+*.iml
+config.json

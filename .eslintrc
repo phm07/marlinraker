@@ -1,0 +1,79 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": "./"
+  },
+  "root": true,
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "quotes": ["warn", "double"],
+    "semi": ["warn", "always"],
+    "indent": ["warn", 4],
+    "@typescript-eslint/brace-style": "warn",
+    "@typescript-eslint/comma-dangle": "warn",
+    "@typescript-eslint/comma-spacing": "warn",
+    "@typescript-eslint/consistent-indexed-object-style": "warn",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/explicit-member-accessibility": "warn",
+    "@typescript-eslint/func-call-spacing": "warn",
+    "@typescript-eslint/keyword-spacing": "warn",
+    "@typescript-eslint/no-extra-parens": "warn",
+    "@typescript-eslint/no-extra-semi": "warn",
+    "@typescript-eslint/no-require-imports": "warn",
+    "@typescript-eslint/no-shadow": "warn",
+    "@typescript-eslint/no-unnecessary-condition": "warn",
+    "@typescript-eslint/no-unnecessary-qualifier": "warn",
+    "@typescript-eslint/object-curly-spacing": [
+      "warn",
+      "always"
+    ],
+    "@typescript-eslint/prefer-for-of": "warn",
+    "@typescript-eslint/no-namespace": "off",
+    "@typescript-eslint/prefer-readonly": "warn",
+    "@typescript-eslint/promise-function-async": "warn",
+    "@typescript-eslint/quotes": "warn",
+    "@typescript-eslint/semi": "warn",
+    "@typescript-eslint/space-infix-ops": "warn",
+    "@typescript-eslint/type-annotation-spacing": "warn",
+    "array-bracket-spacing": "warn",
+    "arrow-parens": "warn",
+    "arrow-spacing": "warn",
+    "block-spacing": "warn",
+    "dot-location": [
+      "warn",
+      "property"
+    ],
+    "eqeqeq": "warn",
+    "key-spacing": "warn",
+    "no-confusing-arrow": "warn",
+    "no-console": "error",
+    "no-implicit-coercion": "warn",
+    "no-lonely-if": "warn",
+    "no-multi-spaces": "warn",
+    "no-trailing-spaces": "warn",
+    "no-whitespace-before-property": "warn",
+    "operator-linebreak": [
+      "warn",
+      "before"
+    ],
+    "rest-spread-spacing": "warn",
+    "space-before-blocks": "warn",
+    "space-in-parens": "warn",
+    "space-unary-ops": "warn",
+    "spaced-comment": "warn"
+  }
+}
