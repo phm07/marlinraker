@@ -41,6 +41,7 @@ class GithubReleaseUpdatable implements IUpdatable<TInfo> {
     }
 
     public async checkForUpdate(): Promise<void> {
+        if(!this.repo) return;
         const versionFilePath = path.join(this.dir, ".version");
         if (await fs.pathExists(versionFilePath)) {
             try {
