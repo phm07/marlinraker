@@ -20,15 +20,22 @@ type TResult = {
 class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
 
     public readonly name = "server.info";
+    private readonly warnings: string[];
+    private readonly versionArray: number[];
+
+    public constructor() {
+        this.warnings = config.warnings.slice();
+        if (logger.level > Level.info) {
+            this.warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes.");
+        }
+        this.versionArray = packageJson.version
+            .replace(/[^0-9.]/g, "")
+            .split(".")
+            .map((s) => Number.parseInt(s))
+            .filter((n) => !Number.isNaN(n));
+    }
 
     public invoke(_: TSender, __: undefined): TResult {
-
-        const warnings = config.warnings.slice();
-
-        if (logger.level > Level.info) {
-            warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes.");
-        }
-
         return {
             klippy_connected: true,
             klippy_state: marlinRaker.printer?.state ?? "error",
@@ -44,12 +51,10 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
             ],
             failed_components: [],
             registered_directories: ["gcodes", "config"],
-            warnings,
+            warnings: this.warnings,
             websocket_count: marlinRaker.connectionManager.connections.length,
             moonraker_version: packageJson.version,
-            api_version: packageJson.version.split(".")
-                .map((s) => Number.parseInt(s))
-                .filter((n) => !Number.isNaN(n)),
+            api_version: this.versionArray,
             api_version_string: packageJson.version
         };
     }
