@@ -15,6 +15,7 @@ type TResult = {
     moonraker_version: string,
     api_version: number[],
     api_version_string: string;
+    type: string;
 };
 
 class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
@@ -55,7 +56,8 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
             websocket_count: marlinRaker.connectionManager.connections.length,
             moonraker_version: packageJson.version,
             api_version: this.versionArray,
-            api_version_string: packageJson.version
+            api_version_string: packageJson.version,
+            type: "marlinraker"
         };
     }
 }
