@@ -7,7 +7,7 @@ on low-power SBCs like the Raspberry Pi Zero W and even on Windows machines.
 
 ## Installation
 There is a pre-built image available for easy installation on common
-Raspberry Pi SBCs. You can download it [here](https://www.youtube.com/watch?v=gDjMZvYWUdo). You can use the
+Raspberry Pi SBCs. You can download it [here](https://github.com/pauhull/MarlinrakerOS/releases/latest). You can use the
 [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to flash
 it onto your SD card.
 
