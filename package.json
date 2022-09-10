@@ -6,9 +6,9 @@
     "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node src/Server.ts --serve-static",
     "build": "npm run lint && webpack && node scripts/after_build.js",
     "build.zip": "npm run build && node scripts/zip.js",
-    "lint": "eslint src --max-warnings=0 --fix"
+    "lint": "eslint src --max-warnings=0 --fix",
+    "test": "eslint src --max-warnings=0"
   },
-  "pre-commit": "lint",
   "author": "pauhull",
   "license": "GPLv3",
   "dependencies": {
