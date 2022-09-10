@@ -21,17 +21,21 @@ class Config {
     }
 
     private load(): unknown {
-        let configContent;
+        let content;
         try {
-            configContent = fs.readFileSync(this.configFile).toString("utf-8");
+            content = fs.readFileSync(this.configFile).toString("utf-8");
         } catch (e) {
-            throw "Missing config file: " + path.resolve("config.json");
+            logger.error(`Cannot find ${this.configFile}`);
         }
-        try {
-            return JSON.parse(configContent);
-        } catch (e) {
-            throw "Malformed config.json (" + this.configFile + "): " + (e as Error).message;
+        if (content) {
+            try {
+                return JSON.parse(content);
+            } catch (e) {
+                logger.error(`Malformed config (${this.configFile})`);
+                logger.error((e as Error).message);
+            }
         }
+        return {};
     }
 
     public getOrDefault<T>(property: string, defaultValue: T): T {

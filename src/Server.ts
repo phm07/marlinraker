@@ -50,10 +50,15 @@ let router: Router;
         process.exit(0);
     });
 
-    const configFile = path.join(rootDir, "config/config.json");
+    const configFile = path.join(rootDir, "config/marlinraker.json");
     await fs.mkdirs(path.dirname(configFile));
     if (!await fs.pathExists(configFile)) {
-        await fs.writeFile(configFile, JSON.stringify(exampleConfig, null, 2));
+        const oldConfigPath = path.join(rootDir, "config/config.json");
+        if (await fs.pathExists(oldConfigPath)) {
+            await fs.move(oldConfigPath, configFile);
+        } else {
+            await fs.writeFile(configFile, JSON.stringify(exampleConfig, null, 2));
+        }
     }
     config = new Config(configFile);
 

@@ -18,7 +18,7 @@ pre-built image Marlinraker is running in ``/pi/home/marlinraker``, so it will b
 at ``/pi/home/marlinraker_files``. It contains the following subdirectories and files:
 
 #### ``config/``
-This is where config files, most notably ``config.json``, are stored. This folder will be
+This is where config files, most notably ``marlinraker.json``, are stored. This folder will be
 exposed by the API and editable in your web interface of choice.
 
 #### ``gcodes/``
@@ -35,7 +35,7 @@ statically served.
 
 ## Configuration
 If you use the provided image the configuration file will be located under
-``/home/pi/marlinraker_files/config/config.json``. This is what the config looks
+``/home/pi/marlinraker_files/config/marlinraker.json``. This is what the config looks
 like by default:
 
 ```json
