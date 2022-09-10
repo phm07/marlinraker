@@ -1,11 +1,10 @@
 const zipper = require("zip-local");
 const path = require("path");
-const packageJson = require("../dist/package.json");
 const fs = require("fs-extra");
 
 const inPath = path.join(__dirname, "../dist/");
 const outDir = path.join(__dirname, "../dist/");
-const outPath = path.join(outDir, `${packageJson.name}-${packageJson.version}.zip`);
+const outPath = path.join(outDir, "marlinraker.zip");
 zipper.sync.zip(inPath).compress().save(outPath);
 
 const files = fs.readdirSync(outDir);
