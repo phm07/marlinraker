@@ -236,6 +236,11 @@ class Printer extends SerialGcodeDevice {
         await this.reset();
         await this.connect();
     }
+
+    public async queryEndstops(): Promise<Record<string, string>> {
+        const response = await this.queueGcode("M119", false, false);
+        return ParserUtil.parseM119Response(response);
+    }
 }
 
 export { TPrinterState };

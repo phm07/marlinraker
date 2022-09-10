@@ -41,6 +41,7 @@ import NamedObjectMap from "../util/NamedObjectMap";
 import MachineUpdateStatusExecutor from "./executors/MachineUpdateStatusExecutor";
 import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor";
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
+import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -69,6 +70,7 @@ class SocketHandler extends MessageHandler {
             new PrinterPrintPauseExecutor(),
             new PrinterPrintResumeExecutor(),
             new PrinterPrintStartExecutor(),
+            new PrinterQueryEndstopsStatusExecutor(),
             new PrinterRestartExecutor(),
             new ServerAnnouncementsListExecutor(),
             new ServerConfigExecutor(),

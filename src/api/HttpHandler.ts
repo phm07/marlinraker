@@ -36,6 +36,7 @@ import NamedObjectMap from "../util/NamedObjectMap";
 import MachineUpdateStatusExecutor from "./executors/MachineUpdateStatusExecutor";
 import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor";
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
+import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
 
 class HttpHandler extends MessageHandler {
 
@@ -56,6 +57,7 @@ class HttpHandler extends MessageHandler {
             new PrinterPrintPauseExecutor(),
             new PrinterPrintResumeExecutor(),
             new PrinterPrintStartExecutor(),
+            new PrinterQueryEndstopsStatusExecutor(),
             new PrinterRestartExecutor(),
             new ServerAnnouncementsListExecutor(),
             new ServerConfigExecutor(),

@@ -96,6 +96,14 @@ class ParserUtil {
         return Object.fromEntries(line.trim().split(" ").slice(1)
             .map((s) => [s[0], Number.parseFloat(s.substring(1))]));
     }
+
+    public static parseM119Response(response: string): Record<string, string> {
+        return Object.fromEntries(response.split("\n")
+            .filter((s) => s.indexOf(":") !== -1)
+            .map((s) => s.split(":")
+                .map((t) => t.trim())
+            ));
+    }
 }
 
 export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo };
