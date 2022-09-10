@@ -41,7 +41,7 @@ class UpdateManager {
 
     public async update(name: string): Promise<void> {
         if (this.busy) throw "Already updating";
-        if(marlinRaker.jobManager.isPrinting()) throw "Cannot update while printing";
+        if (marlinRaker.jobManager.isPrinting()) throw "Cannot update while printing";
         const updatable = this.updatables[name];
         if (!updatable) throw `Unknown client "${name}"`;
         return new Promise<void>((resolve) => {

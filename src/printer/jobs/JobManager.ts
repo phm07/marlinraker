@@ -44,7 +44,7 @@ class JobManager {
 
     public async startPrintJob(filename: string): Promise<boolean> {
         if (!marlinRaker.printer) return false;
-        if(marlinRaker.updateManager.busy) return false;
+        if (marlinRaker.updateManager.busy) return false;
 
         if (this.isPrinting()) {
             return false;
