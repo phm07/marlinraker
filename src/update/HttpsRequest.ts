@@ -53,7 +53,7 @@ class HttpsRequest {
                     onComplete?.();
                 });
 
-                outStream.on("finish", () => {
+                outStream.on("close", () => {
                     resolve();
                 });
             });

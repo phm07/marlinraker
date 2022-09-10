@@ -19,7 +19,7 @@ class PositionWatcher extends Watcher {
         } else {
             let requested = false;
             this.timer = setInterval(async () => {
-                if (requested || marlinRaker.jobManager.currentPrintJob?.state === "printing") return;
+                if (requested || marlinRaker.jobManager.isPrinting()) return;
                 requested = true;
                 const response = await this.printer.queueGcode("M114", true, false);
                 requested = false;

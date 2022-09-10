@@ -9,6 +9,9 @@ fs.writeFileSync(path.join(distDir, "package.json"), JSON.stringify({
   author: packageJson.author,
   main: "index.js",
   license: packageJson.license,
+  scripts: {
+      start: "node index.js"
+  },
   dependencies: packageJson.dependencies,
   optionalDependencies: packageJson.optionalDependencies
 }));

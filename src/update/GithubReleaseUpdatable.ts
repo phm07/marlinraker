@@ -55,7 +55,7 @@ class GithubReleaseUpdatable implements IUpdatable<TInfo> {
 
         this.latestRelease = await this.getLatestRelease() ?? undefined;
 
-        if (!this.currentVersion && this.latestRelease) {
+        if (this.name !== "marlinraker" && !this.currentVersion && this.latestRelease) {
             await marlinRaker.updateManager.update(this.name);
         } else {
             this.updateInfo();
@@ -68,13 +68,19 @@ class GithubReleaseUpdatable implements IUpdatable<TInfo> {
         if (!this.latestRelease) throw "No update to download";
         const procId = crypto.randomBytes(4).readUInt32LE();
         const log = async (message: string, complete = false): Promise<void> => {
+            if (!complete && !message.trim()) return;
             logger.info(message);
             await marlinRaker.updateManager.notifyUpdateResponse(this.name, procId, message, complete);
         };
 
         await log(`Downloading ${this.latestRelease.assets[0].browser_download_url}`);
 
-        await fs.emptyDir(this.dir);
+        await fs.mkdirs(this.dir);
+        for (const file of await fs.readdir(this.dir)) {
+            if (path.basename(file) === "node_modules") continue;
+            await fs.remove(file);
+        }
+
         await new HttpsRequest(this.latestRelease.assets[0].browser_download_url).unzipTo(this.dir, async (progress, size) => {
             const percent = Math.round(progress / size * 100);
             await log(`Download progress: ${percent}%`);
@@ -88,18 +94,28 @@ class GithubReleaseUpdatable implements IUpdatable<TInfo> {
         if (await fs.pathExists(path.join(this.dir, "package.json"))) {
             await log("Installing npm packages");
             await new Promise<void>((resolve) => {
-                const process = spawn("npm", ["install"]);
-                const lineReader = readline.createInterface(process.stdout);
-                lineReader.on("line", async (line) => {
-                    await marlinRaker.updateManager.notifyUpdateResponse(this.name, procId, line, false);
+                const npmCommand = global.process.platform.startsWith("win") ? "npm.cmd" : "npm";
+                const process = spawn(npmCommand, ["install"], { cwd: this.dir });
+                const outLineReader = readline.createInterface(process.stdout);
+                outLineReader.on("line", async (line) => {
+                    await log(line);
                 });
-                lineReader.on("close", resolve);
+                const errorLineReader = readline.createInterface(process.stderr);
+                errorLineReader.on("line", async (line) => {
+                    await log(line);
+                });
+                outLineReader.on("close", resolve);
             });
         }
 
         this.currentVersion = this.latestRelease.tag_name;
         await log("Update complete", true);
         this.updateInfo();
+
+        if (this.name === "marlinraker") {
+            await log("Restarting...");
+            process.exit(0);
+        }
     }
 
     private async getLatestRelease(): Promise<TReleaseMetadata | null> {

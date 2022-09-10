@@ -104,6 +104,7 @@ let router: Router;
     };
     app.get("/server/files/klippy.log", logHandler);
     app.get("/server/files/moonraker.log", logHandler);
+    app.get("/server/files/marlinraker.log", logHandler);
 
     app.get("*", (req, res) => {
         if (isServeStatic) {

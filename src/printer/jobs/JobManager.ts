@@ -44,9 +44,9 @@ class JobManager {
 
     public async startPrintJob(filename: string): Promise<boolean> {
         if (!marlinRaker.printer) return false;
+        if(marlinRaker.updateManager.busy) return false;
 
-        if (this.currentPrintJob?.state === "printing"
-            || this.currentPrintJob?.state === "paused") {
+        if (this.isPrinting()) {
             return false;
         }
 
@@ -105,8 +105,8 @@ class JobManager {
 
     public async cancel(): Promise<boolean> {
         if (!marlinRaker.printer) return false;
-        if (this.currentPrintJob?.state !== "printing" && this.currentPrintJob?.state !== "paused") return false;
-        await this.currentPrintJob.cancel();
+        if (!this.isPrinting()) return false;
+        await this.currentPrintJob!.cancel();
         return true;
     }
 
@@ -114,8 +114,7 @@ class JobManager {
 
         if (!marlinRaker.printer
             || !this.currentPrintJob
-            || this.currentPrintJob.state === "printing"
-            || this.currentPrintJob.state === "paused")
+            || this.isPrinting())
             return false;
 
         delete this.currentPrintJob;
@@ -124,6 +123,10 @@ class JobManager {
         marlinRaker.printer.objectManager.objects["print_stats"]?.emit();
         marlinRaker.printer.objectManager.objects["virtual_sdcard"]?.emit();
         return true;
+    }
+
+    public isPrinting(): boolean {
+        return this.currentPrintJob?.state === "printing" || this.currentPrintJob?.state === "paused";
     }
 }
 

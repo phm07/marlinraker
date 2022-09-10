@@ -2,6 +2,7 @@ import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { config, logger, marlinRaker } from "../../Server";
 import { TPrinterState } from "../../printer/Printer";
 import { Level } from "../../logger/Logger";
+import packageJson from "../../../package.json";
 
 type TResult = {
     klippy_connected: boolean,
@@ -45,9 +46,11 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
             registered_directories: ["gcodes", "config"],
             warnings,
             websocket_count: marlinRaker.connectionManager.connections.length,
-            moonraker_version: "1.0.0",
-            api_version: [1, 0, 0],
-            api_version_string: "1.0.0"
+            moonraker_version: packageJson.version,
+            api_version: packageJson.version.split(".")
+                .map((s) => Number.parseInt(s))
+                .filter((n) => !Number.isNaN(n)),
+            api_version_string: packageJson.version
         };
     }
 }
