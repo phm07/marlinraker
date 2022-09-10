@@ -104,6 +104,15 @@ class ParserUtil {
                 .map((t) => t.trim())
             ));
     }
+
+    public static parseM106Request(line: string): number {
+        const result = Number.parseInt(line
+            .split(" ")
+            .slice(1)
+            .find((s) => s.startsWith("S"))
+            ?.substring(1) ?? "");
+        return Number.isNaN(result) ? 255 : result;
+    }
 }
 
 export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo };

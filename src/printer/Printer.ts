@@ -25,6 +25,7 @@ class Printer extends SerialGcodeDevice {
     public isAbsolutePositioning: boolean;
     public isAbsoluteEPositioning: boolean;
     public feedrate: number;
+    public fanSpeed: number;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -39,6 +40,7 @@ class Printer extends SerialGcodeDevice {
         this.isAbsolutePositioning = true;
         this.isAbsoluteEPositioning = true;
         this.feedrate = 0;
+        this.fanSpeed = 0;
 
         this.serialPort.on("close", () => {
             if (this.state === "ready") {
@@ -121,21 +123,25 @@ class Printer extends SerialGcodeDevice {
     }
 
     protected handleRequestLine(line: string): void {
-        if (line.startsWith("G90")) {
+        if (line.match(/G90(\s|$)+/)) {
             this.isAbsolutePositioning = true;
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
-        } else if (line.startsWith("G91")) {
+
+        } else if (line.match(/G91(\s|$)+/)) {
             this.isAbsolutePositioning = false;
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
-        } else if (line.startsWith("M82")) {
+
+        } else if (line.match(/M82(\s|$)+/)) {
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
-        } else if (line.startsWith("M83")) {
+
+        } else if (line.match(/M83(\s|$)+/)) {
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
-        } else if (line.startsWith("G0") || line.startsWith("G1") || line.startsWith("G92")) {
+
+        } else if (line.match(/(G0|G1|G92)(\s|$)+/)) {
             const positions = ParserUtil.parseG0G1G92Request(line);
             if (line.startsWith("G92")) {
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
@@ -160,6 +166,15 @@ class Printer extends SerialGcodeDevice {
                 this.feedrate = positions["F"] ?? this.feedrate;
             }
             this.emit("positionChange");
+
+        } else if (line.match(/M106(\s|$)+/)) {
+            const fanSpeed = ParserUtil.parseM106Request(line);
+            this.fanSpeed = fanSpeed / 255;
+            this.emit("fanSpeedChange");
+
+        } else if (line.match(/M107(\s|$)+/)) {
+            this.fanSpeed = 0;
+            this.emit("fanSpeedChange");
         }
     }
 
@@ -189,6 +204,7 @@ class Printer extends SerialGcodeDevice {
         this.isAbsolutePositioning = true;
         this.isAbsoluteEPositioning = true;
         this.feedrate = 0;
+        this.fanSpeed = 0;
         this.emit("ready");
     }
 

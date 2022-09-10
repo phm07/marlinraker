@@ -12,6 +12,7 @@ import GcodeMoveObject from "./GcodeMoveObject";
 import PrintStatsObject from "./PrintStatsObject";
 import VirtualSdCardObject from "./VirtualSdCardObject";
 import NamedObjectMap from "../../util/NamedObjectMap";
+import FanObject from "./FanObject";
 
 class ObjectManager {
 
@@ -25,6 +26,7 @@ class ObjectManager {
             new WebhooksObject(this.printer),
             new ToolheadObject(this.printer),
             new GcodeMoveObject(this.printer),
+            new FanObject(this.printer),
             new HeatersObject(),
             new ConfigFileObject(),
             new PrintStatsObject(),
