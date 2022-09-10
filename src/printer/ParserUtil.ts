@@ -113,6 +113,15 @@ class ParserUtil {
             ?.substring(1) ?? "");
         return Number.isNaN(result) ? 255 : result;
     }
+
+    public static parseM220M221Request(line: string): number | undefined {
+        const result = Number.parseInt(line
+            .split(" ")
+            .slice(1)
+            .find((s) => s.startsWith("S"))
+            ?.substring(1) ?? "");
+        return Number.isNaN(result) ? undefined : result;
+    }
 }
 
 export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo };

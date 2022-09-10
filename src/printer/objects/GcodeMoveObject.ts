@@ -26,16 +26,15 @@ class GcodeMoveObject extends PrinterObject<TResult> {
             lastEmit = now;
             this.emit();
         });
-        printer.on("positioningChange", () => {
-            this.emit();
-        });
+        printer.on("positioningChange", this.emit.bind(this));
+        printer.on("factorChange", this.emit.bind(this));
     }
 
     protected get(_: string[] | null): TResult {
         return {
-            speed_factor: 1.0,
+            speed_factor: marlinRaker.printer?.speedFactor ?? 1.0,
             speed: 0.0,
-            extrude_factor: 1.0,
+            extrude_factor: marlinRaker.printer?.extrudeFactor ?? 1.0,
             absolute_coordinates: marlinRaker.printer?.isAbsolutePositioning ?? true,
             absolute_extrude: marlinRaker.printer?.isAbsolutePositioning ?? true,
             homing_origin: [0, 0, 0, 0],

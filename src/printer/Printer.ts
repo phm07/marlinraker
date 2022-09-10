@@ -21,11 +21,13 @@ class Printer extends SerialGcodeDevice {
     public stateMessage: string;
     public capabilities: TPrinterCapabilities;
     public watchers: Watcher[];
-    public toolheadPosition: [number, number, number, number];
-    public isAbsolutePositioning: boolean;
-    public isAbsoluteEPositioning: boolean;
-    public feedrate: number;
-    public fanSpeed: number;
+    public toolheadPosition!: [number, number, number, number];
+    public isAbsolutePositioning!: boolean;
+    public isAbsoluteEPositioning!: boolean;
+    public feedrate!: number;
+    public fanSpeed!: number;
+    public speedFactor!: number;
+    public extrudeFactor!: number;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -36,11 +38,7 @@ class Printer extends SerialGcodeDevice {
         this.heaterManager = new HeaterManager(this);
         this.capabilities = {};
         this.watchers = [];
-        this.toolheadPosition = [0, 0, 0, 0];
-        this.isAbsolutePositioning = true;
-        this.isAbsoluteEPositioning = true;
-        this.feedrate = 0;
-        this.fanSpeed = 0;
+        this.resetValues();
 
         this.serialPort.on("close", () => {
             if (this.state === "ready") {
@@ -68,6 +66,16 @@ class Printer extends SerialGcodeDevice {
         this.on("startup", () => {
             this.setState("startup");
         });
+    }
+
+    private resetValues(): void {
+        this.toolheadPosition = [0, 0, 0, 0];
+        this.isAbsolutePositioning = true;
+        this.isAbsoluteEPositioning = true;
+        this.feedrate = 0;
+        this.fanSpeed = 0;
+        this.speedFactor = 1.0;
+        this.extrudeFactor = 1.0;
     }
 
     public async connect(): Promise<void> {
@@ -175,6 +183,12 @@ class Printer extends SerialGcodeDevice {
         } else if (line.match(/M107(\s|$)+/)) {
             this.fanSpeed = 0;
             this.emit("fanSpeedChange");
+
+        } else if (line.match(/M22[01](\s|$)+/)) {
+            const factor = ParserUtil.parseM220M221Request(line);
+            if (!factor) return;
+            this[line.startsWith("M220") ? "speedFactor" : "extrudeFactor"] = factor / 100;
+            this.emit("factorChange");
         }
     }
 
@@ -200,11 +214,7 @@ class Printer extends SerialGcodeDevice {
 
         await this.queueGcode("M21", false, false);
 
-        this.toolheadPosition = [0, 0, 0, 0];
-        this.isAbsolutePositioning = true;
-        this.isAbsoluteEPositioning = true;
-        this.feedrate = 0;
-        this.fanSpeed = 0;
+        this.resetValues();
         this.emit("ready");
     }
 
