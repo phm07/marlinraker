@@ -25,7 +25,7 @@ class MarlinRaker {
     public readonly macroManager: MacroManager;
     public readonly printer?: Printer;
 
-    public constructor(wss: WebSocketServer, port: string | null, baudRate: number) {
+    public constructor(wss: WebSocketServer, port: string | null, baudRate: number | null) {
         this.socketHandler = new SocketHandler(wss);
         this.httpHandler = new HttpHandler();
         this.updateManager = new UpdateManager();
@@ -36,7 +36,7 @@ class MarlinRaker {
         this.fileManager = new FileManager();
         this.macroManager = new MacroManager();
         this.jobManager = new JobManager();
-        if (port) {
+        if (port && baudRate) {
             try {
                 this.printer = new Printer(port, baudRate);
             } catch (_) {

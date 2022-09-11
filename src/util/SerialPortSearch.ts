@@ -13,52 +13,58 @@ class SerialPortSearch {
         this.baudRate = baudRate;
     }
 
-    public async findSerialPort(): Promise<string | null> {
+    public async findSerialPort(): Promise<[string, number] | null> {
         logger.info("Searching for serial port");
 
-        const last = await this.database.getItem("marlinraker", "serial.last_port");
-        if (last && typeof last === "string") {
-            logger.info(`Trying last used port ${last}`);
-            if (await this.trySerialPort(last)) {
+        const lastPort = await this.database.getItem("marlinraker", "serial.last_port");
+        const lastBaudRate = this.baudRate || await this.database.getItem("marlinraker", "serial.last_baud_rate");
+        if (lastPort && lastBaudRate && typeof lastPort === "string" && typeof lastBaudRate === "number") {
+            logger.info(`Trying last used port ${lastPort} with baud rate ${lastBaudRate}`);
+            if (await this.trySerialPort(lastPort, lastBaudRate)) {
                 logger.info("Success");
-                return last;
+                return [lastPort, lastBaudRate];
             } else {
-                logger.info("Cannot connect");
+                logger.info("Cannot connect. Searching for port...");
             }
         }
+
         await this.database.deleteItem("marlinraker", "serial.last_port");
+        await this.database.deleteItem("marlinraker", "serial.last_baud_rate");
 
         const paths = (await SerialPort.list()).map((port) => port.path);
+        const baudRates = this.baudRate ? [this.baudRate] : [250000, 115200, 19200];
         for (const path of paths) {
-            if (path === last) continue;
-            logger.info(`Trying ${path}`);
+            for (const baudRate of baudRates) {
+                logger.info(`Trying ${path} with baud rate ${baudRate}`);
 
-            let success = false;
-            try {
-                success = await this.trySerialPort(path);
-            } catch (e) {
-                logger.error(e);
-            }
+                let success = false;
+                try {
+                    success = await this.trySerialPort(path, baudRate);
+                } catch (e) {
+                    logger.error(e);
+                }
 
-            if (success) {
-                logger.info("Success");
-                await this.database.addItem("marlinraker", "serial.last_port", path);
-                return path;
-            } else {
-                logger.info("Cannot connect");
+                if (success) {
+                    logger.info("Success");
+                    await this.database.addItem("marlinraker", "serial.last_port", path);
+                    await this.database.addItem("marlinraker", "serial.last_baud_rate", baudRate);
+                    return [path, baudRate];
+                } else {
+                    logger.info("Cannot connect");
+                }
             }
         }
 
         return null;
     }
 
-    private async trySerialPort(path: string): Promise<boolean> {
+    private async trySerialPort(path: string, baudRate: number): Promise<boolean> {
 
         const ignoreError = (): void => {
             //
         };
 
-        const port = new SerialPort({ path, baudRate: this.baudRate, autoOpen: false }, ignoreError);
+        const port = new SerialPort({ path, baudRate, autoOpen: false }, ignoreError);
         const isOpen = await new Promise<boolean>((resolve) => {
             port.open((err) => {
                 resolve(!err);
@@ -81,7 +87,7 @@ class SerialPortSearch {
                     }
                 });
                 try {
-                    port.write("M115\n", ignoreError);
+                    port.write("M110 N0\n", ignoreError);
                 } catch (_) {
                     //
                 }

@@ -45,7 +45,7 @@ like by default:
   },
   "serial": {
     "port": "auto",
-    "baud_rate": 250000
+    "baud_rate": "auto"
   },
   "printer": {
     "bed_mesh": true,
@@ -117,8 +117,9 @@ Serial port of the printer to connect to. Set to ``""`` or ``"auto"`` for
 automatic port scanning. Alternatively a port like ``"/dev/ttyUSB0"`` can be
 specified. Default is ``"auto"``.
 
-#### ``serial.baud_rate: number``
-Serial baud rate. Default is ``250000``.
+#### ``serial.baud_rate: number | "auto"``
+Serial baud rate. Use ``"auto"`` to auto-detect baud rate or directly specify
+it here. Default is ``"auto"``.
 
 #### ``printer.bed_mesh: boolean``
 Specify if bed mesh leveling is enabled for this machine. Default is ``true``.

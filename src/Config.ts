@@ -46,10 +46,8 @@ class Config {
         for (const next of property.split(".")) {
             value = (value as Record<string, unknown> | undefined)?.[next];
         }
-        if (defaultValue !== null && typeof value !== typeof defaultValue) {
-            logger.warn(`Warning: "${property}" does not exist in ${this.configFile}`);
-        }
         if (value === undefined) {
+            logger.warn(`Warning: "${property}" does not exist in ${this.configFile}`);
             if (defaultValue !== null) {
                 logger.warn(`Using default value "${defaultValue}" for property ${property}`);
                 this.warnings.push(`Property "${property}" is missing. Using default "${defaultValue}".`);

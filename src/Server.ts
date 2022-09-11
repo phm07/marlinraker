@@ -69,16 +69,16 @@ let router: Router;
     }
 
     let port: string | null = config.getOrDefault("serial.port", "auto");
-    const baudRate = config.getOrDefault("serial.baud_rate", 250000);
+    let baudRate: number | null = Number.parseInt(config.getOrDefault("serial.baud_rate", "auto"));
     if (!port || port.toLowerCase() === "auto") {
         const serialPortSearch = new SerialPortSearch(baudRate);
-        port = await serialPortSearch.findSerialPort();
+        [port, baudRate] = await serialPortSearch.findSerialPort() ?? [null, null];
     }
 
     if (!port) {
         logger.error("Could not determine serial port to connect to.");
     } else {
-        logger.info(`Using serial port ${port}`);
+        logger.info(`Using serial port ${port} with baud rate ${baudRate}`);
     }
 
     const app = express();

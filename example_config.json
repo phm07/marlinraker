@@ -4,7 +4,7 @@
   },
   "serial": {
     "port": "auto",
-    "baud_rate": 250000
+    "baud_rate": "auto"
   },
   "printer": {
     "bed_mesh": true,
