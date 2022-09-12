@@ -46,6 +46,7 @@ class ParserUtil {
             .find((s) => s.startsWith("T"))
             ?.split(" ");
         if (!parts) return null;
+        if (parts.indexOf("W:?") !== -1) return null; // response is not from M105/M155 request
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
             if (part.indexOf("@:") !== -1) {

@@ -24,6 +24,7 @@ type TResult = {
 class MachineProcStatsExecutor implements IMethodExecutor<undefined, TResult> {
 
     public readonly name = "machine.proc_stats";
+    public readonly timeout = 30000;
 
     public async invoke(_: TSender, __: undefined): Promise<TResult> {
         const cpuTemp = await si.cpuTemperature();

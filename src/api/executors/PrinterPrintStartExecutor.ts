@@ -8,6 +8,7 @@ type TParams = {
 class PrinterPrintStartExecutor implements IMethodExecutor<TParams, string> {
 
     public readonly name = "printer.print.start";
+    public readonly timeout = null;
 
     public async invoke(_: TSender, params: Partial<TParams>): Promise<string> {
         if (!params.filename) throw "Invalid filename";

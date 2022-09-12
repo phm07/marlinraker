@@ -1,17 +1,18 @@
-import PrintJob, { TState } from "./PrintJob";
+import PrintJob from "./PrintJob";
 import path from "path";
 import fs from "fs-extra";
 import { marlinRaker, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { TGcodeMetadata } from "../../files/MetadataManager";
+import Printer from "../Printer";
 
 class FilePrintJob extends PrintJob {
 
     public readonly filename: string;
     public readonly filepath: string;
-    public state: TState;
     public filePosition: number;
     public progress: number;
+    private readonly printer: Printer;
     private fileSize?: number;
     private metadata?: TGcodeMetadata;
     private lineReader?: LineReader;
@@ -20,13 +21,16 @@ class FilePrintJob extends PrintJob {
 
     public constructor(filename: string) {
         super();
+        if (!marlinRaker.printer) throw new Error();
+
+        this.printer = marlinRaker.printer;
         this.filename = filename;
         this.filepath = path.join(rootDir, "gcodes", filename);
         this.state = "standby";
         this.filePosition = 0;
         this.progress = 0;
 
-        marlinRaker.printer?.on("commandOk", async () => {
+        this.printer.on("commandOk", async () => {
             await this.flush();
         });
     }
@@ -44,19 +48,19 @@ class FilePrintJob extends PrintJob {
         this.metadata = metadata;
         this.fileSize = stat.size;
         this.setState("printing");
-        await marlinRaker.printer!.queueGcode("M75 " + this.filename, false, false);
+        await this.printer.queueGcode("M75 " + this.filename, false, false);
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
         this.flush().then();
     }
 
     public async finish(): Promise<void> {
-        await marlinRaker.printer!.queueGcode("M77", false, false);
+        await this.waitForPrintMoves();
+        await this.printer.queueGcode("M77", false, false);
         this.setState("complete");
         this.progress = 1;
     }
 
     private async flush(): Promise<void> {
-        const printer = marlinRaker.printer!;
         if (!this.lineReader) return;
 
         if (this.state !== "printing") {
@@ -69,15 +73,17 @@ class FilePrintJob extends PrintJob {
 
         let nextCommand: string | null = null;
         do {
-            if (!this.lineReader.hasNextLine()) {
-                await this.finish();
-                return;
-            }
             nextCommand = (await this.lineReader.readLine())?.split(";")?.[0] ?? null;
-        } while (!nextCommand || nextCommand.trim().startsWith(";"));
+        } while (nextCommand !== null && !nextCommand.trim());
+
+        if (!nextCommand) {
+            delete this.lineReader;
+            await this.finish();
+            return;
+        }
 
         const position = this.lineReader.position;
-        this.latestCommand = printer.queueGcode(nextCommand, false, false);
+        this.latestCommand = this.printer.queueGcode(nextCommand, false, false);
 
         this.latestCommand.then(() => {
             this.filePosition = position;
@@ -90,13 +96,12 @@ class FilePrintJob extends PrintJob {
     public async pause(): Promise<void> {
         if (this.state !== "printing") return;
         const promise = new Promise<void>((resolve) => {
-            this.onPausedListener = async (): Promise<void> => {
-                await this.latestCommand;
-                resolve();
-            };
+            this.onPausedListener = resolve.bind(this);
         });
         this.setState("paused");
         await promise;
+        await this.waitForPrintMoves();
+        await this.printer.queueGcode("M76", false, false);
     }
 
     public async resume(): Promise<void> {
@@ -108,14 +113,17 @@ class FilePrintJob extends PrintJob {
     public async cancel(): Promise<void> {
         delete this.lineReader;
         const promise = new Promise<void>((resolve) => {
-            this.onPausedListener = async (): Promise<void> => {
-                await this.latestCommand;
-                resolve();
-            };
+            this.onPausedListener = resolve.bind(this);
         });
         this.setState("cancelled");
         await promise;
-        await marlinRaker.printer!.queueGcode("M77");
+        await this.waitForPrintMoves();
+        await this.printer.queueGcode("M77", false, false);
+    }
+
+    private async waitForPrintMoves(): Promise<void> {
+        await this.latestCommand;
+        await this.printer.queueGcode("M400", false, false);
     }
 }
 

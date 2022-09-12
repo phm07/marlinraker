@@ -116,7 +116,7 @@ class MetadataManager {
         };
 
         const firstLineReader = new LineReader(fs.createReadStream(filepath));
-        while (firstLineReader.hasNextLine()) {
+        for (;;) {
             const line = await firstLineReader.readLine();
             if (line === null) break;
 
@@ -165,7 +165,7 @@ class MetadataManager {
             start,
             end: stat.size
         }));
-        while (last50kReader.hasNextLine()) {
+        for (;;) {
             const line = await last50kReader.readLine();
             if (line === null) break;
 
@@ -229,7 +229,7 @@ class MetadataManager {
     private static async extractThumbnail(lineReader: LineReader, filename: string): Promise<string | null> {
         let base64 = "";
 
-        while (lineReader.hasNextLine()) {
+        for (;;) {
             const line = await lineReader.readLine();
             if (line === null) break;
             if (!line.trim()) continue;

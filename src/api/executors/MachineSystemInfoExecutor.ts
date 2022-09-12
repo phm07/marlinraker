@@ -18,6 +18,7 @@ type TResult = {
 class MachineSystemInfoExecutor implements IMethodExecutor<undefined, TResult> {
 
     public readonly name = "machine.system_info";
+    public readonly timeout = 30000;
 
     public async invoke(_: TSender, __: undefined): Promise<TResult> {
         const cpuInfo = await si.cpu();

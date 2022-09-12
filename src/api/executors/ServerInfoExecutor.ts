@@ -27,7 +27,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
     public constructor() {
         this.warnings = config.warnings.slice();
         if (logger.level > Level.info) {
-            this.warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes.");
+            this.warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
         }
         this.versionArray = packageJson.version
             .replace(/[^0-9.]/g, "")

@@ -3,41 +3,33 @@ import readline, { Interface } from "readline";
 
 class LineReader {
 
-    private static readonly BUFFER_CAP = 100;
+    private static readonly BUFFER_CAP = 500;
 
     public position: number;
     private readonly reader: Interface;
-    private moreToRead: boolean;
-    private paused: boolean;
     private readonly buffer: string[];
+    private paused: boolean;
+    private closed: boolean;
 
     public constructor(stream: ReadStream) {
         this.buffer = [];
         this.position = 0;
-        this.moreToRead = true;
         this.paused = false;
-
-        stream.on("end", () => {
-            this.moreToRead = false;
-            this.reader.emit("line", null);
-        });
+        this.closed = false,
 
         this.reader = readline.createInterface(stream);
         this.reader.prependListener("line", this.handleLine.bind(this));
         this.reader.on("pause", () => this.paused = true);
         this.reader.on("resume", () => this.paused = false);
+        this.reader.on("close", () => this.closed = true);
     }
 
     public close(): void {
         this.reader.close();
     }
 
-    public hasNextLine(): boolean {
-        return this.moreToRead || this.buffer.length > 0;
-    }
-
     public async readLine(): Promise<string | null> {
-        if (!this.hasNextLine()) return null;
+        if (this.closed && !this.buffer.length) return null;
         if (this.paused && this.buffer.length < LineReader.BUFFER_CAP) {
             this.reader.resume();
         }
@@ -45,12 +37,20 @@ class LineReader {
             const line = this.buffer.shift()!;
             this.position += Buffer.byteLength(line, "utf-8") + 1; // \n
             return line;
-        }
-        return new Promise<string | null>((resolve) => {
-            this.reader.once("line", (line: string) => {
-                resolve(line);
+        } else {
+            return new Promise<string | null>((resolve) => {
+                const onLine = (): void => {
+                    this.readLine().then(resolve);
+                    this.reader.removeListener("close", onClose);
+                };
+                const onClose = (): void => {
+                    resolve(null);
+                    this.reader.removeListener("line", onLine);
+                };
+                this.reader.once("line", onLine);
+                this.reader.once("close", onClose);
             });
-        });
+        }
     }
 
     private handleLine(line: string): void {
