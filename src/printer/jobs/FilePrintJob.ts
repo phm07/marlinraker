@@ -1,7 +1,7 @@
 import PrintJob, { TState } from "./PrintJob";
 import path from "path";
 import fs from "fs-extra";
-import { logger, marlinRaker, rootDir } from "../../Server";
+import { marlinRaker, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { TGcodeMetadata } from "../../files/MetadataManager";
 
@@ -83,7 +83,6 @@ class FilePrintJob extends PrintJob {
             this.filePosition = position;
             const start = this.metadata?.gcode_start_byte ?? 0;
             const end = this.metadata?.gcode_end_byte ?? this.fileSize ?? 0;
-            logger.info(JSON.stringify({ position, start, end }));
             this.progress = Math.min(1, Math.max(0, (position - start) / (end - start)));
         });
     }
