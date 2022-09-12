@@ -2,14 +2,15 @@ import { ReadLine } from "readline";
 import { SerialPort } from "serialport";
 import readline from "readline";
 import EventEmitter from "events";
-import { logger } from "../Server";
+import { config, logger } from "../Server";
 
 type TGcodeLog = { message: string, time: number, type: "command" | "response" };
 
 type TCommand = {
     command: string,
+    response: string[],
     log: boolean,
-    callback: (response: string) => void,
+    callback: () => void,
     queued: number,
     sent?: number,
     completed?: number,
@@ -23,16 +24,19 @@ abstract class SerialGcodeDevice extends EventEmitter {
     protected readline: ReadLine;
     protected commandQueue: TCommand[];
     protected currentCommand?: TCommand;
-    protected currentLines: string[];
     protected ready: boolean;
+    private readonly maxConnectionAttempts: number;
+    private readonly connectionTimeout: number;
 
     protected constructor(serialPort: string, baudRate: number) {
         super();
 
-        this.currentLines = [];
         this.commandQueue = [];
         this.gcodeStore = [];
         this.ready = false;
+
+        this.maxConnectionAttempts = config.getOrDefault("serial.max_connection_attempts", 5);
+        this.connectionTimeout = config.getOrDefault("serial.connection_timeout", 5000);
 
         this.serialPort = new SerialPort({
             path: serialPort,
@@ -42,7 +46,6 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.readline = readline.createInterface(this.serialPort);
         this.readline.on("line", this.readLine.bind(this));
         this.serialPort.on("close", () => {
-            this.currentLines = [];
             this.commandQueue = [];
             this.ready = false;
         });
@@ -50,32 +53,45 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.setup();
     }
 
+    protected abstract handshake(): Promise<boolean>;
+
     protected abstract setupPrinter(): Promise<void>;
 
     public setup(): void {
         this.emit("startup");
         this.ready = true;
 
-        this.serialPort.open((err) => {
+        this.serialPort.open(async (err) => {
             if (err) {
                 this.emit("error", err);
                 this.listPossibleSerialPorts();
                 return;
             }
 
-            const timeout = setTimeout(() => {
-                this.emit("error", "Marlin firmware did not respond");
-                this.serialPort.close(() => {
-                    //
-                });
-            }, 5000);
+            let tryToConnect = true, tries = 0;
+            while (tryToConnect) {
+                tryToConnect = !await Promise.race([
+                    this.handshake(),
+                    new Promise<boolean>((resolve) => setTimeout(resolve.bind(this, false), this.connectionTimeout))
+                ]);
 
-            this.once("ready", () => {
-                clearTimeout(timeout);
-            });
+                if (tryToConnect && ++tries >= this.maxConnectionAttempts) {
+                    this.emit("error", "Marlin firmware did not respond");
+                    this.serialPort.close(() => {
+                        //
+                    });
+                    return;
+                }
+            }
 
-            void this.setupPrinter();
+            await this.setupPrinter();
         });
+    }
+
+    protected resetCommandQueue(): void {
+        delete this.currentCommand;
+        this.commandQueue = [];
+        this.ready = true;
     }
 
     protected abstract handleResponseLine(line: string): boolean;
@@ -85,20 +101,18 @@ abstract class SerialGcodeDevice extends EventEmitter {
     private readLine(line: string): void {
 
         if (this.handleResponseLine(line)) {
-            this.currentLines.push(line);
+            this.currentCommand?.response.push(line);
         }
 
         if (line.startsWith("ok")) {
             if (this.currentCommand) {
-                logger.debug(`Response: ${JSON.stringify(this.currentLines.join("\n"))}`);
-                this.currentCommand.callback(this.currentLines.join("\n"));
+                this.currentCommand.callback();
                 this.handleRequestLine(this.currentCommand.command);
                 this.currentCommand.completed = Date.now();
                 this.currentCommand.timeInBuffer = this.currentCommand.completed - (this.currentCommand.sent ?? 0);
                 logger.debug(JSON.stringify(this.currentCommand));
                 delete this.currentCommand;
             }
-            this.currentLines = [];
             this.ready = true;
             this.emit("commandOk");
             this.flush();
@@ -128,12 +142,16 @@ abstract class SerialGcodeDevice extends EventEmitter {
             });
         }
         return new Promise<string>((resolve) => {
-            this.commandQueue[important ? "unshift" : "push"]({
+            const commandObject: TCommand = {
                 command,
                 log,
+                response: [],
                 queued: Date.now(),
-                callback: resolve
-            });
+                callback: () => {
+                    resolve(commandObject.response.join("\n"));
+                }
+            };
+            this.commandQueue[important ? "unshift" : "push"](commandObject);
             this.flush();
         });
     }

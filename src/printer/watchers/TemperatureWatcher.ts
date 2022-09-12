@@ -8,13 +8,15 @@ class TemperatureWatcher extends Watcher {
     private readonly autoReport: boolean;
     private readonly timer?: NodeJS.Timer;
 
-    public constructor(printer: Printer, autoReport: boolean) {
+    public constructor(printer: Printer) {
         super();
         this.printer = printer;
-        this.autoReport = autoReport;
+        this.autoReport = printer.capabilities["AUTOREPORT_TEMP"] ?? false;
 
-        if (autoReport) {
-            void this.printer.queueGcode("M155 S1", false, false);
+        if (this.autoReport) {
+            if (!printer.capabilities["AUTOREPORT_POSITION"]) { // -> not a prusa
+                void this.printer.queueGcode("M155 S1", false, false);
+            }
         } else {
             let requested = false;
             this.timer = setInterval(async () => {
@@ -29,12 +31,13 @@ class TemperatureWatcher extends Watcher {
 
     private readTemps(data: string): void {
         const heaters = ParserUtil.parseM105Response(data);
+        if (!heaters) return;
         this.printer.heaterManager.updateTemps(heaters);
         super.onLoaded();
     }
 
     public handle(line: string): boolean {
-        if (!this.autoReport || !line.startsWith(" T")) return false;
+        if (!this.autoReport || !line.trim().startsWith("T")) return false;
         this.readTemps(line);
         return true;
     }

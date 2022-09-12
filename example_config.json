@@ -4,7 +4,9 @@
   },
   "serial": {
     "port": "auto",
-    "baud_rate": "auto"
+    "baud_rate": "auto",
+    "max_connection_attempts": 5,
+    "connection_timeout": 5000
   },
   "printer": {
     "bed_mesh": true,

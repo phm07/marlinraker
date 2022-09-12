@@ -45,7 +45,9 @@ like by default:
   },
   "serial": {
     "port": "auto",
-    "baud_rate": "auto"
+    "baud_rate": "auto",
+    "max_connection_attempts": 5,
+    "connection_timeout": 5000
   },
   "printer": {
     "bed_mesh": true,
@@ -120,6 +122,15 @@ specified. Default is ``"auto"``.
 #### ``serial.baud_rate: number | "auto"``
 Serial baud rate. Use ``"auto"`` to auto-detect baud rate or directly specify
 it here. Default is ``"auto"``.
+
+#### ``serial.max_connection_attempts: number``
+Number of times Marlinraker tries to connect with your printer. This is useful
+for machines which reset after a serial connection has been established and
+need to boot first before taking any commands. Default is ``5``.
+
+#### ``serial.connection_timeout: number``
+How long a connection attempt can take before it is canceled in milliseconds.
+Default is ``5000``.
 
 #### ``printer.bed_mesh: boolean``
 Specify if bed mesh leveling is enabled for this machine. Default is ``true``.

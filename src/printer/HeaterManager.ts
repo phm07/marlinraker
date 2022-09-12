@@ -36,8 +36,8 @@ class HeaterManager {
             if (!klipperName) {
                 klipperName = heaterName;
                 if (heaterName.startsWith("T")) {
-                    const id = heaterName.length > 1 ? Number.parseInt(heaterName.substring(1)) : 0;
-                    klipperName = id ? "extruder" + id : "extruder";
+                    const id = Number.parseInt(heaterName.substring(1)) || 0;
+                    klipperName = id ? `extruder${id}` : "extruder";
                 } else if (heaterName === "B") {
                     klipperName = "heater_bed";
                 } else if (heaterName === "A") {

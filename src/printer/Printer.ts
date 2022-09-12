@@ -114,7 +114,7 @@ class Printer extends SerialGcodeDevice {
             if (watcher.handle(line)) return false;
         }
 
-        if (line.startsWith("echo:")) {
+        if (this.state === "ready" && line.startsWith("echo:")) {
             const response = line.substring(5);
             if (response === "busy: processing") return false;
             void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
@@ -192,21 +192,37 @@ class Printer extends SerialGcodeDevice {
         }
     }
 
-    protected async setupPrinter(): Promise<void> {
+    protected async handshake(): Promise<boolean> {
+        this.resetCommandQueue();
         const infoResponse = await this.queueGcode("M115", false, false);
         try {
             [this.info, this.capabilities] = ParserUtil.parseM115Response(infoResponse);
         } catch (_) {
-            this.setState("error", "Could not get printer information");
-            return;
+            return false;
         }
 
         logger.info(`Printer info:\n${JSON.stringify(this.info, null, 2)}`);
         logger.info(`Printer capabilities:\n${JSON.stringify(this.capabilities, null, 2)}`);
+        return true;
+    }
+
+    protected async setupPrinter(): Promise<void> {
+
+        const timeout = setTimeout(() => {
+            this.setState("error", "Printer initialization took too long");
+            this.serialPort.close(() => {
+                //
+            });
+        }, 10000);
+
+        if (this.capabilities["AUTOREPORT_POSITION"]) {
+            // specific to prusa machines
+            await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
+        }
 
         this.watchers = [
-            new TemperatureWatcher(this, this.capabilities["AUTOREPORT_TEMP"] ?? false),
-            new PositionWatcher(this, this.capabilities["AUTOREPORT_POS"] ?? false),
+            new TemperatureWatcher(this),
+            new PositionWatcher(this),
             new SDCardWatcher("SD")
         ];
 
@@ -216,6 +232,7 @@ class Printer extends SerialGcodeDevice {
 
         this.resetValues();
         this.emit("ready");
+        clearTimeout(timeout);
     }
 
     public async dispatchCommand(command: string, log = true): Promise<void> {
