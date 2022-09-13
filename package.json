@@ -1,6 +1,6 @@
 {
   "name": "marlinraker",
-  "version": "v0.1.1-alpha",
+  "version": "v0.1.2-alpha",
   "main": "src/Server.ts",
   "scripts": {
     "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node src/Server.ts --serve-static",
