@@ -82,7 +82,7 @@ class SerialPortSearch {
             }),
             new Promise<boolean>((resolve) => {
                 lineReader.on("line", (line) => {
-                    if (line === "ok") {
+                    if (line === "ok" || line === "start") {
                         resolve(true);
                     }
                 });
