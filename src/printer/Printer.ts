@@ -77,7 +77,7 @@ class Printer extends SerialGcodeDevice {
         this.fanSpeed = 0;
         this.speedFactor = 1.0;
         this.extrudeFactor = 1.0;
-        this.isSdCard = true;
+        this.isSdCard = false;
     }
 
     public async connect(): Promise<void> {
