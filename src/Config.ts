@@ -1,17 +1,15 @@
-import fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 import { logger } from "./Server";
 
 class Config {
 
     public klipperPseudoConfig: unknown;
-    public readonly warnings: string[];
     private readonly cache: Record<string, unknown | undefined>;
     private readonly config: unknown;
     private readonly configFile: string;
 
     public constructor(configFile: string) {
-        this.warnings = [];
         this.cache = {};
         this.configFile = path.resolve(configFile);
         this.config = this.load();
@@ -38,6 +36,15 @@ class Config {
         return {};
     }
 
+    private async save(): Promise<void> {
+        try {
+            const content = JSON.stringify(this.config, null, 2);
+            await fs.writeFile(this.configFile, content, { encoding: "utf-8" });
+        } catch (e) {
+            logger.error(e);
+        }
+    }
+
     public getOrDefault<T>(property: string, defaultValue: T): T {
         if (this.cache[property] !== undefined) {
             return this.cache[property] as T;
@@ -49,10 +56,17 @@ class Config {
         if (value === undefined) {
             logger.warn(`Warning: "${property}" does not exist in ${this.configFile}`);
             if (defaultValue !== null) {
-                logger.warn(`Using default value "${defaultValue}" for property ${property}`);
-                this.warnings.push(`Property "${property}" is missing. Using default "${defaultValue}".`);
-            } else {
-                this.warnings.push(`Property "${property}" is missing.`);
+                logger.warn(`Using default value ${JSON.stringify(defaultValue)} for property ${property}`);
+
+                const parts = property.split(".");
+                const name = parts.pop()!;
+                let parent = this.config as Record<string, unknown>;
+                for (const next of parts) {
+                    parent[next] ??= {};
+                    parent = parent[next] as Record<string, unknown>;
+                }
+                (parent as Record<string, unknown>)[name] = defaultValue;
+                void this.save();
             }
             value = defaultValue;
         }

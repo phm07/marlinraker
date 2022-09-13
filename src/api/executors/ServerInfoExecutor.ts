@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { config, logger, marlinRaker } from "../../Server";
+import { logger, marlinRaker } from "../../Server";
 import { TPrinterState } from "../../printer/Printer";
 import { Level } from "../../logger/Logger";
 import packageJson from "../../../package.json";
@@ -25,7 +25,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
     private readonly versionArray: number[];
 
     public constructor() {
-        this.warnings = config.warnings.slice();
+        this.warnings = [];
         if (logger.level > Level.info) {
             this.warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
         }
