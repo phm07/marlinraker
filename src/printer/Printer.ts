@@ -2,7 +2,7 @@ import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
 import ParserUtil, { TPrinterCapabilities, TPrinterInfo } from "./ParserUtil";
-import { logger, marlinRaker } from "../Server";
+import { config, logger, marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
@@ -28,6 +28,7 @@ class Printer extends SerialGcodeDevice {
     public fanSpeed!: number;
     public speedFactor!: number;
     public extrudeFactor!: number;
+    public isSdCard!: boolean;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -76,6 +77,7 @@ class Printer extends SerialGcodeDevice {
         this.fanSpeed = 0;
         this.speedFactor = 1.0;
         this.extrudeFactor = 1.0;
+        this.isSdCard = true;
     }
 
     public async connect(): Promise<void> {
@@ -114,6 +116,11 @@ class Printer extends SerialGcodeDevice {
             if (watcher.handle(line)) return false;
         }
 
+        if (line.startsWith("echo:Unknown command: \"") && line.endsWith("\"")) {
+            const unknownCommand = line.substring(23, line.length - 1);
+            this.handleUnknownCommand(unknownCommand);
+        }
+
         if (this.state === "ready" && line.startsWith("echo:")) {
             const response = line.substring(5);
             if (response === "busy: processing") return false;
@@ -128,6 +135,14 @@ class Printer extends SerialGcodeDevice {
         }
 
         return true;
+    }
+
+    private handleUnknownCommand(command: string): void {
+        logger.warn(`Unknown command: "${command}"`);
+        if (this.isSdCard && command.match(/M2[01](\s|$)+/)) {
+            logger.warn("SD Card support was enabled in config but is not supported by printer");
+            this.isSdCard = false;
+        }
     }
 
     protected handleRequestLine(line: string): void {
@@ -220,15 +235,23 @@ class Printer extends SerialGcodeDevice {
             await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
         }
 
+        const sdCardConfig = config.getOrDefault("sd_card", true);
+        this.isSdCard = this.capabilities["SDCARD"] !== false && sdCardConfig;
+        if (this.isSdCard !== sdCardConfig) {
+            logger.warn("SD Card support was enabled in config but is not supported by printer");
+        }
+
         this.watchers = [
             new TemperatureWatcher(this),
-            new PositionWatcher(this),
-            new SDCardWatcher("SD")
+            new PositionWatcher(this)
         ];
 
-        await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
+        if (this.isSdCard) {
+            await this.queueGcode("M21", false, false);
+            this.watchers.push(new SDCardWatcher("SD"));
+        }
 
-        await this.queueGcode("M21", false, false);
+        await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
 
         this.resetValues();
         this.emit("ready");

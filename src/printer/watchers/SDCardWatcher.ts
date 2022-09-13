@@ -13,7 +13,7 @@ class SDCardWatcher extends Watcher {
 
         let fileList: Record<string, TFileInfo | undefined> | null = null, requested = false;
         const handler = async (): Promise<void> => {
-            if (requested || marlinRaker.jobManager.currentPrintJob?.state === "printing") return;
+            if (requested || marlinRaker.jobManager.currentPrintJob?.state === "printing" || !marlinRaker.printer?.isSdCard) return;
             requested = true;
             const response = await marlinRaker.printer!.queueGcode("M20", false, false);
             const newFileList = ParserUtil.parseM20Response(response);

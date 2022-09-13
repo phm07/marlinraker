@@ -101,6 +101,7 @@ like by default:
       ]
     }
   },
+  "sd_card": true,
   "octoprint_compat": true,
   "extended_logs": false
 }
@@ -173,6 +174,10 @@ Defines a macro with the name ``{macro_name}`` and sets the gcode that will be e
 
 #### ``macros.{macro_name}.rename_existing: string``
 If a macro with the name ``{macro_name}`` already exists, it will be renamed to this value.
+
+#### ``sd_card: boolean``
+Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
+Default is ``true``.
 
 #### ``octoprint_compat: boolean``
 Simulate OctoPrint API endpoints to allow Gcode upload from slicers. Default is ``true``.

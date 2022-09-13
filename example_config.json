@@ -60,6 +60,7 @@
       ]
     }
   },
+  "sd_card": true,
   "octoprint_compat": true,
   "extended_logs": false
 }
