@@ -30,6 +30,7 @@ class Printer extends SerialGcodeDevice {
     public extrudeFactor!: number;
     public isSdCard!: boolean;
     public homedAxes!: THomedAxes;
+    public isM73Supported!: boolean;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -80,6 +81,7 @@ class Printer extends SerialGcodeDevice {
         this.extrudeFactor = 1.0;
         this.isSdCard = false;
         this.homedAxes = { x: false, y: false, z: false };
+        this.isM73Supported = true;
     }
 
     public async connect(): Promise<void> {
@@ -141,9 +143,18 @@ class Printer extends SerialGcodeDevice {
 
     private handleUnknownCommand(command: string): void {
         logger.warn(`Unknown command: "${command}"`);
-        if (this.isSdCard && command.match(/M2[01](\s|$)+/)) {
-            logger.warn("SD Card support was enabled in config but is not supported by printer");
-            this.isSdCard = false;
+
+        if (command.match(/M2[01](\s|$)+/)) {
+            if (this.isSdCard) {
+                logger.warn("SD Card support was enabled in config but is not supported by printer");
+                this.isSdCard = false;
+            }
+
+        } else if (command.match(/M73(\s|$)+/)) {
+            if (this.isM73Supported) {
+                logger.warn("Printer does not support M73 command");
+                this.isM73Supported = false;
+            }
         }
     }
 

@@ -107,6 +107,7 @@ class FilePrintJob extends PrintJob {
     public async resume(): Promise<void> {
         if (this.state !== "paused") return;
         this.setState("printing");
+        await this.printer.queueGcode("M75", false, false);
         this.flush().then();
     }
 
