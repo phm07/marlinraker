@@ -19,6 +19,12 @@ type TFileInfo = {
     size?: number;
 };
 
+type THomedAxes = {
+    x: boolean;
+    y: boolean;
+    z: boolean;
+};
+
 class ParserUtil {
     public static parseM115Response(response: string): [TPrinterInfo, TPrinterCapabilities] {
         // "FIRMWARE_NAME:Marlin 1.1.0 (Github) SOURCE_CODE_URL:https://github.com/MarlinFirmware/Marlin PROTOCOL_VERSION:1.0 MACHINE_TYPE:RepRap EXTRUDER_COUNT:1 UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff"
@@ -134,7 +140,19 @@ class ParserUtil {
             ?.substring(1) ?? "");
         return Number.isNaN(result) ? undefined : result;
     }
+
+    public static parseG28Request(line: string, alreadyHomed: THomedAxes = { x: false, y: false, z: false }): THomedAxes {
+        const params = line.split(" ").slice(1).join();
+        const homedAxes: THomedAxes = { x: false, y: false, z: false };
+        const keys = Object.keys(homedAxes) as (keyof THomedAxes)[];
+        keys.forEach((s) => homedAxes[s] = params.indexOf(s.toUpperCase()) !== -1);
+        if (!Object.values(homedAxes).reduce((a, b) => a || b)) {
+            keys.forEach((s) => homedAxes[s] = true);
+        }
+        keys.forEach((s) => homedAxes[s] ||= alreadyHomed[s]);
+        return homedAxes;
+    }
 }
 
-export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo };
+export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo, THomedAxes };
 export default ParserUtil;

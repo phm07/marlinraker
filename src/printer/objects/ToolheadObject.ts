@@ -26,13 +26,8 @@ class ToolheadObject extends PrinterObject<TObject> {
         super();
         this.printer = printer;
 
-        let lastEmit = 0;
-        printer.on("positionChange", () => {
-            const now = Date.now();
-            if (now - lastEmit < 250) return; // avoid spamming
-            lastEmit = now;
-            this.emit();
-        });
+        setInterval(this.emit.bind(this), 250);
+        printer.on("homedAxesChange", this.emit.bind(this));
 
         this.printVolume = [
             config.getOrDefault("printer.print_volume.x", 0),
@@ -43,7 +38,7 @@ class ToolheadObject extends PrinterObject<TObject> {
 
     public get(_: string[] | null): TObject {
         return {
-            homed_axes: "xyz",
+            homed_axes: this.printer.getHomedAxesString(),
             print_time: 0,
             estimated_print_time: 0,
             extruder: "extruder",

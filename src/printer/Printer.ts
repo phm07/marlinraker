@@ -1,7 +1,7 @@
 import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
-import ParserUtil, { TPrinterCapabilities, TPrinterInfo } from "./ParserUtil";
+import ParserUtil, { THomedAxes, TPrinterCapabilities, TPrinterInfo } from "./ParserUtil";
 import { config, logger, marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
@@ -29,6 +29,7 @@ class Printer extends SerialGcodeDevice {
     public speedFactor!: number;
     public extrudeFactor!: number;
     public isSdCard!: boolean;
+    public homedAxes!: THomedAxes;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -78,6 +79,7 @@ class Printer extends SerialGcodeDevice {
         this.speedFactor = 1.0;
         this.extrudeFactor = 1.0;
         this.isSdCard = false;
+        this.homedAxes = { x: false, y: false, z: false };
     }
 
     public async connect(): Promise<void> {
@@ -204,6 +206,14 @@ class Printer extends SerialGcodeDevice {
             if (!factor) return;
             this[line.startsWith("M220") ? "speedFactor" : "extrudeFactor"] = factor / 100;
             this.emit("factorChange");
+
+        } else if (line.match(/G28(\s|$)+/)) {
+            this.homedAxes = ParserUtil.parseG28Request(line, this.homedAxes);
+            this.emit("homedAxesChange");
+
+        } else if (line.match(/M(18|84)(\s|$)+/)) {
+            this.homedAxes = { x: false, y: false, z: false };
+            this.emit("homedAxesChange");
         }
     }
 
@@ -306,6 +316,14 @@ class Printer extends SerialGcodeDevice {
     public async queryEndstops(): Promise<Record<string, string>> {
         const response = await this.queueGcode("M119", false, false);
         return ParserUtil.parseM119Response(response);
+    }
+
+    public getHomedAxesString(): string {
+        let s = "";
+        if (this.homedAxes.x) s += "x";
+        if (this.homedAxes.y) s += "y";
+        if (this.homedAxes.z) s += "z";
+        return s;
     }
 }
 
