@@ -125,32 +125,35 @@ abstract class SerialGcodeDevice extends EventEmitter {
         }
     }
 
-    public async queueGcode(gcode: string, important = false, log = true): Promise<string> {
-
-        if (gcode.indexOf("\n") !== -1) {
-            const responses = [];
-            for (const line of gcode.split("\n").filter((s) => s)) {
-                responses.push(await this.queueGcode(line, important, log));
-            }
-            return responses.join("\n");
-        }
+    public async queueGcode(gcodeRaw: string, important = false, log = true): Promise<string> {
 
         if (!this.serialPort.writable) {
             throw "Not connected";
         }
 
+        if (gcodeRaw.indexOf("\n") !== -1) {
+            const responses = [];
+            for (const line of gcodeRaw.split("\n").filter((s) => s)) {
+                responses.push(await this.queueGcode(line, important, log));
+            }
+            return responses.join("\n");
+        }
+
         if (log) {
             this.gcodeStore.push({
-                message: gcode,
+                message: gcodeRaw,
                 time: Date.now() / 1000,
                 type: "command"
             });
         }
 
+        const gcode = ParserUtil.trimGcodeLine(gcodeRaw);
+        if (!gcode) return "";
+
         if (this.hasEmergencyParser && ParserUtil.isEmergencyCommand(gcode)) {
             const promise = new Promise<string>((resolve) => {
                 this.commandQueue.unshift({
-                    gcode: gcode,
+                    gcode,
                     log,
                     emergency: true,
                     response: [],
@@ -167,7 +170,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
 
         return new Promise<string>((resolve) => {
             const commandObject: TCommand = {
-                gcode: gcode,
+                gcode,
                 log,
                 response: [],
                 queued: Date.now(),

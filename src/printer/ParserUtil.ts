@@ -156,6 +156,10 @@ class ParserUtil {
     public static isEmergencyCommand(command: string): boolean {
         return Boolean(command.match(/M(112|108|410|876)(\s|$)+/));
     }
+
+    public static trimGcodeLine(gcode: string): string {
+        return gcode.split(";")[0].trim();
+    }
 }
 
 export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo, THomedAxes };
