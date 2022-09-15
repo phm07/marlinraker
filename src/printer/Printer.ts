@@ -31,6 +31,7 @@ class Printer extends SerialGcodeDevice {
     public isSdCard!: boolean;
     public homedAxes!: THomedAxes;
     public isM73Supported!: boolean;
+    public isPrusa!: boolean;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -82,6 +83,7 @@ class Printer extends SerialGcodeDevice {
         this.isSdCard = false;
         this.homedAxes = { x: false, y: false, z: false };
         this.isM73Supported = true;
+        this.isPrusa = false;
     }
 
     public async connect(): Promise<void> {
@@ -100,11 +102,7 @@ class Printer extends SerialGcodeDevice {
     }
 
     public emergencyStop(): void {
-        this.serialPort.write("M112\n");
-        this.emit("error", "Emergency stop triggered");
-        if (this.serialPort.isOpen) {
-            this.serialPort.close();
-        }
+        void this.queueGcode("M112");
     }
 
     public reset(): void {
@@ -222,9 +220,15 @@ class Printer extends SerialGcodeDevice {
             this.homedAxes = ParserUtil.parseG28Request(line, this.homedAxes);
             this.emit("homedAxesChange");
 
-        } else if (line.match(/M(18|84)(\s|$)+/)) {
+        } else if (line.match(/M(18|84|410)(\s|$)+/)) {
             this.homedAxes = { x: false, y: false, z: false };
             this.emit("homedAxesChange");
+
+        } else if (line.match(/M112(\s|$)+/)) {
+            this.emit("error", "Emergency stop triggered");
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
         }
     }
 
@@ -251,10 +255,8 @@ class Printer extends SerialGcodeDevice {
             });
         }, 10000);
 
-        if (this.capabilities["AUTOREPORT_POSITION"]) {
-            // specific to prusa machines
-            await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
-        }
+        this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;
+        this.hasEmergencyParser = this.capabilities["EMERGENCY_PARSER"] || this.isPrusa;
 
         const sdCardConfig = config.getOrDefault("sd_card", true);
         this.isSdCard = this.capabilities["SDCARD"] !== false && sdCardConfig;
@@ -266,6 +268,10 @@ class Printer extends SerialGcodeDevice {
             new TemperatureWatcher(this),
             new PositionWatcher(this)
         ];
+
+        if (this.isPrusa) {
+            await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
+        }
 
         if (this.isSdCard) {
             await this.queueGcode("M21", false, false);

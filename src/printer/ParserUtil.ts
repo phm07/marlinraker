@@ -152,6 +152,10 @@ class ParserUtil {
         keys.forEach((s) => homedAxes[s] ||= alreadyHomed[s]);
         return homedAxes;
     }
+
+    public static isEmergencyCommand(command: string): boolean {
+        return Boolean(command.match(/M(112|108|410|876)(\s|$)+/));
+    }
 }
 
 export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo, THomedAxes };

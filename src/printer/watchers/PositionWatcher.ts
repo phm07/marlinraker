@@ -15,7 +15,7 @@ class PositionWatcher extends Watcher {
         this.autoReport = printer.capabilities["AUTOREPORT_POS"] ?? printer.capabilities["AUTOREPORT_POSITION"] ?? false;
 
         if (this.autoReport) {
-            if (!printer.capabilities["AUTOREPORT_POSITION"]) { // -> not a prusa
+            if (!printer.isPrusa) {
                 void this.printer.queueGcode("M154 S1", false, false);
             }
         } else {

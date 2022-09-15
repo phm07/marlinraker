@@ -74,7 +74,7 @@ class FilePrintJob extends PrintJob {
             return;
         }
 
-        if (this.state !== "printing") return;
+        if (this.state !== "printing" || this.printer.hasCommandsInQueue()) return;
 
         let nextCommand: string | null = null;
         do {
@@ -100,6 +100,9 @@ class FilePrintJob extends PrintJob {
 
     public async pause(): Promise<void> {
         if (this.state !== "printing" || this.pauseRequested) return;
+        if (this.printer.hasEmergencyParser) {
+            await this.printer.queueGcode("M108");
+        }
         const promise = new Promise<void>((resolve) => {
             this.onPausedListener = resolve.bind(this);
         });
@@ -120,6 +123,9 @@ class FilePrintJob extends PrintJob {
 
     public async cancel(): Promise<void> {
         delete this.lineReader;
+        if (this.printer.hasEmergencyParser) {
+            await this.printer.queueGcode("M108");
+        }
         if (!this.pauseRequested) {
             const promise = new Promise<void>((resolve) => {
                 this.onPausedListener = resolve.bind(this);

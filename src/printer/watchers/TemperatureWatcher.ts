@@ -14,7 +14,7 @@ class TemperatureWatcher extends Watcher {
         this.autoReport = printer.capabilities["AUTOREPORT_TEMP"] ?? false;
 
         if (this.autoReport) {
-            if (!printer.capabilities["AUTOREPORT_POSITION"]) { // -> not a prusa
+            if (!printer.isPrusa) {
                 void this.printer.queueGcode("M155 S1", false, false);
             }
         } else {

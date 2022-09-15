@@ -3,23 +3,26 @@ import { SerialPort } from "serialport";
 import readline from "readline";
 import EventEmitter from "events";
 import { config, logger } from "../Server";
+import ParserUtil from "./ParserUtil";
 
 type TGcodeLog = { message: string, time: number, type: "command" | "response" };
 
 type TCommand = {
-    command: string,
+    gcode: string,
     response: string[],
     log: boolean,
+    emergency?: boolean,
     callback: () => void,
     queued: number,
     sent?: number,
     completed?: number,
-    timeInBuffer?: number
+    timeInQueue?: number
 };
 
 abstract class SerialGcodeDevice extends EventEmitter {
 
     public readonly gcodeStore: TGcodeLog[];
+    public hasEmergencyParser: boolean;
     protected readonly serialPort: SerialPort;
     protected readline: ReadLine;
     protected commandQueue: TCommand[];
@@ -34,6 +37,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.commandQueue = [];
         this.gcodeStore = [];
         this.ready = false;
+        this.hasEmergencyParser = false;
 
         this.maxConnectionAttempts = config.getOrDefault("serial.max_connection_attempts", 5);
         this.connectionTimeout = config.getOrDefault("serial.connection_timeout", 5000);
@@ -54,12 +58,14 @@ abstract class SerialGcodeDevice extends EventEmitter {
     }
 
     protected abstract handshake(): Promise<boolean>;
-
     protected abstract setupPrinter(): Promise<void>;
+    protected abstract handleResponseLine(line: string): boolean;
+    protected abstract handleRequestLine(line: string): void;
 
     public setup(): void {
         this.emit("startup");
         this.ready = true;
+        this.hasEmergencyParser = false;
 
         this.serialPort.open(async (err) => {
             if (err) {
@@ -94,11 +100,9 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.ready = true;
     }
 
-    protected abstract handleResponseLine(line: string): boolean;
-
-    protected abstract handleRequestLine(line: string): void;
-
     private readLine(line: string): void {
+
+        logger.debug(`got \t${line}`);
 
         if (this.handleResponseLine(line)) {
             this.currentCommand?.response.push(line);
@@ -107,9 +111,11 @@ abstract class SerialGcodeDevice extends EventEmitter {
         if (line.startsWith("ok")) {
             if (this.currentCommand) {
                 this.currentCommand.callback();
-                this.handleRequestLine(this.currentCommand.command);
+                if (!this.currentCommand.emergency) {
+                    this.handleRequestLine(this.currentCommand.gcode);
+                }
                 this.currentCommand.completed = Date.now();
-                this.currentCommand.timeInBuffer = this.currentCommand.completed - (this.currentCommand.sent ?? 0);
+                this.currentCommand.timeInQueue = this.currentCommand.completed - (this.currentCommand.sent ?? 0);
                 logger.debug(JSON.stringify(this.currentCommand));
                 delete this.currentCommand;
             }
@@ -117,16 +123,14 @@ abstract class SerialGcodeDevice extends EventEmitter {
             this.emit("commandOk");
             this.flush();
         }
-
-        logger.debug(`got \t${line}`);
     }
 
-    public async queueGcode(command: string, important = false, log = true): Promise<string> {
+    public async queueGcode(gcode: string, important = false, log = true): Promise<string> {
 
-        if (command.indexOf("\n") !== -1) {
+        if (gcode.indexOf("\n") !== -1) {
             const responses = [];
-            for (const gcode of command.split("\n").filter((s) => s)) {
-                responses.push(await this.queueGcode(gcode, important, log));
+            for (const line of gcode.split("\n").filter((s) => s)) {
+                responses.push(await this.queueGcode(line, important, log));
             }
             return responses.join("\n");
         }
@@ -134,16 +138,36 @@ abstract class SerialGcodeDevice extends EventEmitter {
         if (!this.serialPort.writable) {
             throw "Not connected";
         }
+
         if (log) {
             this.gcodeStore.push({
-                message: command,
+                message: gcode,
                 time: Date.now() / 1000,
                 type: "command"
             });
         }
+
+        if (this.hasEmergencyParser && ParserUtil.isEmergencyCommand(gcode)) {
+            const promise = new Promise<string>((resolve) => {
+                this.commandQueue.unshift({
+                    gcode: gcode,
+                    log,
+                    emergency: true,
+                    response: [],
+                    queued: Date.now(),
+                    callback: resolve.bind(this, "ok")
+                });
+            });
+            logger.debug(`emgy \t${gcode}`);
+            this.serialPort.write(`${gcode}\n`);
+            this.handleRequestLine(gcode);
+            this.flush();
+            return promise;
+        }
+
         return new Promise<string>((resolve) => {
             const commandObject: TCommand = {
-                command,
+                gcode: gcode,
                 log,
                 response: [],
                 queued: Date.now(),
@@ -158,11 +182,13 @@ abstract class SerialGcodeDevice extends EventEmitter {
 
     private flush(): void {
         if (this.ready && this.commandQueue.length) {
-            this.ready = false;
             this.currentCommand = this.commandQueue.shift()!;
-            this.serialPort.write(this.currentCommand.command + "\n");
-            logger.debug(`sent \t${this.currentCommand.command}`);
-            this.currentCommand.sent = Date.now();
+            if (!this.currentCommand.emergency) {
+                this.ready = false;
+                this.currentCommand.sent = Date.now();
+                logger.debug(`sent \t${this.currentCommand.gcode}`);
+                this.serialPort.write(this.currentCommand.gcode + "\n");
+            }
         }
     }
 
@@ -171,6 +197,10 @@ abstract class SerialGcodeDevice extends EventEmitter {
             logger.error(`Could not connect to serial port. Is the specified port "${this.serialPort.path}" correct?`);
             logger.error(`Possible ports: ${ports.map((port) => port.path).join(", ")}`);
         });
+    }
+
+    public hasCommandsInQueue(): boolean {
+        return this.commandQueue.length > 0;
     }
 }
 
