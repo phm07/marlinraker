@@ -8,6 +8,7 @@ class Config {
     private readonly cache: Record<string, unknown | undefined>;
     private readonly config: unknown;
     private readonly configFile: string;
+    private lastConfigContent!: string;
 
     public constructor(configFile: string) {
         this.cache = {};
@@ -25,6 +26,8 @@ class Config {
         } catch (e) {
             logger.error(`Cannot find ${this.configFile}`);
         }
+        this.lastConfigContent = content ?? "";
+
         if (content) {
             try {
                 return JSON.parse(content);
@@ -36,13 +39,35 @@ class Config {
         return {};
     }
 
-    private async save(): Promise<void> {
+    private async saveProperty(property: string, value: unknown): Promise<void> {
+
+        let content, config: Record<string, unknown>;
         try {
-            const content = JSON.stringify(this.config, null, 2);
-            await fs.writeFile(this.configFile, content, { encoding: "utf-8" });
+            content = fs.readFileSync(this.configFile).toString("utf-8");
         } catch (e) {
-            logger.error(e);
+            logger.error(`Cannot find ${this.configFile}`);
         }
+        if (!content || content === this.lastConfigContent) return;
+        this.lastConfigContent = content;
+
+        try {
+            config = JSON.parse(content);
+        } catch (e) {
+            logger.error(`Malformed config (${this.configFile})`);
+            logger.error((e as Error).message);
+            return;
+        }
+
+        const parts = property.split(".");
+        const name = parts.pop()!;
+        let parent = config;
+        for (const next of parts) {
+            parent[next] ??= {};
+            parent = parent[next] as Record<string, unknown>;
+        }
+        (parent as Record<string, unknown>)[name] = value;
+
+        await fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2), { encoding: "utf-8" });
     }
 
     public getOrDefault<T>(property: string, defaultValue: T): T {
@@ -54,19 +79,10 @@ class Config {
             value = (value as Record<string, unknown> | undefined)?.[next];
         }
         if (value === undefined) {
-            logger.warn(`Warning: "${property}" does not exist in ${this.configFile}`);
+            logger.warn(`Warning: "${property}" was not found in ${this.configFile}`);
             if (defaultValue !== null) {
                 logger.warn(`Using default value ${JSON.stringify(defaultValue)} for property ${property}`);
-
-                const parts = property.split(".");
-                const name = parts.pop()!;
-                let parent = this.config as Record<string, unknown>;
-                for (const next of parts) {
-                    parent[next] ??= {};
-                    parent = parent[next] as Record<string, unknown>;
-                }
-                (parent as Record<string, unknown>)[name] = defaultValue;
-                void this.save();
+                void this.saveProperty(property, defaultValue);
             }
             value = defaultValue;
         }
