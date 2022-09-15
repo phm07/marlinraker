@@ -18,6 +18,7 @@ class FilePrintJob extends PrintJob {
     private lineReader?: LineReader;
     private latestCommand?: Promise<string>;
     private onPausedListener?: () => void;
+    private pauseRequested: boolean;
 
     public constructor(filename: string) {
         super();
@@ -29,6 +30,7 @@ class FilePrintJob extends PrintJob {
         this.state = "standby";
         this.filePosition = 0;
         this.progress = 0;
+        this.pauseRequested = false;
 
         this.printer.on("commandOk", async () => {
             await this.flush();
@@ -47,6 +49,7 @@ class FilePrintJob extends PrintJob {
         if (!metadata || !stat) throw "Cannot find file";
         this.metadata = metadata;
         this.fileSize = stat.size;
+        this.pauseRequested = false;
         this.setState("printing");
         await this.printer.queueGcode("M75 " + this.filename, false, false);
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
@@ -63,13 +66,15 @@ class FilePrintJob extends PrintJob {
     private async flush(): Promise<void> {
         if (!this.lineReader) return;
 
-        if (this.state !== "printing") {
+        if (this.pauseRequested) {
             if (this.onPausedListener) {
                 this.onPausedListener();
                 delete this.onPausedListener;
             }
             return;
         }
+
+        if (this.state !== "printing") return;
 
         let nextCommand: string | null = null;
         do {
@@ -94,32 +99,37 @@ class FilePrintJob extends PrintJob {
     }
 
     public async pause(): Promise<void> {
-        if (this.state !== "printing") return;
+        if (this.state !== "printing" || this.pauseRequested) return;
         const promise = new Promise<void>((resolve) => {
             this.onPausedListener = resolve.bind(this);
         });
-        this.setState("paused");
+        this.pauseRequested = true;
         await promise;
         await this.waitForPrintMoves();
         await this.printer.queueGcode("M76", false, false);
+        this.setState("paused");
     }
 
     public async resume(): Promise<void> {
         if (this.state !== "paused") return;
-        this.setState("printing");
         await this.printer.queueGcode("M75", false, false);
+        this.pauseRequested = false;
+        this.setState("printing");
         this.flush().then();
     }
 
     public async cancel(): Promise<void> {
         delete this.lineReader;
-        const promise = new Promise<void>((resolve) => {
-            this.onPausedListener = resolve.bind(this);
-        });
-        this.setState("cancelled");
-        await promise;
+        if (!this.pauseRequested) {
+            const promise = new Promise<void>((resolve) => {
+                this.onPausedListener = resolve.bind(this);
+            });
+            this.pauseRequested = true;
+            await promise;
+        }
         await this.waitForPrintMoves();
         await this.printer.queueGcode("M77", false, false);
+        this.setState("cancelled");
     }
 
     private async waitForPrintMoves(): Promise<void> {
