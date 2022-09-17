@@ -8,11 +8,12 @@ class Config {
     private readonly cache: Record<string, unknown | undefined>;
     private readonly config: unknown;
     private readonly configFile: string;
-    private lastConfigContent!: string;
+    private isConfigMalformed: boolean;
 
     public constructor(configFile: string) {
         this.cache = {};
         this.configFile = path.resolve(configFile);
+        this.isConfigMalformed = false;
         this.config = this.load();
         this.klipperPseudoConfig = this.generateKlipperConfig();
         logger.info(`Config:\n${JSON.stringify(this.config, null, 2)}`);
@@ -26,14 +27,17 @@ class Config {
         } catch (e) {
             logger.error(`Cannot find ${this.configFile}`);
         }
-        this.lastConfigContent = content ?? "";
 
         if (content) {
             try {
+                this.isConfigMalformed = false;
                 return JSON.parse(content);
             } catch (e) {
-                logger.error(`Malformed config (${this.configFile})`);
-                logger.error((e as Error).message);
+                if (!this.isConfigMalformed) {
+                    logger.error(`Malformed config (${this.configFile})`);
+                    logger.error((e as Error).message);
+                }
+                this.isConfigMalformed = true;
             }
         }
         return {};
@@ -47,14 +51,18 @@ class Config {
         } catch (e) {
             logger.error(`Cannot find ${this.configFile}`);
         }
-        if (!content || content === this.lastConfigContent) return;
-        this.lastConfigContent = content;
+
+        if (!content) return;
 
         try {
             config = JSON.parse(content);
+            this.isConfigMalformed = false;
         } catch (e) {
-            logger.error(`Malformed config (${this.configFile})`);
-            logger.error((e as Error).message);
+            if (!this.isConfigMalformed) {
+                logger.error(`Malformed config (${this.configFile})`);
+                logger.error((e as Error).message);
+            }
+            this.isConfigMalformed = true;
             return;
         }
 
@@ -65,9 +73,9 @@ class Config {
             parent[next] ??= {};
             parent = parent[next] as Record<string, unknown>;
         }
-        (parent as Record<string, unknown>)[name] = value;
 
-        await fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2), { encoding: "utf-8" });
+        (parent as Record<string, unknown>)[name] = value;
+        await fs.writeFile(this.configFile, JSON.stringify(config, null, 2), { encoding: "utf-8" });
     }
 
     public getOrDefault<T>(property: string, defaultValue: T): T {
