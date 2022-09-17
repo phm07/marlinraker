@@ -37,6 +37,7 @@ import MachineUpdateStatusExecutor from "./executors/MachineUpdateStatusExecutor
 import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor";
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
 import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
+import MachineUpdateFullExecutor from "./executors/MachineUpdateFullExecutor";
 
 class HttpHandler extends MessageHandler {
 
@@ -47,6 +48,7 @@ class HttpHandler extends MessageHandler {
             new MachineProcStatsExecutor(),
             new MachineSystemInfoExecutor(),
             new MachineUpdateClientExecutor(),
+            new MachineUpdateFullExecutor(),
             new MachineUpdateStatusExecutor(),
             new MachineUpdateSystemExecutor(),
             new PrinterEmergencyStopExecutor(),

@@ -1,11 +1,12 @@
-import { config, logger, marlinRaker, rootDir } from "../Server";
+import { logger, marlinRaker, rootDir } from "../Server";
 import HttpsRequest from "./HttpsRequest";
 import path from "path";
-import GithubReleaseUpdatable from "./GithubReleaseUpdatable";
-import { IUpdatable } from "./IUpdatable";
 import NamedObjectMap from "../util/NamedObjectMap";
 import SystemUpdatable from "./SystemUpdatable";
 import SimpleNotification from "../api/notifications/SimpleNotification";
+import fs from "fs-extra";
+import ScriptUpdatable from "./ScriptUpdatable";
+import { Updatable } from "./Updatable";
 
 type TUpdateStatus = {
     busy: boolean;
@@ -23,20 +24,43 @@ type TRateLimit = {
 
 class UpdateManager {
 
-    private readonly updatables: NamedObjectMap<IUpdatable<unknown>>;
+    private readonly updatables: NamedObjectMap<Updatable<unknown>>;
     private readonly scheduledUpdates: [() => Promise<void>, () => void][];
     public busy: boolean;
 
     public constructor() {
         this.busy = false;
         this.scheduledUpdates = [];
-        this.updatables = new NamedObjectMap<IUpdatable<unknown>>(<IUpdatable<unknown>[]>[
-            process.env.NODE_ENV === "production" && new GithubReleaseUpdatable("marlinraker", path.resolve("./"), config.getOrDefault("update_manager.marlinraker_repo", "pauhull/marlinraker")),
-            new GithubReleaseUpdatable("client", path.join(rootDir, "www"), config.getOrDefault("update_manager.client_repo", "mainsail-crew/mainsail")),
+        this.updatables = new NamedObjectMap<Updatable<unknown>>(<Updatable<unknown>[]>[
             new SystemUpdatable()
         ]);
 
-        this.checkForUpdates();
+        this.loadScripts();
+        void this.checkForUpdates();
+    }
+
+    private loadScripts(): void {
+        const scriptsDir = path.join(rootDir, "update_scripts");
+        fs.mkdirsSync(scriptsDir);
+        for (const file of fs.readdirSync(scriptsDir, { withFileTypes: true })) {
+            if (!file.isFile() || file.name.startsWith("_")) continue;
+            const updatable = new ScriptUpdatable(file.name.split(".")[0], path.join(scriptsDir, file.name));
+            this.updatables[updatable.name] = updatable;
+        }
+    }
+
+    public async fullUpdate(): Promise<void> {
+        if (this.updatables["system"] && this.updatables["system"].isUpdatePossible()) {
+            await this.update("system");
+        }
+        await Promise.all(Object.values(this.updatables)
+            .filter((updatable) => updatable!.name !== "marlinraker" && updatable!.isUpdatePossible())
+            .map(async (updatable) => {
+                await this.update(updatable!.name);
+            }));
+        if (this.updatables["marlinraker"] && this.updatables["marlinraker"].isUpdatePossible()) {
+            await this.update("marlinraker");
+        }
     }
 
     public async update(name: string): Promise<void> {
@@ -44,6 +68,7 @@ class UpdateManager {
         if (marlinRaker.jobManager.isPrinting()) throw "Cannot update while printing";
         const updatable = this.updatables[name];
         if (!updatable) throw `Unknown client "${name}"`;
+        if (!updatable.isUpdatePossible()) throw `Cannot update ${name}`;
         return new Promise<void>((resolve) => {
             void this.scheduleUpdate(updatable.update.bind(updatable), resolve);
         });
@@ -72,10 +97,9 @@ class UpdateManager {
         ]));
     }
 
-    public checkForUpdates(): void {
-        for (const name in this.updatables) {
-            this.updatables[name]!.checkForUpdate();
-        }
+    public async checkForUpdates(): Promise<void> {
+        await Promise.all(Object.values(this.updatables)
+            .map(async (updatable) => await updatable!.checkForUpdate()));
     }
 
     public async getUpdateStatus(): Promise<TUpdateStatus> {

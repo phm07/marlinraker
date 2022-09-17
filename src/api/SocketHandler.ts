@@ -42,6 +42,7 @@ import MachineUpdateStatusExecutor from "./executors/MachineUpdateStatusExecutor
 import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor";
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
 import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
+import MachineUpdateFullExecutor from "./executors/MachineUpdateFullExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -57,6 +58,7 @@ class SocketHandler extends MessageHandler {
             new MachineSystemInfoExecutor(),
             new MachineSystemInfoExecutor(),
             new MachineUpdateClientExecutor(),
+            new MachineUpdateFullExecutor(),
             new MachineUpdateStatusExecutor(),
             new MachineUpdateSystemExecutor(),
             new PrinterEmergencyStopExecutor(),

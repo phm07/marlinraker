@@ -25,10 +25,6 @@
       "max_temp": 100
     }
   },
-  "update_manager": {
-    "marlinraker_repo": "pauhull/marlinraker",
-    "client_repo": "mainsail-crew/mainsail"
-  },
   "macros": {
     "pause": {
       "rename_existing": "pause_base",

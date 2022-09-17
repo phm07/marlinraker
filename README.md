@@ -29,6 +29,9 @@ Logs are stored here. The most recent log file will always be called ``marlinrak
 Log files will be rotated after they reach a size of 1 megabyte. If there are more than
 5 files, old logs will be deleted.
 
+#### ``update_scripts/``
+Update scripts are located here. See [Update scripts](#update-scripts) for more info.
+
 #### ``www/``
 This is where the web interface will be located. The contents of this folder will be
 statically served.
@@ -65,10 +68,6 @@ like by default:
       "min_temp": 0,
       "max_temp": 100
     }
-  },
-  "update_manager": {
-    "marlinraker_repo": "pauhull/marlinraker",
-    "client_repo": "mainsail-crew/mainsail"
   },
   "macros": {
     "pause": {
@@ -157,19 +156,6 @@ Minimum bed temperature. Default is ``0``.
 #### ``printer.heater_bed.max_temp: number``
 Maximum bed temperature. Default is ``100``.
 
-#### ``update_manager.marlinraker_repo: string``
-This is the repository where Marlinraker will look for updates. Repository format
-is ``owner/repository``. Default is ``"pauhull/marlinraker"``.
-
-#### ``update_manager.client_repo: string``
-GitHub repository that contains the web interface to be served in the ``www``
-directory in the format ``owner/repository``. Default is ``"mainsail-crew/mainsail"``.
-It will download automatically on first startup so that the machine is accessible
-without any further configuration. After that Marlinraker will periodically look for
-updates and display them in the update manager. For Fluidd set this option to
-``"fluidd-core/fluidd"`` and issue an update in the update manager. To disable automatic
-web interface updates set to ``""``.
-
 #### ``macros.{macro_name}.gcode: string[]``
 Defines a macro with the name ``{macro_name}`` and sets the gcode that will be executed.
 
@@ -189,6 +175,14 @@ Simulate OctoPrint API endpoints to allow Gcode upload from slicers. Default is 
 #### ``extended_logs: boolean``
 Enable verbose logging. Useful for debugging and development. Default is ``false``. Note:
 This will create very large log files quickly and will impact print performance.
+
+## Update scripts
+Marlinraker will load all scripts contained in ``update_scripts/`` and use them for updating
+components. Files starting with ``_`` are ignored. When called with ``-i`` as an argument,
+scripts should print a component status information JSON object (see [Moonraker docs](https://moonraker.readthedocs.io/en/latest/web_api/#get-update-status)) 
+to stdout. ``version`` and ``remote_version`` have to be included in order for updates to work.
+When called with ``-u`` as an argument, the script should update the component. Pre-made scripts
+for Marlinraker, Mainsail and Fluidd are included in the Raspberry Pi image.
 
 ## Command line arguments
 - ``--find-ports`` List available serial ports and exit
