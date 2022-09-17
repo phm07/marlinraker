@@ -38,6 +38,7 @@ import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
 import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
 import MachineUpdateFullExecutor from "./executors/MachineUpdateFullExecutor";
+import ServerDatabasePostItemExecutor from "./executors/ServerDatabasePostItemExecutor";
 
 class HttpHandler extends MessageHandler {
 
@@ -66,7 +67,7 @@ class HttpHandler extends MessageHandler {
             new ServerDatabaseDeleteItemExecutor(),
             new ServerDatabaseGetItemExecutor(),
             new ServerDatabaseListExecutor(),
-            new ServerDatabaseListExecutor(),
+            new ServerDatabasePostItemExecutor(),
             new ServerFilesCopyExecutor(),
             new ServerFilesDeleteDirectoryExecutor(),
             new ServerFilesGetDirectoryExecutor(),

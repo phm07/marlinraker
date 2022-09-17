@@ -20,6 +20,7 @@ abstract class MessageHandler {
                     }
                     resolve(new ResultResponse<typeof response>(response));
                 }).catch((e) => {
+                    clearTimeout(timeout);
                     logger.error(`Error in ${executor.name}: ${e}`);
                     resolve(new ErrorResponse(500, "Method error: " + e));
                 });

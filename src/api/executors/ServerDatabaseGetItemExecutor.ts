@@ -11,10 +11,12 @@ class ServerDatabaseGetItemExecutor implements IMethodExecutor<TParams, TResult>
 
     public async invoke(_: TSender, params: Partial<TParams>): Promise<TResult> {
         if (!params.namespace) throw "Invalid namespace";
+        const value = await marlinRaker.database.getItem(params.namespace, params.key ?? undefined);
+        if (value === null) throw `${params.namespace}${params.key ? `.${params.key}` : ""} doesn't exist`;
         return {
             namespace: params.namespace,
             key: params.key ?? null,
-            value: await marlinRaker.database.getItem(params.namespace, params.key ?? undefined)
+            value
         };
     }
 
