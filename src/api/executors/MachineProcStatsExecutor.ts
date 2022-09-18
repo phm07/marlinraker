@@ -49,7 +49,7 @@ class MachineProcStatsExecutor implements IMethodExecutor<undefined, TResult> {
                 }
             ])),
             system_cpu_usage: Object.fromEntries(load.cpus.map((cpu, index) => [
-                "cpu" + index,
+                `cpu${index}`,
                 cpu.load
             ])),
             websocket_connections: marlinRaker.connectionManager.connections.length

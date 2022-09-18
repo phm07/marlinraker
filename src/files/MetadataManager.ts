@@ -247,7 +247,7 @@ class MetadataManager {
         }
 
         const thumbnailName = crypto.randomUUID() + ".png";
-        const relativeLocation = ".thumbs/" + thumbnailName;
+        const relativeLocation = `.thumbs/${thumbnailName}`;
         const pathOnDisk = path.join(rootDir, "gcodes", path.dirname(filename), relativeLocation);
         await fs.mkdirs(path.dirname(pathOnDisk));
         await fs.writeFile(pathOnDisk, buf);

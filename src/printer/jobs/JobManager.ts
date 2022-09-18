@@ -104,7 +104,7 @@ class JobManager {
             await printer.queueGcode(this.resumeIsEAbsolute ? "M82" : "M83", false, false);
         }
         if (this.resumeFeedrate !== printer.feedrate) {
-            await printer.queueGcode("G0 F" + this.resumeFeedrate, false, false);
+            await printer.queueGcode(`G0 F${this.resumeFeedrate}`, false, false);
         }
 
         delete this.resumeIsAbsolute;

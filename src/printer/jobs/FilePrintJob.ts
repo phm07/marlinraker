@@ -51,7 +51,7 @@ class FilePrintJob extends PrintJob {
         this.fileSize = stat.size;
         this.pauseRequested = false;
         this.setState("printing");
-        await this.printer.queueGcode("M75 " + this.filename, false, false);
+        await this.printer.queueGcode(`M75 ${this.filename}`, false, false);
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
         this.flush().then();
     }

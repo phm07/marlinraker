@@ -22,7 +22,7 @@ abstract class MessageHandler {
                 }).catch((e) => {
                     clearTimeout(timeout);
                     logger.error(`Error in ${executor.name}: ${e}`);
-                    resolve(new ErrorResponse(500, "Method error: " + e));
+                    resolve(new ErrorResponse(500, `Method error: ${e}`));
                 });
             }),
             new Promise((resolve) => {

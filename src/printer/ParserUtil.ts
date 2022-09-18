@@ -31,8 +31,8 @@ class ParserUtil {
         // "FIRMWARE_NAME:Prusa-Firmware 3.10.1 based on Marlin FIRMWARE_URL:https://github.com/prusa3d/Prusa-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Prusa i3 MK3S EXTRUDER_COUNT:1 UUID:00000000-0000-0000-0000-000000000000"
         const line = response.split("\n").find((s) => s.startsWith("FIRMWARE_NAME:"));
         if (!line) throw "Could not parse printer information";
-        const firmwareName = line.split(":")[1].split(" ").slice(0, -1).join(" ");
-        const machineType = line.substring(line.indexOf("MACHINE_TYPE:") + 13, line.indexOf("EXTRUDER_COUNT") - 1);
+        const firmwareName = /FIRMWARE_NAME:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
+        const machineType = /MACHINE_TYPE:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
         const info = { firmwareName, machineType };
         const capabilities = Object.fromEntries(
             // "Cap:EEPROM:0"
@@ -154,7 +154,7 @@ class ParserUtil {
     }
 
     public static isEmergencyCommand(command: string): boolean {
-        return Boolean(command.match(/M(112|108|410|876)(\s|$)+/));
+        return Boolean(/M(112|108|410|876)(\s|$)/.test(command));
     }
 
     public static trimGcodeLine(gcode: string): string {

@@ -4,7 +4,7 @@ class KlipperCompat {
 
     public static translateCommand(klipperCommand: string): (() => Promise<void>) | null {
 
-        if (klipperCommand.match(/SET_HEATER_TEMPERATURE(\s|$)+/)) {
+        if (/SET_HEATER_TEMPERATURE(\s|$)/i.test(klipperCommand)) {
             const args = klipperCommand.split(" ").slice(1);
 
             const heaterName = args.find((s) => s.toUpperCase().startsWith("HEATER="))?.substring(7);
@@ -41,7 +41,7 @@ class KlipperCompat {
                 throw "Internal error";
             }
 
-        } else if (klipperCommand.match(/BED_MESH_CALIBRATE(\s|$)+/)) {
+        } else if (/BED_MESH_CALIBRATE(\s|$)/i.test(klipperCommand)) {
 
             /*
             Klipper doesn't do anything with the profile name so I won't too
@@ -84,17 +84,17 @@ class KlipperCompat {
                 });
             };
 
-        } else if (klipperCommand.match(/RESTART(\s|$)+/)) {
+        } else if (/RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
                 marlinRaker.restart();
             };
 
-        } else if (klipperCommand.match(/FIRMWARE_RESTART(\s|$)+/)) {
+        } else if (/FIRMWARE_RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
                 await marlinRaker.printer?.restart();
             };
 
-        } else if (klipperCommand.match(/SDCARD_RESET_FILE(\s|$)+/)) {
+        } else if (/SDCARD_RESET_FILE(\s|$)/i.test(klipperCommand)) {
             return async () => {
                 marlinRaker.jobManager.reset();
             };

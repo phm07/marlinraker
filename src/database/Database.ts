@@ -18,7 +18,7 @@ class Database {
     }
 
     private static getPath(namespace: string, key?: string): string {
-        return "." + namespace + (key ? "." + key : "");
+        return `.${namespace}${key ? `.${key}` : ""}`;
     }
 
     public async getItem(namespace: string, key?: string): Promise<unknown | null> {

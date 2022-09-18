@@ -119,16 +119,18 @@ class Printer extends SerialGcodeDevice {
         }
 
         if (line.startsWith("//")) {
-            const action = line.match(/\/\/( *)action:(.*)$/)?.[2];
+            const action = /\/\/( *)action:(.*)$/.exec(line)?.[2];
             if (action) {
                 this.handleAction(action);
             }
             return false;
         }
 
-        if (line.startsWith("echo:Unknown command: \"") && line.endsWith("\"")) {
-            const unknownCommand = line.substring(23, line.length - 1);
-            this.handleUnknownCommand(unknownCommand);
+        {
+            const unknownCommand = /echo:Unknown command: "(.*)"/.exec(line)?.[1];
+            if (unknownCommand) {
+                this.handleUnknownCommand(unknownCommand);
+            }
         }
 
         if (this.state === "ready" && line.startsWith("echo:")) {
@@ -165,13 +167,13 @@ class Printer extends SerialGcodeDevice {
     private handleUnknownCommand(command: string): void {
         logger.warn(`Unknown command: "${command}"`);
 
-        if (command.match(/M2[01](\s|$)+/)) {
+        if (/M2[01](\s|$)/.test(command)) {
             if (this.isSdCard) {
                 logger.warn("SD Card support was enabled in config but is not supported by printer");
                 this.isSdCard = false;
             }
 
-        } else if (command.match(/M73(\s|$)+/)) {
+        } else if (/M73(\s|$)/.test(command)) {
             if (this.isM73Supported) {
                 logger.warn("Printer does not support M73 command");
                 this.isM73Supported = false;
@@ -180,25 +182,25 @@ class Printer extends SerialGcodeDevice {
     }
 
     protected handleRequestLine(line: string): void {
-        if (line.match(/G90(\s|$)+/)) {
+        if (/G90(\s|$)/.test(line)) {
             this.isAbsolutePositioning = true;
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
 
-        } else if (line.match(/G91(\s|$)+/)) {
+        } else if (/G91(\s|$)/.test(line)) {
             this.isAbsolutePositioning = false;
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
 
-        } else if (line.match(/M82(\s|$)+/)) {
+        } else if (/M82(\s|$)/.test(line)) {
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
 
-        } else if (line.match(/M83(\s|$)+/)) {
+        } else if (/M83(\s|$)/.test(line)) {
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
 
-        } else if (line.match(/(G0|G1|G92)(\s|$)+/)) {
+        } else if (/(G0|G1|G92)(\s|$)/.test(line)) {
             const positions = ParserUtil.parseG0G1G92Request(line);
             if (line.startsWith("G92")) {
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
@@ -224,30 +226,30 @@ class Printer extends SerialGcodeDevice {
             }
             this.emit("positionChange");
 
-        } else if (line.match(/M106(\s|$)+/)) {
+        } else if (/M106(\s|$)/.test(line)) {
             const fanSpeed = ParserUtil.parseM106Request(line);
             this.fanSpeed = fanSpeed / 255;
             this.emit("fanSpeedChange");
 
-        } else if (line.match(/M107(\s|$)+/)) {
+        } else if (/M107(\s|$)/.test(line)) {
             this.fanSpeed = 0;
             this.emit("fanSpeedChange");
 
-        } else if (line.match(/M22[01](\s|$)+/)) {
+        } else if (/M22[01](\s|$)/.test(line)) {
             const factor = ParserUtil.parseM220M221Request(line);
             if (!factor) return;
             this[line.startsWith("M220") ? "speedFactor" : "extrudeFactor"] = factor / 100;
             this.emit("factorChange");
 
-        } else if (line.match(/G28(\s|$)+/)) {
+        } else if (/G28(\s|$)/.test(line)) {
             this.homedAxes = ParserUtil.parseG28Request(line, this.homedAxes);
             this.emit("homedAxesChange");
 
-        } else if (line.match(/M(18|84|410)(\s|$)+/)) {
+        } else if (/M(18|84|410)(\s|$)/.test(line)) {
             this.homedAxes = { x: false, y: false, z: false };
             this.emit("homedAxesChange");
 
-        } else if (line.match(/M112(\s|$)+/)) {
+        } else if (/M112(\s|$)/.test(line)) {
             this.emit("error", "Emergency stop triggered");
             if (this.serialPort.isOpen) {
                 this.serialPort.close();

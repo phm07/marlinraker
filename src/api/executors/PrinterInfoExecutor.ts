@@ -23,7 +23,7 @@ class PrinterInfoExecutor implements IMethodExecutor<undefined, TResult> {
             state_message: marlinRaker.printer?.stateMessage ?? "Cannot connect to serial port",
             hostname: os.hostname(),
             software_version: "1.0",
-            cpu_info: cpuInfo.manufacturer + " " + cpuInfo.brand
+            cpu_info: `${cpuInfo.manufacturer} ${cpuInfo.brand}`
         };
     }
 }

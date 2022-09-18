@@ -97,7 +97,7 @@ class HttpHandler extends MessageHandler {
 
             if (executor.httpMethod === null) continue;
             const method = executor.httpMethod ?? "get";
-            const route = "/" + (executor.httpName ?? name).split(".").join("/");
+            const route = `/${(executor.httpName ?? name).replaceAll(".", "/")}`;
 
             router[method](route, async (req, res) => {
                 const requestBody = req.query;

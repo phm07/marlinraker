@@ -30,7 +30,7 @@ class MachineSystemInfoExecutor implements IMethodExecutor<undefined, TResult> {
                 cpu_count: cpuInfo.cores,
                 bits: osInfo.arch,
                 processor: cpuInfo.brand,
-                cpu_desc: cpuInfo.manufacturer + " " + cpuInfo.brand,
+                cpu_desc: `${cpuInfo.manufacturer} ${cpuInfo.brand}`,
                 serial_number: "",
                 hardware_desc: "",
                 model: systemInfo.model,

@@ -21,7 +21,7 @@ class SDCardWatcher extends Watcher {
                 for (const filename in newFileList) {
                     const file = newFileList[filename]!;
                     const item = {
-                        path: sdCardVirtualFolder + "/" + filename,
+                        path: `${sdCardVirtualFolder}/${filename}`,
                         root: "gcodes",
                         size: file.size,
                         modified: Date.now() / 1000
@@ -40,7 +40,7 @@ class SDCardWatcher extends Watcher {
                     if (newFileList[filename]) continue;
                     const file = fileList[filename]!;
                     const item = {
-                        path: sdCardVirtualFolder + "/" + filename,
+                        path: `${sdCardVirtualFolder}/${filename}`,
                         root: "gcodes",
                         size: file.size,
                         modified: Date.now() / 1000
