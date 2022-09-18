@@ -1,3 +1,10 @@
+![](https://img.shields.io/github/v/tag/pauhull/marlinraker?label=release)
+![](https://img.shields.io/github/last-commit/pauhull/marlinraker)
+![](https://img.shields.io/github/license/pauhull/marlinraker)
+![](https://img.shields.io/github/issues-raw/pauhull/marlinraker)
+![](https://img.shields.io/tokei/lines/github/pauhull/marlinraker)
+![](https://img.shields.io/github/downloads/pauhull/marlinraker/total)
+
 ## Overview
 Marlinraker is a tool that connects an external device to your Marlin 3D Printer
 via serial and emulates Moonraker API endpoints. This enables you to use
