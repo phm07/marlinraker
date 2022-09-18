@@ -196,7 +196,7 @@ To identify a Marlinraker instance, check the ``/server/info`` API endpoint. For
 Moonraker installations ``type`` will not be defined. For Marlinraker it will always be
 set to ``"marlinraker"``.
 
-> :warning: **Warning**
+> **Warning**
 > 
 > Never leave your machine unattended. Do not make the API accessible from outside your local network. 
 > This software is in early development, bugs are expected.
