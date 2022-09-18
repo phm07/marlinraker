@@ -142,7 +142,7 @@ class SocketHandler extends MessageHandler {
         const executor = this.methodExecutors[message.method];
         const response = await this.handleMessage(socket, executor, message.params);
         return {
-            ...typeof response === "string" ? { response } : response,
+            ...response,
             id: message.id as number,
             jsonrpc: "2.0"
         };
