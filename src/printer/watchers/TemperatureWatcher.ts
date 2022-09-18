@@ -11,7 +11,7 @@ class TemperatureWatcher extends Watcher {
     public constructor(printer: Printer) {
         super();
         this.printer = printer;
-        this.autoReport = printer.capabilities["AUTOREPORT_TEMP"] ?? false;
+        this.autoReport = printer.capabilities.AUTOREPORT_TEMP ?? false;
 
         if (this.autoReport) {
             if (!printer.isPrusa) {

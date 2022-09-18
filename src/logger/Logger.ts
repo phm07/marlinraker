@@ -14,7 +14,7 @@ enum Level {
 }
 
 type TOutStream = Writable & {
-    writer?: WriteStream
+    writer?: WriteStream;
 };
 
 class Logger {
@@ -60,7 +60,7 @@ class Logger {
         const messageFormatted = message instanceof Error ? message.stack ?? message.message : message;
         const formatted = `${`[${Level[level].toUpperCase()}]`.padEnd(7)} ${timeFormatted} ${messageFormatted}`;
 
-        if (this.outStream && this.outStream.writable) {
+        if (this.outStream?.writable) {
             this.outStream.write(`${formatted}\n`);
         }
 

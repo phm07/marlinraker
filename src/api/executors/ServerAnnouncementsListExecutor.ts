@@ -1,27 +1,29 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 
-type TParams = { include_dismissed: boolean };
+interface IParams {
+    include_dismissed: boolean;
+}
 
-type TResult = {
+interface IResult {
     entries: {
-        entry_id: string,
-        url: string,
-        title: string,
-        description: string,
-        priority: "normal" | "high",
-        date: number,
-        dismissed: boolean,
-        source: string,
-        feed: string
-    }[],
-    feeds: string[]
-};
+        entry_id: string;
+        url: string;
+        title: string;
+        description: string;
+        priority: "normal" | "high";
+        date: number;
+        dismissed: boolean;
+        source: string;
+        feed: string;
+    }[];
+    feeds: string[];
+}
 
-class ServerAnnouncementsListExecutor implements IMethodExecutor<TParams, TResult> {
+class ServerAnnouncementsListExecutor implements IMethodExecutor<IParams, IResult> {
 
     public readonly name = "server.announcements.list";
 
-    public invoke(_: TSender, __: Partial<TParams>): TResult {
+    public invoke(_: TSender, __: Partial<IParams>): IResult {
         // @TODO
         return {
             entries: [],

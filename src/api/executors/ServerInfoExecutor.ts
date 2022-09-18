@@ -4,21 +4,21 @@ import { TPrinterState } from "../../printer/Printer";
 import { Level } from "../../logger/Logger";
 import packageJson from "../../../package.json";
 
-type TResult = {
-    klippy_connected: boolean,
-    klippy_state: TPrinterState,
-    components: string[],
-    failed_components: string[],
-    registered_directories: string[],
-    warnings: string[],
-    websocket_count: number,
-    moonraker_version: string,
-    api_version: number[],
+interface IResult {
+    klippy_connected: boolean;
+    klippy_state: TPrinterState;
+    components: string[];
+    failed_components: string[];
+    registered_directories: string[];
+    warnings: string[];
+    websocket_count: number;
+    moonraker_version: string;
+    api_version: number[];
     api_version_string: string;
     type: string;
-};
+}
 
-class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
+class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.info";
     private readonly warnings: string[];
@@ -36,7 +36,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, TResult> {
             .filter((n) => !Number.isNaN(n));
     }
 
-    public invoke(_: TSender, __: undefined): TResult {
+    public invoke(_: TSender, __: undefined): IResult {
         return {
             klippy_connected: true,
             klippy_state: marlinRaker.printer?.state ?? "error",

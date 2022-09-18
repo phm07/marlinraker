@@ -7,53 +7,53 @@ import { marlinRaker, rootDir } from "../Server";
 import fs from "fs-extra";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 
-type TDirInfo = {
+interface IDirInfo {
     dirs: {
-        modified?: number,
-        size?: number,
-        permissions: string,
-        dirname: string
-    }[],
+        modified?: number;
+        size?: number;
+        permissions: string;
+        dirname: string;
+    }[];
     files: {
-        modified?: number,
-        size?: number,
-        permissions: string,
-        filename: string
-    }[],
+        modified?: number;
+        size?: number;
+        permissions: string;
+        filename: string;
+    }[];
     disk_usage: {
-        total: number,
-        used: number,
-        free: number
-    },
+        total: number;
+        used: number;
+        free: number;
+    };
     root_info: {
-        name: string,
-        permissions: string
-    }
-};
+        name: string;
+        permissions: string;
+    };
+}
 
-type TFileInfo = {
-    path: string,
-    modified: number,
-    size: number,
-    permissions: string
-};
+interface IFileInfo {
+    path: string;
+    modified: number;
+    size: number;
+    permissions: string;
+}
 
-type TFileChangeNotification = {
+interface IFileChangeNotification {
     item: {
-        path: string,
-        root: string,
-        size?: number,
-        modified?: number,
+        path: string;
+        root: string;
+        size?: number;
+        modified?: number;
 
         // undocumented
-        permissions: string
-    },
+        permissions: string;
+    };
     source_item?: {
-        path: string,
-        root: string
-    }
-    action: "create_dir" | "delete_dir" | "move_dir" | "create_file" | "delete_file" | "move_file"
-};
+        path: string;
+        root: string;
+    };
+    action: "create_dir" | "delete_dir" | "move_dir" | "create_file" | "delete_file" | "move_file";
+}
 
 class FileManager {
 
@@ -87,12 +87,12 @@ class FileManager {
         return currentDir ?? null;
     }
 
-    public async listFiles(rootPath: string): Promise<TFileInfo[]> {
+    public async listFiles(rootPath: string): Promise<IFileInfo[]> {
 
         const root = await this.getDirectory(rootPath);
         if (!root) return [];
 
-        const files: TFileInfo[] = [];
+        const files: IFileInfo[] = [];
         const dirs: [IDirectory, string][] = [[root, ""]];
         while (dirs.length) {
             const [dir, pathSoFar] = dirs.pop()!;
@@ -110,7 +110,7 @@ class FileManager {
         return files;
     }
 
-    public async getDirectoryInfo(dirpath: string): Promise<TDirInfo | null> {
+    public async getDirectoryInfo(dirpath: string): Promise<IDirInfo | null> {
         const dir = await this.getDirectory(dirpath);
         if (!dir) return null;
         return {
@@ -138,7 +138,7 @@ class FileManager {
         };
     }
 
-    public async uploadFile(root: string, filepath: string, filename: string, source: string): Promise<TFileChangeNotification> {
+    public async uploadFile(root: string, filepath: string, filename: string, source: string): Promise<IFileChangeNotification> {
 
         const targetDir = path.join(root, filepath).replaceAll("\\", "/");
         await this.checkWriteProtected(targetDir);
@@ -159,7 +159,7 @@ class FileManager {
             //
         }
 
-        const notification: TFileChangeNotification = {
+        const notification: IFileChangeNotification = {
             action: "create_file",
             item: {
                 path: path.join(filepath, filename).replaceAll("\\", "/"),
@@ -179,12 +179,12 @@ class FileManager {
         const pathArr = dirpath.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const root = this.directories.find((dir) => dir.dirname === pathArr[0]);
         let currentDir = root;
-        if (!root) throw "Root doesn't exist";
+        if (!root) throw new Error("Root doesn't exist");
         pathArr.shift();
 
         while (currentDir) {
-            if (currentDir.permissions.indexOf("w") === -1) {
-                throw "Write protected directory";
+            if (!currentDir.permissions.includes("w")) {
+                throw new Error("Write protected directory");
             }
             if (pathArr.length) {
                 currentDir = await currentDir.getSubDir(pathArr.shift()!) ?? undefined;
@@ -196,18 +196,18 @@ class FileManager {
         return currentDir ?? null;
     }
 
-    public async createDirectory(dirpath: string): Promise<TFileChangeNotification> {
+    public async createDirectory(dirpath: string): Promise<IFileChangeNotification> {
 
         const dir = await this.checkWriteProtected(dirpath);
 
         const root = dirpath.split("/").filter((s) => s)[0];
         const diskPath = path.join(rootDir, dirpath);
         if (dir || await fs.pathExists(diskPath)) {
-            throw "Directory already exists";
+            throw new Error("Directory already exists");
         }
 
         await fs.mkdir(diskPath, { recursive: true });
-        const notification: TFileChangeNotification = {
+        const notification: IFileChangeNotification = {
             item: {
                 path: dirpath.split("/").filter((s) => s).slice(1).join("/"),
                 root,
@@ -226,28 +226,28 @@ class FileManager {
         };
     }
 
-    public async deleteDirectory(dirpath: string, force: boolean): Promise<TFileChangeNotification> {
+    public async deleteDirectory(dirpath: string, force: boolean): Promise<IFileChangeNotification> {
 
         const root = dirpath.split("/").filter((s) => s)[0];
 
         const diskPath = path.join(rootDir, dirpath);
         const stat = await fs.stat(diskPath);
 
-        if (!stat.isDirectory()) throw "Not a directory";
+        if (!stat.isDirectory()) throw new Error("Not a directory");
 
         const dir = await this.checkWriteProtected(dirpath);
         if (!dir) {
-            throw "Directory doesn't exist";
+            throw new Error("Directory doesn't exist");
         }
 
         const files = await fs.readdir(diskPath);
         if (files.length && !force) {
-            throw "Directory contains files";
+            throw new Error("Directory contains files");
         }
 
         await fs.remove(diskPath);
         await marlinRaker.metadataManager.cleanup();
-        const notification: TFileChangeNotification = {
+        const notification: IFileChangeNotification = {
             item: {
                 path: dirpath.split("/").filter((s) => s).slice(1).join("/"),
                 root,
@@ -270,7 +270,7 @@ class FileManager {
         };
     }
 
-    public async moveOrCopy(source: string, dest: string, copy: boolean): Promise<TFileChangeNotification> {
+    public async moveOrCopy(source: string, dest: string, copy: boolean): Promise<IFileChangeNotification> {
         await this.checkWriteProtected(source);
         await this.checkWriteProtected(dest);
 
@@ -280,7 +280,7 @@ class FileManager {
         const destOnDisk = path.join(rootDir, dest);
 
         if (!await fs.pathExists(sourceOnDisk)) {
-            throw "Source doesn't exist";
+            throw new Error("Source doesn't exist");
         }
 
         await fs.mkdirs(path.dirname(destOnDisk));
@@ -293,7 +293,7 @@ class FileManager {
         const stat = await fs.stat(destOnDisk);
         const action = stat.isFile() ? "move_file" : "move_dir";
 
-        const notification: TFileChangeNotification = {
+        const notification: IFileChangeNotification = {
             item: {
                 path: dest.split("/").filter((s) => s).splice(1).join("/"),
                 root: destRoot,
@@ -325,17 +325,17 @@ class FileManager {
         };
     }
 
-    public async deleteFile(filepath: string): Promise<TFileChangeNotification> {
+    public async deleteFile(filepath: string): Promise<IFileChangeNotification> {
 
         const root = filepath.split("/").filter((s) => s)[0];
         const diskPath = path.join(rootDir, filepath);
         const stat = await fs.stat(diskPath);
-        if (!stat.isFile()) throw "Not a file";
+        if (!stat.isFile()) throw new Error("Not a file");
 
         await this.checkWriteProtected(path.dirname(filepath));
         await fs.remove(diskPath);
 
-        const notification: TFileChangeNotification = {
+        const notification: IFileChangeNotification = {
             item: {
                 path: filepath.split("/").filter((s) => s).splice(1).join("/"),
                 root,
@@ -350,5 +350,5 @@ class FileManager {
     }
 }
 
-export { TFileInfo, TDirInfo, TFileChangeNotification };
+export { IFileInfo, IDirInfo, IFileChangeNotification };
 export default FileManager;

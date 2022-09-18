@@ -1,12 +1,12 @@
 import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
 
-type TObject = {
+interface IObject {
     speed: number;
     rpm?: number; // @TODO M123?
-};
+}
 
-class FanObject extends PrinterObject<TObject> {
+class FanObject extends PrinterObject<IObject> {
 
     public readonly name = "fan";
     private readonly printer: Printer;
@@ -17,7 +17,7 @@ class FanObject extends PrinterObject<TObject> {
         this.printer.on("fanSpeedChange", this.emit.bind(this));
     }
 
-    protected get(_: string[] | null): TObject {
+    protected get(_: string[] | null): IObject {
         return {
             speed: this.printer.fanSpeed
         };

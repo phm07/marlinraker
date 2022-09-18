@@ -1,12 +1,12 @@
 import PrinterObject from "./PrinterObject";
 
-type TObject = {
-    temperature?: number,
-    target?: number,
-    power?: number
-};
+interface IObject {
+    temperature?: number;
+    target?: number;
+    power?: number;
+}
 
-class HeaterObject extends PrinterObject<TObject> {
+class HeaterObject extends PrinterObject<IObject> {
 
     public readonly name: string;
     public temp?: number;
@@ -18,7 +18,7 @@ class HeaterObject extends PrinterObject<TObject> {
         this.name = name;
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             temperature: this.temp,
             power: this.power,

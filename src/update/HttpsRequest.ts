@@ -27,8 +27,8 @@ class HttpsRequest {
     public async unzipTo(path: string, onProgress?: (progress: number, size: number) => void, onComplete?: () => void): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             https.get(this.url, { headers: { "User-Agent": HttpsRequest.USER_AGENT } }, (res) => {
-                if (res.statusCode === 302 && res.headers["location"]) {
-                    new HttpsRequest(res.headers["location"]).unzipTo(path, onProgress, onComplete).then(resolve).catch(reject);
+                if (res.statusCode === 302 && res.headers.location) {
+                    new HttpsRequest(res.headers.location).unzipTo(path, onProgress, onComplete).then(resolve).catch(reject);
                     return;
                 }
 

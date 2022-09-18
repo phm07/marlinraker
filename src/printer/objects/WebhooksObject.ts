@@ -1,12 +1,12 @@
 import PrinterObject from "./PrinterObject";
 import Printer, { TPrinterState } from "../Printer";
 
-type TObject = {
-    state: TPrinterState,
-    state_message?: string
-};
+interface IObject {
+    state: TPrinterState;
+    state_message?: string;
+}
 
-class WebhooksObject extends PrinterObject<TObject> {
+class WebhooksObject extends PrinterObject<IObject> {
 
     public readonly name = "webhooks";
     private readonly printer: Printer;
@@ -17,7 +17,7 @@ class WebhooksObject extends PrinterObject<TObject> {
         this.printer.on("stateChange", this.emit.bind(this));
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             state: this.printer.state,
             state_message: this.printer.stateMessage

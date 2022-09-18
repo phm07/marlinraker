@@ -12,7 +12,7 @@ class PositionWatcher extends Watcher {
     public constructor(printer: Printer) {
         super();
         this.printer = printer;
-        this.autoReport = printer.capabilities["AUTOREPORT_POS"] ?? printer.capabilities["AUTOREPORT_POSITION"] ?? false;
+        this.autoReport = printer.capabilities.AUTOREPORT_POS ?? printer.capabilities.AUTOREPORT_POSITION ?? false;
 
         if (this.autoReport) {
             if (!printer.isPrusa) {

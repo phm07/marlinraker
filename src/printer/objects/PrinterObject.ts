@@ -3,7 +3,7 @@ import assert from "assert";
 abstract class PrinterObject<TResponse> {
 
     public abstract readonly name: string;
-    protected subscribers: { subscriber: () => void, previous: Partial<TResponse> }[];
+    protected subscribers: { subscriber: () => void; previous: Partial<TResponse> }[];
 
     protected constructor() {
         this.subscribers = [];

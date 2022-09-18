@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs-extra";
 import { marlinRaker, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
-import { TGcodeMetadata } from "../../files/MetadataManager";
+import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
 
 class FilePrintJob extends PrintJob {
@@ -14,7 +14,7 @@ class FilePrintJob extends PrintJob {
     public progress: number;
     private readonly printer: Printer;
     private fileSize?: number;
-    private metadata?: TGcodeMetadata;
+    private metadata?: IGcodeMetadata;
     private lineReader?: LineReader;
     private latestCommand?: Promise<string>;
     private onPausedListener?: () => void;
@@ -38,7 +38,7 @@ class FilePrintJob extends PrintJob {
     }
 
     public async start(): Promise<void> {
-        if (this.state !== "standby") throw "Job already started";
+        if (this.state !== "standby") throw new Error("Job already started");
         const metadata = await marlinRaker.metadataManager.getOrGenerateMetadata(this.filename);
         let stat = null;
         try {
@@ -46,7 +46,7 @@ class FilePrintJob extends PrintJob {
         } catch (_) {
             //
         }
-        if (!metadata || !stat) throw "Cannot find file";
+        if (!metadata || !stat) throw new Error("Cannot find file");
         this.metadata = metadata;
         this.fileSize = stat.size;
         this.pauseRequested = false;

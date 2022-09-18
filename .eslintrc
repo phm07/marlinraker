@@ -1,7 +1,7 @@
 {
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/strict"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
@@ -11,6 +11,7 @@
   },
   "root": true,
   "rules": {
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       {
@@ -31,6 +32,8 @@
     "@typescript-eslint/explicit-member-accessibility": "warn",
     "@typescript-eslint/func-call-spacing": "warn",
     "@typescript-eslint/keyword-spacing": "warn",
+    "@typescript-eslint/no-extraneous-class": "off",
+    "@typescript-eslint/no-base-to-string": "off",
     "@typescript-eslint/no-extra-parens": "warn",
     "@typescript-eslint/no-extra-semi": "warn",
     "@typescript-eslint/no-require-imports": "warn",
@@ -42,7 +45,9 @@
       "always"
     ],
     "@typescript-eslint/prefer-for-of": "warn",
+    "@typescript-eslint/member-delimiter-style": "warn",
     "@typescript-eslint/no-namespace": "off",
+    "@typescript-eslint/prefer-nullish-coalescing": "off",
     "@typescript-eslint/prefer-readonly": "warn",
     "@typescript-eslint/promise-function-async": "warn",
     "@typescript-eslint/quotes": "warn",

@@ -1,13 +1,13 @@
 import PrinterObject from "./PrinterObject";
 import { marlinRaker } from "../../Server";
 
-type TObject = {
-    progress: number,
-    is_active: boolean,
-    file_position: number
-};
+interface IObject {
+    progress: number;
+    is_active: boolean;
+    file_position: number;
+}
 
-class VirtualSdCardObject extends PrinterObject<TObject> {
+class VirtualSdCardObject extends PrinterObject<IObject> {
 
     public readonly name = "virtual_sdcard";
 
@@ -15,7 +15,7 @@ class VirtualSdCardObject extends PrinterObject<TObject> {
         super();
     }
 
-    protected get(_: string[] | null): TObject {
+    protected get(_: string[] | null): IObject {
         return {
             progress: marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
             is_active: marlinRaker.jobManager.currentPrintJob?.state === "printing",

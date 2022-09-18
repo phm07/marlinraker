@@ -8,19 +8,19 @@ import fs from "fs-extra";
 import ScriptUpdatable from "./ScriptUpdatable";
 import { Updatable } from "./Updatable";
 
-type TUpdateStatus = {
+interface IUpdateStatus {
     busy: boolean;
     github_rate_limit: number;
     github_requests_remaining: number;
     github_limit_reset_time: number;
-    version_info: Record<string, unknown>
-};
+    version_info: Record<string, unknown>;
+}
 
-type TRateLimit = {
-    limit: number,
-    remaining: number,
-    reset: number
-};
+interface IRateLimit {
+    limit: number;
+    remaining: number;
+    reset: number;
+}
 
 class UpdateManager {
 
@@ -31,7 +31,7 @@ class UpdateManager {
     public constructor() {
         this.busy = false;
         this.scheduledUpdates = [];
-        this.updatables = new NamedObjectMap<Updatable<unknown>>(<Updatable<unknown>[]>[
+        this.updatables = new NamedObjectMap<Updatable<unknown>>([
             new SystemUpdatable()
         ]);
 
@@ -50,7 +50,7 @@ class UpdateManager {
     }
 
     public async fullUpdate(): Promise<void> {
-        if (this.updatables["system"] && this.updatables["system"].isUpdatePossible()) {
+        if (this.updatables.system?.isUpdatePossible()) {
             await this.update("system");
         }
         await Promise.all(Object.values(this.updatables)
@@ -58,17 +58,17 @@ class UpdateManager {
             .map(async (updatable) => {
                 await this.update(updatable!.name);
             }));
-        if (this.updatables["marlinraker"] && this.updatables["marlinraker"].isUpdatePossible()) {
+        if (this.updatables.marlinraker?.isUpdatePossible()) {
             await this.update("marlinraker");
         }
     }
 
     public async update(name: string): Promise<void> {
-        if (this.busy) throw "Already updating";
-        if (marlinRaker.jobManager.isPrinting()) throw "Cannot update while printing";
+        if (this.busy) throw new Error("Already updating");
+        if (marlinRaker.jobManager.isPrinting()) throw new Error("Cannot update while printing");
         const updatable = this.updatables[name];
-        if (!updatable) throw `Unknown client "${name}"`;
-        if (!updatable.isUpdatePossible()) throw `Cannot update ${name}`;
+        if (!updatable) throw new Error(`Unknown client "${name}"`);
+        if (!updatable.isUpdatePossible()) throw new Error(`Cannot update ${name}`);
         return new Promise<void>((resolve) => {
             void this.scheduleUpdate(updatable.update.bind(updatable), resolve);
         });
@@ -102,7 +102,7 @@ class UpdateManager {
             .map(async (updatable) => await updatable!.checkForUpdate()));
     }
 
-    public async getUpdateStatus(): Promise<TUpdateStatus> {
+    public async getUpdateStatus(): Promise<IUpdateStatus> {
         const rateLimit = await UpdateManager.getRateLimit();
         const versionInfo: Record<string, unknown> = {};
         for (const name in this.updatables) {
@@ -129,7 +129,7 @@ class UpdateManager {
         }]));
     }
 
-    private static async getRateLimit(): Promise<TRateLimit> {
+    private static async getRateLimit(): Promise<IRateLimit> {
         try {
             const response = await new HttpsRequest("https://api.github.com/rate_limit").getString();
             const data = JSON.parse(response);
@@ -157,5 +157,5 @@ class UpdateManager {
     }
 }
 
-export { TUpdateStatus };
+export { IUpdateStatus };
 export default UpdateManager;

@@ -1,26 +1,26 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import si from "systeminformation";
 
-type TResult = {
+interface IResult {
     system_info: {
-        cpu_count: number,
-        bits: string,
-        processor: string,
-        cpu_desc: string,
-        serial_number: string,
-        hardware_desc: string,
-        model: string,
-        total_memory: number,
-        memory_units: string
-    }
-};
+        cpu_count: number;
+        bits: string;
+        processor: string;
+        cpu_desc: string;
+        serial_number: string;
+        hardware_desc: string;
+        model: string;
+        total_memory: number;
+        memory_units: string;
+    };
+}
 
-class MachineSystemInfoExecutor implements IMethodExecutor<undefined, TResult> {
+class MachineSystemInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "machine.system_info";
     public readonly timeout = 30000;
 
-    public async invoke(_: TSender, __: undefined): Promise<TResult> {
+    public async invoke(_: TSender, __: undefined): Promise<IResult> {
         const cpuInfo = await si.cpu();
         const osInfo = await si.osInfo();
         const systemInfo = await si.system();

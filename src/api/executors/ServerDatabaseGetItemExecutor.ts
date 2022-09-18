@@ -1,18 +1,26 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { marlinRaker } from "../../Server";
 
-type TParams = { namespace: string, key: string | null };
-type TResult = { namespace: string, key: string | null, value: unknown };
+interface IParams {
+    namespace: string;
+    key: string | null;
+}
 
-class ServerDatabaseGetItemExecutor implements IMethodExecutor<TParams, TResult> {
+interface IResult {
+    namespace: string;
+    key: string | null;
+    value: unknown;
+}
+
+class ServerDatabaseGetItemExecutor implements IMethodExecutor<IParams, IResult> {
 
     public readonly name = "server.database.get_item";
     public readonly httpName = "server.database.item";
 
-    public async invoke(_: TSender, params: Partial<TParams>): Promise<TResult> {
-        if (!params.namespace) throw "Invalid namespace";
+    public async invoke(_: TSender, params: Partial<IParams>): Promise<IResult> {
+        if (!params.namespace) throw new Error("Invalid namespace");
         const value = await marlinRaker.database.getItem(params.namespace, params.key ?? undefined);
-        if (value === null) throw `${params.namespace}${params.key ? `.${params.key}` : ""} doesn't exist`;
+        if (value === null) throw new Error(`${params.namespace}${params.key ? `.${params.key}` : ""} doesn't exist`);
         return {
             namespace: params.namespace,
             key: params.key ?? null,

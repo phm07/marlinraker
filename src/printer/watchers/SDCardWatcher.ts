@@ -1,6 +1,6 @@
 import Watcher from "./Watcher";
 import { marlinRaker } from "../../Server";
-import ParserUtil, { TFileInfo } from "../ParserUtil";
+import ParserUtil, { IFileInfo } from "../ParserUtil";
 import SimpleNotification from "../../api/notifications/SimpleNotification";
 
 class SDCardWatcher extends Watcher {
@@ -11,7 +11,7 @@ class SDCardWatcher extends Watcher {
     public constructor(sdCardVirtualFolder: string) {
         super();
 
-        let fileList: Record<string, TFileInfo | undefined> | null = null, requested = false;
+        let fileList: Record<string, IFileInfo | undefined> | null = null, requested = false;
         const handler = async (): Promise<void> => {
             if (requested || marlinRaker.jobManager.currentPrintJob?.state === "printing" || !marlinRaker.printer?.isSdCard) return;
             requested = true;

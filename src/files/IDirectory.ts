@@ -8,8 +8,11 @@ interface IDirectory {
     root: IDirectory;
 
     getSubDirs(): Promise<IDirectory[]>;
+
     getSubDir(name: string): Promise<IDirectory | null>;
+
     getFiles(): Promise<IFile[]>;
+
     getFile(name: string): Promise<IFile | null>;
 }
 

@@ -15,7 +15,9 @@ abstract class Updatable<TInfo> {
     }
 
     public abstract checkForUpdate(): Promise<void>;
+
     public abstract isUpdatePossible(): boolean;
+
     public abstract update(): Promise<void>;
 
     protected createLogger(): TLogger {

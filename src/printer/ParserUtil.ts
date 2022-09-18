@@ -1,36 +1,36 @@
-type THeater = {
+interface IHeater {
     temp?: number;
     target?: number;
-    power?: number
-};
+    power?: number;
+}
 
-type THeaters = Record<string, THeater>;
+type THeaters = Record<string, IHeater>;
 
-type TPrinterInfo = {
+interface IPrinterInfo {
     machineType: string;
     firmwareName: string;
-};
+}
 
 type TPrinterCapabilities = Record<string, boolean | undefined>;
 
-type TFileInfo = {
+interface IFileInfo {
     filename: string;
     fullName?: string;
     size?: number;
-};
+}
 
-type THomedAxes = {
+interface IHomedAxes {
     x: boolean;
     y: boolean;
     z: boolean;
-};
+}
 
 class ParserUtil {
-    public static parseM115Response(response: string): [TPrinterInfo, TPrinterCapabilities] {
+    public static parseM115Response(response: string): [IPrinterInfo, TPrinterCapabilities] {
         // "FIRMWARE_NAME:Marlin 1.1.0 (Github) SOURCE_CODE_URL:https://github.com/MarlinFirmware/Marlin PROTOCOL_VERSION:1.0 MACHINE_TYPE:RepRap EXTRUDER_COUNT:1 UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff"
         // "FIRMWARE_NAME:Prusa-Firmware 3.10.1 based on Marlin FIRMWARE_URL:https://github.com/prusa3d/Prusa-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Prusa i3 MK3S EXTRUDER_COUNT:1 UUID:00000000-0000-0000-0000-000000000000"
         const line = response.split("\n").find((s) => s.startsWith("FIRMWARE_NAME:"));
-        if (!line) throw "Could not parse printer information";
+        if (!line) throw new Error("Could not parse printer information");
         const firmwareName = /FIRMWARE_NAME:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
         const machineType = /MACHINE_TYPE:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
         const info = { firmwareName, machineType };
@@ -52,15 +52,15 @@ class ParserUtil {
             .find((s) => s.startsWith("T"))
             ?.split(" ");
         if (!parts) return null;
-        if (parts.indexOf("W:?") !== -1) return null; // response is not from M105/M155 request
+        if (parts.includes("W:?")) return null; // response is not from M105/M155 request
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
-            if (part.indexOf("@:") !== -1) {
+            if (part.includes("@:")) {
                 // eslint-disable-next-line prefer-const
                 let [id, powerStr] = part.split("@:");
                 if (id === "T0") id = "T";
                 (heaters[id || "T"] ??= {}).power = Math.round(Number.parseInt(powerStr) / 127 * 100) / 100;
-            } else if (part.indexOf(":") !== -1) {
+            } else if (part.includes(":")) {
                 // eslint-disable-next-line prefer-const
                 let [id, tempStr] = part.split(":");
                 if (id === "W") continue;
@@ -91,9 +91,9 @@ class ParserUtil {
             .map((s) => Number.parseFloat(s)) ?? null) as [number, number, number, number] | null;
     }
 
-    public static parseM20Response(line: string): Record<string, TFileInfo | undefined> {
+    public static parseM20Response(line: string): Record<string, IFileInfo | undefined> {
 
-        const files: Record<string, TFileInfo | undefined> = {};
+        const files: Record<string, IFileInfo | undefined> = {};
 
         for (const fileInfo of line.split("\n").slice(1, -2)) {
             const arr = fileInfo.split(" ");
@@ -117,7 +117,7 @@ class ParserUtil {
 
     public static parseM119Response(response: string): Record<string, string> {
         return Object.fromEntries(response.split("\n")
-            .filter((s) => s.indexOf(":") !== -1)
+            .filter((s) => s.includes(":"))
             .map((s) => s.split(":")
                 .map((t) => t.trim())
             ));
@@ -141,11 +141,15 @@ class ParserUtil {
         return Number.isNaN(result) ? undefined : result;
     }
 
-    public static parseG28Request(line: string, alreadyHomed: THomedAxes = { x: false, y: false, z: false }): THomedAxes {
+    public static parseG28Request(line: string, alreadyHomed: IHomedAxes = {
+        x: false,
+        y: false,
+        z: false
+    }): IHomedAxes {
         const params = line.split(" ").slice(1).join();
-        const homedAxes: THomedAxes = { x: false, y: false, z: false };
-        const keys = Object.keys(homedAxes) as (keyof THomedAxes)[];
-        keys.forEach((s) => homedAxes[s] = params.indexOf(s.toUpperCase()) !== -1);
+        const homedAxes: IHomedAxes = { x: false, y: false, z: false };
+        const keys = Object.keys(homedAxes) as (keyof IHomedAxes)[];
+        keys.forEach((s) => homedAxes[s] = params.includes(s.toUpperCase()));
         if (!Object.values(homedAxes).reduce((a, b) => a || b)) {
             keys.forEach((s) => homedAxes[s] = true);
         }
@@ -162,5 +166,5 @@ class ParserUtil {
     }
 }
 
-export { THeater, THeaters, TPrinterInfo, TPrinterCapabilities, TFileInfo, THomedAxes };
+export { IHeater, THeaters, IPrinterInfo, TPrinterCapabilities, IFileInfo, IHomedAxes };
 export default ParserUtil;

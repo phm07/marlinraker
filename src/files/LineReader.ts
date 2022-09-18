@@ -15,7 +15,7 @@ class LineReader {
         this.buffer = [];
         this.position = 0;
         this.paused = false;
-        this.closed = false,
+        this.closed = false;
 
         this.reader = readline.createInterface(stream);
         this.reader.prependListener("line", this.handleLine.bind(this));

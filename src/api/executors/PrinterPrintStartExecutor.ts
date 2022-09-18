@@ -1,17 +1,17 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { marlinRaker } from "../../Server";
 
-type TParams = {
+interface IParams {
     filename: string;
-};
+}
 
-class PrinterPrintStartExecutor implements IMethodExecutor<TParams, string> {
+class PrinterPrintStartExecutor implements IMethodExecutor<IParams, string> {
 
     public readonly name = "printer.print.start";
     public readonly timeout = null;
 
-    public async invoke(_: TSender, params: Partial<TParams>): Promise<string> {
-        if (!params.filename) throw "Invalid filename";
+    public async invoke(_: TSender, params: Partial<IParams>): Promise<string> {
+        if (!params.filename) throw new Error("Invalid filename");
         await marlinRaker.jobManager.startPrintJob(`gcodes/${params.filename}`);
         return "ok";
     }

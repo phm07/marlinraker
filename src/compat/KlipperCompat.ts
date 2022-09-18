@@ -9,23 +9,23 @@ class KlipperCompat {
 
             const heaterName = args.find((s) => s.toUpperCase().startsWith("HEATER="))?.substring(7);
             if (!heaterName) {
-                throw "missing HEATER";
+                throw new Error("missing HEATER");
             }
             const marlinHeater = Object.entries(marlinRaker.printer?.heaterManager.klipperHeaterNames ?? [])
                 .find(([_, value]) => value === heaterName)?.[0];
             if (!marlinHeater) {
-                throw `The value '${heaterName}' is not valid for HEATER`;
+                throw new Error(`The value '${heaterName}' is not valid for HEATER`);
             }
 
             const targetStr = args.find((s) => s.toUpperCase().startsWith("TARGET="))?.substring(7);
             if (!targetStr) {
-                throw "missing TARGET";
+                throw new Error("missing TARGET");
             }
             let target: number;
             try {
                 target = Number.parseFloat(targetStr);
             } catch (e) {
-                throw `unable to parse ${targetStr}`;
+                throw new Error(`unable to parse ${targetStr}`);
             }
 
             if (marlinHeater.startsWith("T")) {
@@ -38,7 +38,7 @@ class KlipperCompat {
                     await marlinRaker.printer?.queueGcode(`M140 S${target}`, false, false);
                 };
             } else {
-                throw "Internal error";
+                throw new Error("Internal error");
             }
 
         } else if (/BED_MESH_CALIBRATE(\s|$)/i.test(klipperCommand)) {

@@ -2,31 +2,31 @@ import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import si from "systeminformation";
 import { marlinRaker } from "../../Server";
 
-type TNetworkInfo = {
-    rx_bytes: number,
-    tx_bytes: number,
-    bandwidth: number
-};
+interface INetworkInfo {
+    rx_bytes: number;
+    tx_bytes: number;
+    bandwidth: number;
+}
 
-type TResult = {
+interface IResult {
     moonraker_stats: {
-        time: number,
-        cpu_usage: number,
-        memory: number,
-        mem_units: string
-    },
-    cpu_temp: number,
-    network: Record<string, TNetworkInfo>,
-    system_cpu_usage: Record<string, number>,
-    websocket_connections: number
-};
+        time: number;
+        cpu_usage: number;
+        memory: number;
+        mem_units: string;
+    };
+    cpu_temp: number;
+    network: Record<string, INetworkInfo>;
+    system_cpu_usage: Record<string, number>;
+    websocket_connections: number;
+}
 
-class MachineProcStatsExecutor implements IMethodExecutor<undefined, TResult> {
+class MachineProcStatsExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "machine.proc_stats";
     public readonly timeout = 30000;
 
-    public async invoke(_: TSender, __: undefined): Promise<TResult> {
+    public async invoke(_: TSender, __: undefined): Promise<IResult> {
         const cpuTemp = await si.cpuTemperature();
         const load = await si.currentLoad();
         const memory = await si.mem();

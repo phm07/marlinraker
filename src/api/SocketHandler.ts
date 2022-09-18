@@ -53,7 +53,7 @@ class SocketHandler extends MessageHandler {
 
     private readonly socketServer: WebSocketServer;
     private readonly methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
-        <IMethodExecutor<unknown, unknown>[]>[
+        [
             new MachineProcStatsExecutor(),
             new MachineSystemInfoExecutor(),
             new MachineSystemInfoExecutor(),
@@ -93,7 +93,7 @@ class SocketHandler extends MessageHandler {
             new ServerInfoExecutor(),
             new ServerJobQueueStatus(),
             new ServerTemperatureStoreExecutor()
-        ]
+        ] as IMethodExecutor<unknown, unknown>[]
     );
 
     public constructor(socketServer: WebSocketServer) {
@@ -131,7 +131,7 @@ class SocketHandler extends MessageHandler {
         socket.send(JSON.stringify(response));
     }
 
-    private async handle(socket: WebSocket, message: { jsonrpc?: unknown, id?: unknown, method?: unknown, params?: unknown }): Promise<ISocketResponse | string> {
+    private async handle(socket: WebSocket, message: { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown }): Promise<ISocketResponse | string> {
         if (message.jsonrpc !== "2.0" || typeof message.id !== "number" || typeof message.method !== "string") {
             return {
                 ...new ErrorResponse(400, "Bad Request"),

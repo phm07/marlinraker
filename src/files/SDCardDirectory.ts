@@ -1,7 +1,7 @@
 import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
 import { marlinRaker } from "../Server";
-import ParserUtil, { TFileInfo } from "../printer/ParserUtil";
+import ParserUtil, { IFileInfo } from "../printer/ParserUtil";
 
 class SDCardDirectory implements IDirectory {
 
@@ -21,7 +21,7 @@ class SDCardDirectory implements IDirectory {
         if (!response) return [];
         const fileList = ParserUtil.parseM20Response(response);
 
-        this.lastFileList = Object.values(fileList).filter((file): file is TFileInfo => Boolean(file)).map((file) => ({
+        this.lastFileList = Object.values(fileList).filter((file): file is IFileInfo => Boolean(file)).map((file) => ({
             filename: file.fullName ?? file.filename,
             size: file.size,
             permissions: "r"

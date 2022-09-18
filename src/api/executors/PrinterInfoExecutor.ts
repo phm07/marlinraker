@@ -4,19 +4,19 @@ import { marlinRaker } from "../../Server";
 import { TPrinterState } from "../../printer/Printer";
 import si from "systeminformation";
 
-type TResult = {
-    state: TPrinterState,
-    state_message?: string,
-    hostname: string,
-    software_version: string,
-    cpu_info: string
-};
+interface IResult {
+    state: TPrinterState;
+    state_message?: string;
+    hostname: string;
+    software_version: string;
+    cpu_info: string;
+}
 
-class PrinterInfoExecutor implements IMethodExecutor<undefined, TResult> {
+class PrinterInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "printer.info";
 
-    public async invoke(_: TSender, __: undefined): Promise<TResult> {
+    public async invoke(_: TSender, __: undefined): Promise<IResult> {
         const cpuInfo = await si.cpu();
         return {
             state: marlinRaker.printer?.state ?? "error",

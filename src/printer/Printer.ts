@@ -1,7 +1,7 @@
 import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
-import ParserUtil, { THomedAxes, TPrinterCapabilities, TPrinterInfo } from "./ParserUtil";
+import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo } from "./ParserUtil";
 import { config, logger, marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
@@ -17,7 +17,7 @@ class Printer extends SerialGcodeDevice {
     public objectManager: ObjectManager;
     public heaterManager: HeaterManager;
     public state: TPrinterState;
-    public info?: TPrinterInfo;
+    public info?: IPrinterInfo;
     public stateMessage: string;
     public capabilities: TPrinterCapabilities;
     public watchers: Watcher[];
@@ -29,7 +29,7 @@ class Printer extends SerialGcodeDevice {
     public speedFactor!: number;
     public extrudeFactor!: number;
     public isSdCard!: boolean;
-    public homedAxes!: THomedAxes;
+    public homedAxes!: IHomedAxes;
     public isM73Supported!: boolean;
     public isPrusa!: boolean;
 
@@ -217,12 +217,12 @@ class Printer extends SerialGcodeDevice {
                     });
                 }
                 if (this.isAbsoluteEPositioning) {
-                    this.toolheadPosition[3] = positions["E"] ?? this.toolheadPosition[3];
+                    this.toolheadPosition[3] = positions.E ?? this.toolheadPosition[3];
                 } else {
-                    this.toolheadPosition[3] += positions["E"] ?? 0;
+                    this.toolheadPosition[3] += positions.E ?? 0;
                 }
 
-                this.feedrate = positions["F"] ?? this.feedrate;
+                this.feedrate = positions.F ?? this.feedrate;
             }
             this.emit("positionChange");
 
@@ -281,10 +281,10 @@ class Printer extends SerialGcodeDevice {
         }, 10000);
 
         this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;
-        this.hasEmergencyParser = this.capabilities["EMERGENCY_PARSER"] || this.isPrusa;
+        this.hasEmergencyParser = this.capabilities.EMERGENCY_PARSER || this.isPrusa;
 
         const sdCardConfig = config.getOrDefault("sd_card", true);
-        this.isSdCard = this.capabilities["SDCARD"] !== false && sdCardConfig;
+        this.isSdCard = this.capabilities.SDCARD !== false && sdCardConfig;
         if (this.isSdCard !== sdCardConfig) {
             logger.warn("SD Card support was enabled in config but is not supported by printer");
         }
@@ -311,7 +311,7 @@ class Printer extends SerialGcodeDevice {
     }
 
     public async dispatchCommand(command: string, log = true): Promise<void> {
-        if (command.indexOf("\n") !== -1) {
+        if (command.includes("\n")) {
             for (const cmd of command.split("\n").filter((s) => s)) {
                 await this.dispatchCommand(cmd, log);
             }

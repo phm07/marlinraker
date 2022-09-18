@@ -2,9 +2,12 @@ import { Updatable } from "./Updatable";
 import { logger, marlinRaker } from "../Server";
 import { exec } from "child_process";
 
-type TInfo = { version?: unknown, remote_version?: unknown };
+interface IInfo {
+    version?: unknown;
+    remote_version?: unknown;
+}
 
-class ScriptUpdatable extends Updatable<TInfo> {
+class ScriptUpdatable extends Updatable<IInfo> {
 
     public readonly scriptFile: string;
 
@@ -36,14 +39,13 @@ class ScriptUpdatable extends Updatable<TInfo> {
     }
 
     public isUpdatePossible(): boolean {
-        return Boolean(this.info
-            && this.info.remote_version
+        return Boolean(this.info?.remote_version
             && this.info.remote_version !== "?"
             && this.info.remote_version !== this.info.version);
     }
 
     public async update(): Promise<void> {
-        if (!this.isUpdatePossible()) throw "No update to download";
+        if (!this.isUpdatePossible()) throw new Error("No update to download");
         const log = this.createLogger();
         await this.doUpdate(log, this.scriptFile, ["-u"]);
         await this.checkForUpdate();

@@ -1,13 +1,13 @@
 import PrinterObject from "./PrinterObject";
 import { config } from "../../Server";
 
-type TObject = {
-    config: unknown,
-    settings: unknown,
-    save_config_pending: boolean
-};
+interface IObject {
+    config: unknown;
+    settings: unknown;
+    save_config_pending: boolean;
+}
 
-class ConfigFileObject extends PrinterObject<TObject> {
+class ConfigFileObject extends PrinterObject<IObject> {
 
     public readonly name = "configfile";
 
@@ -15,7 +15,7 @@ class ConfigFileObject extends PrinterObject<TObject> {
         super();
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             config: config.klipperPseudoConfig,
             settings: config.klipperPseudoConfig,

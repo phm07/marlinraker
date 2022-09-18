@@ -3,12 +3,12 @@ import { spawn, exec } from "child_process";
 import readline from "readline";
 import { logger, marlinRaker } from "../Server";
 
-type TInfo = {
-    package_count: number,
-    package_list: string[]
-};
+interface IInfo {
+    package_count: number;
+    package_list: string[];
+}
 
-class SystemUpdatable extends Updatable<TInfo> {
+class SystemUpdatable extends Updatable<IInfo> {
 
     private packages: string[];
 
@@ -53,7 +53,7 @@ class SystemUpdatable extends Updatable<TInfo> {
     }
 
     public async update(): Promise<void> {
-        if (!this.isUpdatePossible()) throw "No packages to upgrade";
+        if (!this.isUpdatePossible()) throw new Error("No packages to upgrade");
         const log = this.createLogger();
         await log(`Upgrading ${this.packages.length} packages`);
         await this.doUpdate(log, "sudo", ["apt", "upgrade", "-y"]);

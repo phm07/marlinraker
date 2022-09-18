@@ -1,15 +1,15 @@
 import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
 
-type TObject = {
+interface IObject {
     profile_name: string;
     mesh_min: [number, number];
     mesh_max: [number, number];
     probed_matrix?: number[][];
     mesh_matrix?: number[][];
-};
+}
 
-class BedMeshObject extends PrinterObject<TObject> {
+class BedMeshObject extends PrinterObject<IObject> {
 
     public readonly name = "bed_mesh";
     private readonly profile?: string;
@@ -25,16 +25,16 @@ class BedMeshObject extends PrinterObject<TObject> {
         this.grid = [[]];
 
         printer.on("updateBedMesh", (args: {
-            grid: number[][],
-            min: [number, number],
-            max: [number, number]
+            grid: number[][];
+            min: [number, number];
+            max: [number, number];
         }) => {
             Object.assign(this, args);
             this.emit();
         });
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             profile_name: this.profile ?? "",
             mesh_min: this.min,

@@ -5,28 +5,32 @@ import EventEmitter from "events";
 import { config, logger } from "../Server";
 import ParserUtil from "./ParserUtil";
 
-type TGcodeLog = { message: string, time: number, type: "command" | "response" };
+interface IGcodeLog {
+    message: string;
+    time: number;
+    type: "command" | "response";
+}
 
-type TCommand = {
-    gcode: string,
-    response: string[],
-    log: boolean,
-    emergency?: boolean,
-    callback: () => void,
-    queued: number,
-    sent?: number,
-    completed?: number,
-    timeInQueue?: number
-};
+interface ICommand {
+    gcode: string;
+    response: string[];
+    log: boolean;
+    emergency?: boolean;
+    callback: () => void;
+    queued: number;
+    sent?: number;
+    completed?: number;
+    timeInQueue?: number;
+}
 
 abstract class SerialGcodeDevice extends EventEmitter {
 
-    public readonly gcodeStore: TGcodeLog[];
+    public readonly gcodeStore: IGcodeLog[];
     public hasEmergencyParser: boolean;
     protected readonly serialPort: SerialPort;
     protected readline: ReadLine;
-    protected commandQueue: TCommand[];
-    protected currentCommand?: TCommand;
+    protected commandQueue: ICommand[];
+    protected currentCommand?: ICommand;
     protected ready: boolean;
     private readonly maxConnectionAttempts: number;
     private readonly connectionTimeout: number;
@@ -58,8 +62,11 @@ abstract class SerialGcodeDevice extends EventEmitter {
     }
 
     protected abstract handshake(): Promise<boolean>;
+
     protected abstract setupPrinter(): Promise<void>;
+
     protected abstract handleResponseLine(line: string): boolean;
+
     protected abstract handleRequestLine(line: string): void;
 
     public setup(): void {
@@ -128,10 +135,10 @@ abstract class SerialGcodeDevice extends EventEmitter {
     public async queueGcode(gcodeRaw: string, important = false, log = true): Promise<string> {
 
         if (!this.serialPort.writable) {
-            throw "Not connected";
+            throw new Error("Not connected");
         }
 
-        if (gcodeRaw.indexOf("\n") !== -1) {
+        if (gcodeRaw.includes("\n")) {
             const responses = [];
             for (const line of gcodeRaw.split("\n").filter((s) => s)) {
                 responses.push(await this.queueGcode(line, important, log));
@@ -169,7 +176,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
         }
 
         return new Promise<string>((resolve) => {
-            const commandObject: TCommand = {
+            const commandObject: ICommand = {
                 gcode,
                 log,
                 response: [],
@@ -208,4 +215,4 @@ abstract class SerialGcodeDevice extends EventEmitter {
 }
 
 export default SerialGcodeDevice;
-export { TGcodeLog };
+export { IGcodeLog };

@@ -18,7 +18,7 @@ class ObjectManager {
 
     public readonly objects: NamedObjectMap<PrinterObject<unknown>>;
     private readonly printer: Printer;
-    private subscriptions: { socket: WebSocket, unsubscribeAll: () => void }[] = [];
+    private subscriptions: { socket: WebSocket; unsubscribeAll: () => void }[] = [];
 
     public constructor(printer: Printer) {
         this.printer = printer;
@@ -35,7 +35,7 @@ class ObjectManager {
         ]);
     }
 
-    public subscribe(socket: WebSocket, objects: Record<string, string[] | null>): { eventtime: number, status: Record<string, unknown> } {
+    public subscribe(socket: WebSocket, objects: Record<string, string[] | null>): { eventtime: number; status: Record<string, unknown> } {
 
         const existing = this.subscriptions.find((subscription) => subscription.socket === socket);
         if (existing) {

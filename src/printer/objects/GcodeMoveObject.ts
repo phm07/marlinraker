@@ -2,18 +2,18 @@ import PrinterObject from "./PrinterObject";
 import { marlinRaker } from "../../Server";
 import Printer from "../Printer";
 
-type TResult = {
-    speed_factor: number,
-    speed: number,
-    extrude_factor: number,
-    absolute_coordinates: boolean,
-    absolute_extrude: boolean,
-    homing_origin: [number, number, number, number],
-    position: [number, number, number, number],
-    gcode_position: [number, number, number, number]
-};
+interface IResult {
+    speed_factor: number;
+    speed: number;
+    extrude_factor: number;
+    absolute_coordinates: boolean;
+    absolute_extrude: boolean;
+    homing_origin: [number, number, number, number];
+    position: [number, number, number, number];
+    gcode_position: [number, number, number, number];
+}
 
-class GcodeMoveObject extends PrinterObject<TResult> {
+class GcodeMoveObject extends PrinterObject<IResult> {
 
     public readonly name = "gcode_move";
 
@@ -30,7 +30,7 @@ class GcodeMoveObject extends PrinterObject<TResult> {
         printer.on("factorChange", this.emit.bind(this));
     }
 
-    protected get(_: string[] | null): TResult {
+    protected get(_: string[] | null): IResult {
         return {
             speed_factor: marlinRaker.printer?.speedFactor ?? 1.0,
             speed: 0.0,

@@ -4,7 +4,7 @@ import * as crypto from "crypto";
 
 class AccessManager {
 
-    private readonly oneshotTokens: { client: Socket, time: number, token: string }[];
+    private readonly oneshotTokens: { client: Socket; time: number; token: string }[];
 
     public constructor() {
         this.oneshotTokens = [];

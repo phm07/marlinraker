@@ -31,7 +31,7 @@ class JobManager {
                     this.printDuration++;
                 }
             }
-            marlinRaker.printer?.objectManager.objects["print_stats"]?.emit();
+            marlinRaker.printer?.objectManager.objects.print_stats.emit();
         }, 1000);
 
         let lastReportedProgress = 0;
@@ -40,7 +40,7 @@ class JobManager {
             const progress = this.currentPrintJob?.progress;
             if (progress && lastReportedProgress !== progress) {
                 lastReportedProgress = progress;
-                marlinRaker.printer?.objectManager.objects["virtual_sdcard"]?.emit();
+                marlinRaker.printer?.objectManager.objects.virtual_sdcard.emit();
                 await marlinRaker.printer?.queueGcode(`M73 P${Math.round(progress * 100)}`, false, false);
             }
         }, 1000);
@@ -64,8 +64,8 @@ class JobManager {
         delete this.resumeFeedrate;
         this.currentPrintJob = printJob;
         printJob.on("stateChange", () => {
-            marlinRaker.printer!.objectManager.objects["print_stats"]?.emit();
-            marlinRaker.printer!.objectManager.objects["virtual_sdcard"]?.emit();
+            marlinRaker.printer!.objectManager.objects.print_stats?.emit();
+            marlinRaker.printer!.objectManager.objects.virtual_sdcard?.emit();
         });
         if (this.displayMessages) {
             await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`,
@@ -141,8 +141,8 @@ class JobManager {
         delete this.currentPrintJob;
         this.totalDuration = 0;
         this.printDuration = 0;
-        marlinRaker.printer.objectManager.objects["print_stats"]?.emit();
-        marlinRaker.printer.objectManager.objects["virtual_sdcard"]?.emit();
+        marlinRaker.printer.objectManager.objects.print_stats?.emit();
+        marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
         return true;
     }
 

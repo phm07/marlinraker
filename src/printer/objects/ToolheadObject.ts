@@ -2,21 +2,21 @@ import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
 import { config } from "../../Server";
 
-type TObject = {
-    homed_axes: string,
-    print_time: number,
-    estimated_print_time: number,
-    extruder: string,
-    position: number[],
-    max_velocity?: number,
-    max_accel?: number,
-    max_accel_to_decel?: number,
-    square_corner_velocity?: number,
-    axis_minimum: number[],
-    axis_maximum: number[]
-};
+interface IObject {
+    homed_axes: string;
+    print_time: number;
+    estimated_print_time: number;
+    extruder: string;
+    position: number[];
+    max_velocity?: number;
+    max_accel?: number;
+    max_accel_to_decel?: number;
+    square_corner_velocity?: number;
+    axis_minimum: number[];
+    axis_maximum: number[];
+}
 
-class ToolheadObject extends PrinterObject<TObject> {
+class ToolheadObject extends PrinterObject<IObject> {
 
     public readonly name = "toolhead";
     private readonly printer: Printer;
@@ -36,7 +36,7 @@ class ToolheadObject extends PrinterObject<TObject> {
         ];
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             homed_axes: this.printer.getHomedAxesString(),
             print_time: 0,

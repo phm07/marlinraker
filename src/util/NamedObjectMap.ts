@@ -1,8 +1,8 @@
-type TNamedObject = {
+interface INamedObject {
     name: string;
-};
+}
 
-class NamedObjectMap<T extends TNamedObject> implements Record<string, T | undefined> {
+class NamedObjectMap<T extends INamedObject> implements Record<string, T | undefined> {
 
     [key: string]: T | undefined;
 

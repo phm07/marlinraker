@@ -3,16 +3,16 @@ import { marlinRaker } from "../../Server";
 
 type TPrintState = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
-type TObject = {
-    filename: string,
-    total_duration: number,
-    print_duration: number,
-    filament_used: number,
-    state: TPrintState,
-    message: string
-};
+interface IObject {
+    filename: string;
+    total_duration: number;
+    print_duration: number;
+    filament_used: number;
+    state: TPrintState;
+    message: string;
+}
 
-class PrintStatsObject extends PrinterObject<TObject> {
+class PrintStatsObject extends PrinterObject<IObject> {
 
     public readonly name = "print_stats";
 
@@ -20,7 +20,7 @@ class PrintStatsObject extends PrinterObject<TObject> {
         super();
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             filename: marlinRaker.jobManager.currentPrintJob?.filename ?? "",
             total_duration: marlinRaker.jobManager.totalDuration,

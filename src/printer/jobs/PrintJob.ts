@@ -15,8 +15,11 @@ abstract class PrintJob extends EventEmitter {
     }
 
     public abstract start(): Promise<void>;
+
     public abstract pause(): Promise<void>;
+
     public abstract resume(): Promise<void>;
+
     public abstract cancel(): Promise<void>;
 
     public setState(state: TState): void {

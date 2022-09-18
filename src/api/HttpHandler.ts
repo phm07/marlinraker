@@ -44,7 +44,7 @@ class HttpHandler extends MessageHandler {
 
     public readonly fileHandler: FileHandler;
     private readonly methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
-        <IMethodExecutor<unknown, unknown>[]>[
+        [
             new AccessOneshotTokenExecutor(),
             new MachineProcStatsExecutor(),
             new MachineSystemInfoExecutor(),
@@ -79,7 +79,7 @@ class HttpHandler extends MessageHandler {
             new ServerInfoExecutor(),
             new ServerJobQueueStatus(),
             new ServerTemperatureStoreExecutor()
-        ]
+        ] as IMethodExecutor<unknown, unknown>[]
     );
 
     public constructor() {

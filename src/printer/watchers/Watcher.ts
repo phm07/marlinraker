@@ -1,4 +1,3 @@
-
 abstract class Watcher {
 
     private loaded: boolean;

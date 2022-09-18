@@ -1,11 +1,11 @@
 import PrinterObject from "./PrinterObject";
 
-type TObject = {
+interface IObject {
     available_sensors: string[];
     available_heaters: string[];
-};
+}
 
-class HeatersObject extends PrinterObject<TObject> {
+class HeatersObject extends PrinterObject<IObject> {
 
     public readonly name = "heaters";
     public available_sensors: string[];
@@ -17,7 +17,7 @@ class HeatersObject extends PrinterObject<TObject> {
         this.available_heaters = [];
     }
 
-    public get(_: string[] | null): TObject {
+    public get(_: string[] | null): IObject {
         return {
             available_sensors: this.available_sensors,
             available_heaters: this.available_heaters

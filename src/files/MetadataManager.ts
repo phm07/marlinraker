@@ -6,41 +6,41 @@ import LineReader from "./LineReader";
 import Database from "../database/Database";
 import HashUtils from "./HashUtils";
 
-type TThumbnail = {
-    width: number,
-    height: number,
-    size: number,
-    relative_path: string
-};
+interface IThumbnail {
+    width: number;
+    height: number;
+    size: number;
+    relative_path: string;
+}
 
-type TGcodeMetadata = {
-    print_start_time?: number,
-    job_id?: string,
-    size: number,
-    modified: number,
-    slicer?: string,
-    slicer_version?: string,
-    layer_height?: number,
-    first_layer_height?: number,
-    object_height?: number,
-    filament_total?: number,
-    estimated_time?: number,
-    thumbnails?: TThumbnail[],
-    first_layer_bed_temp?: number,
-    first_layer_extr_temp?: number,
-    gcode_start_byte?: number,
-    gcode_end_byte?: number,
-    filename: string,
+interface IGcodeMetadata {
+    print_start_time?: number;
+    job_id?: string;
+    size: number;
+    modified: number;
+    slicer?: string;
+    slicer_version?: string;
+    layer_height?: number;
+    first_layer_height?: number;
+    object_height?: number;
+    filament_total?: number;
+    estimated_time?: number;
+    thumbnails?: IThumbnail[];
+    first_layer_bed_temp?: number;
+    first_layer_extr_temp?: number;
+    gcode_start_byte?: number;
+    gcode_end_byte?: number;
+    filename: string;
 
     // these are undocumented...
-    nozzle_diameter?: number,
-    filament_name?: string,
-    filament_type?: string,
-    filament_weight_total?: number,
+    nozzle_diameter?: number;
+    filament_name?: string;
+    filament_type?: string;
+    filament_weight_total?: number;
 
     // for watching changes
-    mtimeMs: number
-};
+    mtimeMs: number;
+}
 
 class MetadataManager {
 
@@ -52,7 +52,7 @@ class MetadataManager {
     }
 
     public async cleanup(): Promise<void> {
-        const allMetadata = await this.database.getItem("gcode_metadata") as Record<string, TGcodeMetadata>;
+        const allMetadata = await this.database.getItem("gcode_metadata") as Record<string, IGcodeMetadata>;
         for (const id in allMetadata) {
             const metadata = allMetadata[id];
             const filepath = path.join(rootDir, "gcodes", metadata.filename);
@@ -62,7 +62,7 @@ class MetadataManager {
         }
     }
 
-    public async getOrGenerateMetadata(filename: string): Promise<TGcodeMetadata | null> {
+    public async getOrGenerateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
         if (!await fs.pathExists(filepath)) {
@@ -72,7 +72,7 @@ class MetadataManager {
         const stat = await fs.stat(filepath);
         const id = this.getId(filename);
 
-        let metadata = await this.database.getItem("gcode_metadata", id) as TGcodeMetadata | null;
+        let metadata = await this.database.getItem("gcode_metadata", id) as IGcodeMetadata | null;
         if (metadata) {
             if (metadata.mtimeMs !== stat.mtimeMs) {
                 await this.deleteMetadata(id);
@@ -91,7 +91,7 @@ class MetadataManager {
     }
 
     public async deleteMetadata(id: string): Promise<void> {
-        const metadata = await this.database.getItem("gcode_metadata", id) as TGcodeMetadata | null;
+        const metadata = await this.database.getItem("gcode_metadata", id) as IGcodeMetadata | null;
         if (!metadata) return;
         for (const thumbnail of metadata.thumbnails ?? []) {
             const thumbnailPath = path.join(rootDir, "gcodes", path.dirname(metadata.filename), thumbnail.relative_path);
@@ -100,7 +100,7 @@ class MetadataManager {
         await this.database.deleteItem("gcode_metadata", id);
     }
 
-    public async generateMetadata(filename: string): Promise<TGcodeMetadata | null> {
+    public async generateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
         if (!await fs.pathExists(filepath)) {
@@ -108,7 +108,7 @@ class MetadataManager {
         }
 
         const stat = await fs.stat(filepath);
-        const metadata: TGcodeMetadata = {
+        const metadata: IGcodeMetadata = {
             filename,
             size: stat.size,
             modified: stat.mtimeMs / 1000,
@@ -116,7 +116,7 @@ class MetadataManager {
         };
 
         const firstLineReader = new LineReader(fs.createReadStream(filepath));
-        for (;;) {
+        for (; ;) {
             const line = await firstLineReader.readLine();
             if (line === null) break;
 
@@ -145,7 +145,7 @@ class MetadataManager {
                     relative_path: relativePath
                 });
 
-            } else if (comment.indexOf(":") !== -1) {
+            } else if (comment.includes(":")) {
                 const [key, value] = comment.split(":").map((s) => s.trim());
                 if (key === "TIME") {
                     metadata.estimated_time = Number.parseInt(value);
@@ -165,7 +165,7 @@ class MetadataManager {
             start,
             end: stat.size
         }));
-        for (;;) {
+        for (; ;) {
             const line = await last50kReader.readLine();
             if (line === null) break;
 
@@ -182,7 +182,7 @@ class MetadataManager {
                     continue;
                 }
 
-                if (comment.indexOf("=") === -1) continue;
+                if (!comment.includes("=")) continue;
                 const [key, value] = comment.split("=").map((s) => s.trim());
                 if (key === "layer_height") {
                     metadata.layer_height = Number.parseFloat(value);
@@ -229,7 +229,7 @@ class MetadataManager {
     private static async extractThumbnail(lineReader: LineReader, filename: string): Promise<string | null> {
         let base64 = "";
 
-        for (;;) {
+        for (; ;) {
             const line = await lineReader.readLine();
             if (line === null) break;
             if (!line.trim()) continue;
@@ -255,5 +255,5 @@ class MetadataManager {
     }
 }
 
-export { TGcodeMetadata };
+export { IGcodeMetadata };
 export default MetadataManager;
