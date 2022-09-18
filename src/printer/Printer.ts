@@ -102,7 +102,7 @@ class Printer extends SerialGcodeDevice {
     }
 
     public emergencyStop(): void {
-        void this.queueGcode("M112");
+        void this.queueGcode("M112", true, false);
     }
 
     public reset(): void {

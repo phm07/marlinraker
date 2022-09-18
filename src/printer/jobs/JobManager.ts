@@ -68,7 +68,8 @@ class JobManager {
             marlinRaker.printer!.objectManager.objects["virtual_sdcard"]?.emit();
         });
         if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`);
+            await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`,
+                false, false);
         }
         await printJob.start();
         return true;
@@ -79,7 +80,7 @@ class JobManager {
         if (this.currentPrintJob?.state !== "printing") return false;
         await this.currentPrintJob.pause();
         if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode("M117 Print paused");
+            await marlinRaker.printer.queueGcode("M117 Print paused", false, false);
         }
         this.resumePosition = marlinRaker.printer.toolheadPosition.slice(0, 2) as [number, number];
         this.resumeIsAbsolute = marlinRaker.printer.isAbsolutePositioning;
@@ -93,7 +94,8 @@ class JobManager {
         if (this.currentPrintJob?.state !== "paused") return false;
         const printer = marlinRaker.printer;
 
-        await printer.queueGcode(`G90\nG1 X${this.resumePosition?.[0] ?? 0} Y${this.resumePosition?.[1] ?? 0} F6000`);
+        await printer.queueGcode(`G90\nG1 X${this.resumePosition?.[0] ?? 0} Y${this.resumePosition?.[1] ?? 0} F6000`,
+            false, false);
 
         if (this.resumeIsAbsolute !== printer.isAbsolutePositioning) {
             await printer.queueGcode(this.resumeIsAbsolute ? "G90" : "G91", false, false);
@@ -109,7 +111,8 @@ class JobManager {
         delete this.resumeIsEAbsolute;
         delete this.resumePosition;
         delete this.resumeFeedrate;
-        await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`);
+        await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`,
+            false, false);
         await this.currentPrintJob.resume();
         return true;
     }
@@ -119,7 +122,7 @@ class JobManager {
         if (!this.isPrinting()) return false;
         await this.currentPrintJob!.cancel();
         if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode("M117 Print canceled");
+            await marlinRaker.printer.queueGcode("M117 Print canceled", false, false);
         }
         return true;
     }
@@ -132,7 +135,7 @@ class JobManager {
             return false;
 
         if (this.displayMessages) {
-            void marlinRaker.printer.queueGcode("M117");
+            void marlinRaker.printer.queueGcode("M117", false, false);
         }
 
         delete this.currentPrintJob;
