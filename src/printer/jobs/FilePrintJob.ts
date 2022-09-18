@@ -122,7 +122,6 @@ class FilePrintJob extends PrintJob {
     }
 
     public async cancel(): Promise<void> {
-        delete this.lineReader;
         if (this.printer.hasEmergencyParser) {
             await this.printer.queueGcode("M108", true, false);
         }

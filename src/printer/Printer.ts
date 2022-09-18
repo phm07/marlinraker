@@ -118,6 +118,14 @@ class Printer extends SerialGcodeDevice {
             if (watcher.handle(line)) return false;
         }
 
+        if (line.startsWith("//")) {
+            const action = line.match(/\/\/( *)action:(.*)$/)?.[2];
+            if (action) {
+                this.handleAction(action);
+            }
+            return false;
+        }
+
         if (line.startsWith("echo:Unknown command: \"") && line.endsWith("\"")) {
             const unknownCommand = line.substring(23, line.length - 1);
             this.handleUnknownCommand(unknownCommand);
@@ -137,6 +145,21 @@ class Printer extends SerialGcodeDevice {
         }
 
         return true;
+    }
+
+    private handleAction(action: string): void {
+        if (action === "cancel") {
+            logger.info("Canceling print");
+            void marlinRaker.jobManager.cancel();
+
+        } else if (action === "pause") {
+            logger.info("Pausing print");
+            void marlinRaker.jobManager.pause();
+
+        } else if (action === "resume") {
+            logger.info("Resuming print");
+            void marlinRaker.jobManager.resume();
+        }
     }
 
     private handleUnknownCommand(command: string): void {
