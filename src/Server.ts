@@ -122,7 +122,7 @@ let router: Router;
     const httpServer = http.createServer(app);
     const wss = new WebSocketServer({ server: httpServer, path: "/websocket" });
 
-    const httpPort = config.getOrDefault("web.port", 80);
+    const httpPort = config.getOrDefault("web.port", 7125);
     httpServer.listen(httpPort);
     logger.info(`App listening on port ${httpPort}`);
 
