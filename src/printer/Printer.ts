@@ -119,7 +119,7 @@ class Printer extends SerialGcodeDevice {
         }
 
         if (line.startsWith("//")) {
-            const action = /\/\/( *)action:(.*)$/.exec(line)?.[2];
+            const action = /^\/\/( *)action:(.*)$/.exec(line)?.[2];
             if (action) {
                 this.handleAction(action);
             }
@@ -127,7 +127,7 @@ class Printer extends SerialGcodeDevice {
         }
 
         {
-            const unknownCommand = /echo:Unknown command: "(.*)"/.exec(line)?.[1];
+            const unknownCommand = /^echo:Unknown command: "(.*)"/.exec(line)?.[1];
             if (unknownCommand) {
                 this.handleUnknownCommand(unknownCommand);
             }
@@ -167,13 +167,13 @@ class Printer extends SerialGcodeDevice {
     private handleUnknownCommand(command: string): void {
         logger.warn(`Unknown command: "${command}"`);
 
-        if (/M2[01](\s|$)/.test(command)) {
+        if (/^M2[01](\s|$)/.test(command)) {
             if (this.isSdCard) {
                 logger.warn("SD Card support was enabled in config but is not supported by printer");
                 this.isSdCard = false;
             }
 
-        } else if (/M73(\s|$)/.test(command)) {
+        } else if (/^M73(\s|$)/.test(command)) {
             if (this.isM73Supported) {
                 logger.warn("Printer does not support M73 command");
                 this.isM73Supported = false;
@@ -182,25 +182,25 @@ class Printer extends SerialGcodeDevice {
     }
 
     protected handleRequestLine(line: string): void {
-        if (/G90(\s|$)/.test(line)) {
+        if (/^G90(\s|$)/.test(line)) {
             this.isAbsolutePositioning = true;
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
 
-        } else if (/G91(\s|$)/.test(line)) {
+        } else if (/^G91(\s|$)/.test(line)) {
             this.isAbsolutePositioning = false;
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
 
-        } else if (/M82(\s|$)/.test(line)) {
+        } else if (/^M82(\s|$)/.test(line)) {
             this.isAbsoluteEPositioning = true;
             this.emit("positioningChange");
 
-        } else if (/M83(\s|$)/.test(line)) {
+        } else if (/^M83(\s|$)/.test(line)) {
             this.isAbsoluteEPositioning = false;
             this.emit("positioningChange");
 
-        } else if (/(G0|G1|G92)(\s|$)/.test(line)) {
+        } else if (/^G(0|1|92)(\s|$)/.test(line)) {
             const positions = ParserUtil.parseG0G1G92Request(line);
             if (line.startsWith("G92")) {
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
@@ -226,30 +226,30 @@ class Printer extends SerialGcodeDevice {
             }
             this.emit("positionChange");
 
-        } else if (/M106(\s|$)/.test(line)) {
+        } else if (/^M106(\s|$)/.test(line)) {
             const fanSpeed = ParserUtil.parseM106Request(line);
             this.fanSpeed = fanSpeed / 255;
             this.emit("fanSpeedChange");
 
-        } else if (/M107(\s|$)/.test(line)) {
+        } else if (/^M107(\s|$)/.test(line)) {
             this.fanSpeed = 0;
             this.emit("fanSpeedChange");
 
-        } else if (/M22[01](\s|$)/.test(line)) {
+        } else if (/^M22[01](\s|$)/.test(line)) {
             const factor = ParserUtil.parseM220M221Request(line);
             if (!factor) return;
             this[line.startsWith("M220") ? "speedFactor" : "extrudeFactor"] = factor / 100;
             this.emit("factorChange");
 
-        } else if (/G28(\s|$)/.test(line)) {
+        } else if (/^G28(\s|$)/.test(line)) {
             this.homedAxes = ParserUtil.parseG28Request(line, this.homedAxes);
             this.emit("homedAxesChange");
 
-        } else if (/M(18|84|410)(\s|$)/.test(line)) {
+        } else if (/^M(18|84|410)(\s|$)/.test(line)) {
             this.homedAxes = { x: false, y: false, z: false };
             this.emit("homedAxesChange");
 
-        } else if (/M112(\s|$)/.test(line)) {
+        } else if (/^M112(\s|$)/.test(line)) {
             this.emit("error", "Emergency stop triggered");
             if (this.serialPort.isOpen) {
                 this.serialPort.close();

@@ -158,7 +158,7 @@ class ParserUtil {
     }
 
     public static isEmergencyCommand(command: string): boolean {
-        return Boolean(/M(112|108|410|876)(\s|$)/.test(command));
+        return Boolean(/^M(112|108|410|876)(\s|$)/.test(command));
     }
 
     public static trimGcodeLine(gcode: string): string {
