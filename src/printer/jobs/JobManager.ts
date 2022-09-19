@@ -31,17 +31,17 @@ class JobManager {
                     this.printDuration++;
                 }
             }
-            marlinRaker.printer?.objectManager.objects.print_stats.emit();
+            marlinRaker.printer!.objectManager.objects.print_stats?.emit();
         }, 1000);
 
         let lastReportedProgress = 0;
         setInterval(async () => {
-            if (marlinRaker.printer?.isM73Supported === false) return;
+            if (!marlinRaker.printer || !marlinRaker.printer.isM73Supported) return;
             const progress = this.currentPrintJob?.progress;
             if (progress && lastReportedProgress !== progress) {
                 lastReportedProgress = progress;
-                marlinRaker.printer?.objectManager.objects.virtual_sdcard.emit();
-                await marlinRaker.printer?.queueGcode(`M73 P${Math.round(progress * 100)}`, false, false);
+                marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
+                await marlinRaker.printer.queueGcode(`M73 P${Math.round(progress * 100)}`, false, false);
             }
         }, 1000);
     }
