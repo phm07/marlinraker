@@ -31,7 +31,7 @@ class ObjectManager {
             new ConfigFileObject(),
             new PrintStatsObject(),
             new VirtualSdCardObject(),
-            config.getOrDefault<boolean>("printer.bed_mesh", false) && new BedMeshObject(this.printer)
+            config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(this.printer)
         ]);
     }
 

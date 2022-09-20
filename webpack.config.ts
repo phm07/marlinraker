@@ -39,6 +39,10 @@ const config: webpack.Configuration = {
                 test: /\.ts$/,
                 loader: "ts-loader",
                 exclude: /node_modules/
+            },
+            {
+                test: /\.toml$/,
+                loader: "raw-loader"
             }
         ]
     }

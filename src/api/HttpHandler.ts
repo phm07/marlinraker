@@ -87,7 +87,7 @@ class HttpHandler extends MessageHandler {
 
         this.fileHandler = new FileHandler();
 
-        if (config.getOrDefault<boolean>("octoprint_compat", true)) {
+        if (config.getBoolean("misc.octoprint_compat", true)) {
             new OctoprintEmulator();
         }
 

@@ -43,8 +43,8 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.ready = false;
         this.hasEmergencyParser = false;
 
-        this.maxConnectionAttempts = config.getOrDefault("serial.max_connection_attempts", 5);
-        this.connectionTimeout = config.getOrDefault("serial.connection_timeout", 5000);
+        this.maxConnectionAttempts = config.getNumber("serial.max_connection_attempts", 5);
+        this.connectionTimeout = config.getNumber("serial.connection_timeout", 5000);
 
         this.serialPort = new SerialPort({
             path: serialPort,
@@ -140,7 +140,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
 
         if (gcodeRaw.includes("\n")) {
             const responses = [];
-            for (const line of gcodeRaw.split("\n").filter((s) => s)) {
+            for (const line of gcodeRaw.split(/\r?\n/).filter((s) => s)) {
                 responses.push(await this.queueGcode(line, important, log));
             }
             return responses.join("\n");

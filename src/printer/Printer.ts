@@ -283,7 +283,7 @@ class Printer extends SerialGcodeDevice {
         this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;
         this.hasEmergencyParser = this.capabilities.EMERGENCY_PARSER || this.isPrusa;
 
-        const sdCardConfig = config.getOrDefault("sd_card", true);
+        const sdCardConfig = config.getBoolean("misc.sd_card", true);
         this.isSdCard = this.capabilities.SDCARD !== false && sdCardConfig;
         if (this.isSdCard !== sdCardConfig) {
             logger.warn("SD Card support was enabled in config but is not supported by printer");
@@ -312,7 +312,7 @@ class Printer extends SerialGcodeDevice {
 
     public async dispatchCommand(command: string, log = true): Promise<void> {
         if (command.includes("\n")) {
-            for (const cmd of command.split("\n").filter((s) => s)) {
+            for (const cmd of command.split(/\r?\n/).filter((s) => s)) {
                 await this.dispatchCommand(cmd, log);
             }
             return;

@@ -25,8 +25,8 @@ pre-built image Marlinraker is running in ``/pi/home/marlinraker``, so it will b
 at ``/pi/home/marlinraker_files``. It contains the following subdirectories and files:
 
 #### ``config/``
-This is where config files, most notably ``marlinraker.json``, are stored. This folder will be
-exposed by the API and editable in your web interface of choice.
+This is where config files are stored. This folder will be exposed by the API and editable 
+in your web interface of choice. See [Configuration](#configuration) for more info.
 
 #### ``gcodes/``
 User-uploaded Gcode files will be stored in this folder. It will too be exposed by the API.
@@ -44,75 +44,83 @@ This is where the web interface will be located. The contents of this folder wil
 statically served.
 
 ## Configuration
-If you use the provided image the configuration file will be located under
-``/home/pi/marlinraker_files/config/marlinraker.json``. This is what the config looks
+Configuration files use the [TOML](https://toml.io/) file format. If you use the provided 
+image, the main configuration file will be located under 
+``/home/pi/marlinraker_files/config/marlinraker.toml``. This is what the config looks
 like by default:
 
-```json
-{
-  "web": {
-    "port": 7125
-  },
-  "serial": {
-    "port": "auto",
-    "baud_rate": "auto",
-    "max_connection_attempts": 5,
-    "connection_timeout": 5000
-  },
-  "printer": {
-    "bed_mesh": true,
-    "print_volume": {
-      "x": 180,
-      "y": 180,
-      "z": 180
-    },
-    "extruder": {
-      "min_temp": 0,
-      "max_temp": 250,
-      "min_extrude_temp": 180
-    },
-    "heater_bed": {
-      "min_temp": 0,
-      "max_temp": 100
-    }
-  },
-  "macros": {
-    "pause": {
-      "rename_existing": "pause_base",
-      "gcode": [
-        "pause_base",
-        "G91",
-        "G1 Z5 E-20 F600",
-        "G90",
-        "G1 X0 Y0 F6000"
-      ]
-    },
-    "resume": {
-      "rename_existing": "resume_base",
-      "gcode": [
-        "G91",
-        "G1 Z-5 E20 F600",
-        "resume_base"
-      ]
-    },
-    "cancel_print": {
-      "rename_existing": "cancel_base",
-      "gcode": [
-        "cancel_base",
-        "G28 X Y",
-        "M18",
-        "M104 S0",
-        "M140 S0",
-        "M107"
-      ]
-    }
-  },
-  "display_messages": true,
-  "sd_card": true,
-  "octoprint_compat": true,
-  "extended_logs": false
-}
+```toml
+#<include printer.toml>
+
+[web]
+port = 7125
+
+[serial]
+port = "auto"
+baud_rate = "auto"
+max_connection_attempts = 5
+connection_timeout = 5000
+
+[misc]
+octoprint_compat = true
+extended_logs = false
+sd_card = true
+display_messages = true
 ```
+
+Notice the ``#<include printer.toml>`` instruction at the top of the file. This will automatically
+import the specified file and load its contents into the current config. The default ``printer.toml``
+file looks like this:
+
+```toml
+# Generic 3D Printer
+
+[printer]
+bed_mesh = false
+print_volume = [220, 220, 240]
+
+[printer.extruder]
+min_temp = 0
+max_temp = 250
+min_extrude_temp = 180
+
+[printer.heater_bed]
+min_temp = 0
+max_temp = 100
+
+[macros.pause]
+rename_existing = "pause_base"
+gcode = """
+pause_base
+G91
+G1 Z5 E-20 F600
+G90
+G1 X0 Y0 F6000
+"""
+
+[macros.resume]
+rename_existing = "resume_base"
+gcode = """
+G91
+G1 Z-5 E20 F600
+resume_base
+"""
+
+[macros.cancel_print]
+rename_existing = "cancel_base"
+gcode = """
+cancel_base
+G28 X Y
+M18
+M104 S0
+M140 S0
+M107
+"""
+```
+
+[Here](config/printers) you can find pre-made printer profiles and pick one already made for
+your printer or create your own. If you can't find your printer in the list and create a
+working configuration for it, you are welcome to create a pull request and contribute your config.
 
 Below is a detailed overview of
 configurable properties. If a property is not configured, the default will be used.
@@ -123,13 +131,14 @@ used for display only.
 Port where API endpoints are served. Default is ``7125``.
 
 #### ``serial.port: string``
-Serial port of the printer to connect to. Set to ``""`` or ``"auto"`` for
-automatic port scanning. Alternatively a port like ``"/dev/ttyUSB0"`` can be
+Serial port of the printer to connect to. Set to ``"auto"`` for
+automatic port scanning. Alternatively a port like ``"/dev/ttyUSB0"`` or ``"COM11"`` can be
 specified. Default is ``"auto"``.
 
 #### ``serial.baud_rate: number | "auto"``
 Serial baud rate. Use ``"auto"`` to auto-detect baud rate or directly specify
-it here. Default is ``"auto"``.
+it here. Integer values like ``115200`` or ``250000`` are allowed. 
+Default is ``"auto"``.
 
 #### ``serial.max_connection_attempts: number``
 Number of times Marlinraker tries to connect with your printer. This is useful
@@ -141,10 +150,10 @@ How long a connection attempt can take before it is canceled in milliseconds.
 Default is ``5000``.
 
 #### ``printer.bed_mesh: boolean``
-Specify if bed mesh leveling is enabled for this machine. Default is ``true``.
+Specify if bed mesh leveling is enabled for this machine. Default is ``false``.
 
-#### ``printer.print_volume.[x,y,z]: number``
-Machine print volume. Default is ``180`` for all axes.
+#### ``printer.print_volume: [number, number, number]``
+Machine print volume in the format [x, y, z]. Default is ``[220, 220, 240]``.
 
 #### ``printer.extruder.min_temp: number``
 Minimum extruder temperature. Default is ``0``.
@@ -163,25 +172,25 @@ Minimum bed temperature. Default is ``0``.
 #### ``printer.heater_bed.max_temp: number``
 Maximum bed temperature. Default is ``100``.
 
-#### ``macros.{macro_name}.gcode: string[]``
+#### ``macros.{macro_name}.gcode: string``
 Defines a macro with the name ``{macro_name}`` and sets the gcode that will be executed.
 
 #### ``macros.{macro_name}.rename_existing: string``
 If a macro with the name ``{macro_name}`` already exists, it will be renamed to this value.
 
-#### ``display_messages: boolean``
+#### ``misc.display_messages: boolean``
 Show ``M117`` messages. Default is ``true``.
 
-#### ``sd_card: boolean``
+#### ``misc.sd_card: boolean``
 Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
 Default is ``true``.
 
-#### ``octoprint_compat: boolean``
+#### ``misc.octoprint_compat: boolean``
 Simulate OctoPrint API endpoints to allow Gcode upload from slicers. Default is ``true``.
 
-#### ``extended_logs: boolean``
-Enable verbose logging. Useful for debugging and development. Default is ``false``. Note:
-This will create very large log files quickly and will impact print performance.
+#### ``misc.extended_logs: boolean``
+Enable verbose logging. Useful for debugging and development. Default is ``false``. 
+**Note:** This will create very large log files quickly and will impact print performance.
 
 ## Update scripts
 Marlinraker will load all scripts contained in ``update_scripts/`` and use them for updating
@@ -202,6 +211,8 @@ for Marlinraker, Mainsail and Fluidd are included in the Raspberry Pi image.
 To identify a Marlinraker instance, check the ``/server/info`` API endpoint. For regular
 Moonraker installations ``type`` will not be defined. For Marlinraker it will always be
 set to ``"marlinraker"``.
+
+&nbsp;
 
 > **Warning**
 > 

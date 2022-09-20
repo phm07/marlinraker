@@ -35,19 +35,20 @@ class MacroManager {
                 return true;
             }
         }
+
         return false;
     }
 
     private loadMacros(): void {
-        const macros = config.getOrDefault("macros", {});
+        const macros = config.getObject("macros", {});
         for (const macroName in macros) {
-            const renameExisting = config.getOrDefault<string | null>(`macros.${macroName}.rename_existing`, null);
-            const gcode = config.getOrDefault<string[]>(`macros.${macroName}.gcode`, []);
-            if (gcode.some((line) => line.trim().split(" ")[0].toLowerCase() === macroName.toLowerCase())) {
+            const renameExisting = config.getStringIfExists(`macros.${macroName}.rename_existing`, null);
+            const gcode = config.getString(`macros.${macroName}.gcode`, "");
+            if (new RegExp(`^\\s*${macroName.replace(/(?=\W)/g, "\\")}(\\s|$)`, "gmi").test(gcode)) {
                 logger.error(`Error in macro ${macroName}: Cannot call self`);
                 continue;
             }
-            this.registerMacro(macroName, renameExisting ?? macroName + "_base", gcode.join("\n"));
+            this.registerMacro(macroName, renameExisting ?? macroName + "_base", gcode);
         }
         for (const macroName in this.macros) {
             if (macroName === this.macros[macroName]?.name) {

@@ -2,10 +2,9 @@ import express, { Request, Response, Router, static as serveStatic } from "expre
 import http from "http";
 import MarlinRaker from "./MarlinRaker";
 import { WebSocketServer } from "ws";
-import Config from "./Config";
+import Config from "./config/Config";
 import path from "path";
 import fs from "fs-extra";
-import exampleConfig from "../example_config.json";
 import { SerialPort } from "serialport";
 import SerialPortSearch from "./util/SerialPortSearch";
 import sourceMapSupport from "source-map-support";
@@ -50,21 +49,34 @@ let router: Router;
         process.exit(0);
     });
 
-    const configFile = path.join(rootDir, "config/marlinraker.json");
+    const loadResource = async (res: string): Promise<string> => {
+        return process.env.NODE_ENV === "production"
+            ? (await import(`../${res}`)).default
+            : await fs.readFile(res);
+    };
+
+    const configFile = path.join(rootDir, "config/marlinraker.toml");
     await fs.mkdirs(path.dirname(configFile));
     if (!await fs.pathExists(configFile)) {
-        await fs.writeFile(configFile, JSON.stringify(exampleConfig, null, 2));
+        const defaultConfig = await loadResource("config/marlinraker.toml");
+        await fs.writeFile(configFile, defaultConfig);
+
+        const printerConfigFile = path.join(rootDir, "config/printer.toml");
+        if (!await fs.pathExists(printerConfigFile)) {
+            const defaultPrinterConfig = await loadResource("config/printers/generic.toml");
+            await fs.writeFile(printerConfigFile, defaultPrinterConfig);
+        }
     }
     config = new Config(configFile);
 
-    const isDebug = config.getOrDefault<boolean>("extended_logs", false)
+    const isDebug = config.getBoolean("misc.extended_logs", false)
         || process.argv.some((s) => s.toLowerCase() === "--extended-logs");
     if (isDebug) {
         logger.level = Level.debug;
     }
 
-    let port: string | null = config.getOrDefault("serial.port", "auto");
-    let baudRate: number | null = Number.parseInt(config.getOrDefault("serial.baud_rate", "auto"));
+    let port: string | null = config.getString("serial.port", "auto");
+    let baudRate: number | null = Number.parseInt(config.getStringOrNumber("serial.baud_rate", "auto") as string);
     if (!port || port.toLowerCase() === "auto") {
         const serialPortSearch = new SerialPortSearch(baudRate);
         [port, baudRate] = await serialPortSearch.findSerialPort() ?? [null, null];
@@ -117,7 +129,7 @@ let router: Router;
     const httpServer = http.createServer(app);
     const wss = new WebSocketServer({ server: httpServer, path: "/websocket" });
 
-    const httpPort = config.getOrDefault("web.port", 7125);
+    const httpPort = config.getNumber("web.port", 7125);
     httpServer.listen(httpPort);
     logger.info(`App listening on port ${httpPort}`);
 

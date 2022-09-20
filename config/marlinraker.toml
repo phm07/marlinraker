@@ -1,0 +1,16 @@
+#<include printer.toml>
+
+[web]
+port = 7125
+
+[serial]
+port = "auto"
+baud_rate = "auto"
+max_connection_attempts = 5
+connection_timeout = 5000
+
+[misc]
+octoprint_compat = true
+extended_logs = false
+sd_card = true
+display_messages = true

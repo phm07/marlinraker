@@ -29,14 +29,14 @@ class ParserUtil {
     public static parseM115Response(response: string): [IPrinterInfo, TPrinterCapabilities] {
         // "FIRMWARE_NAME:Marlin 1.1.0 (Github) SOURCE_CODE_URL:https://github.com/MarlinFirmware/Marlin PROTOCOL_VERSION:1.0 MACHINE_TYPE:RepRap EXTRUDER_COUNT:1 UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff"
         // "FIRMWARE_NAME:Prusa-Firmware 3.10.1 based on Marlin FIRMWARE_URL:https://github.com/prusa3d/Prusa-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Prusa i3 MK3S EXTRUDER_COUNT:1 UUID:00000000-0000-0000-0000-000000000000"
-        const line = response.split("\n").find((s) => s.startsWith("FIRMWARE_NAME:"));
+        const line = response.split(/\r?\n/).find((s) => s.startsWith("FIRMWARE_NAME:"));
         if (!line) throw new Error("Could not parse printer information");
         const firmwareName = /FIRMWARE_NAME:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
         const machineType = /MACHINE_TYPE:(.*?)( [A-Z_]+:|$)/.exec(line)?.[1] ?? "";
         const info = { firmwareName, machineType };
         const capabilities = Object.fromEntries(
             // "Cap:EEPROM:0"
-            response.split("\n")
+            response.split(/\r?\n/)
                 .filter((s) => s.startsWith("Cap:"))
                 .map((s) => s.substring(4).split(":"))
                 .map(([key, value]) => [key, value === "1"])
@@ -47,7 +47,7 @@ class ParserUtil {
     // " T:229.00 /230.00 B:84.96 /85.00 A:48.33 /0.00 @:55 B@:58"
     public static parseM105Response(line: string): THeaters | null {
         const heaters: THeaters = {};
-        const parts = line.split("\n")
+        const parts = line.split(/\r?\n/)
             .map((s) => s.trim())
             .find((s) => s.startsWith("T"))
             ?.split(" ");
@@ -82,7 +82,7 @@ class ParserUtil {
     // X:180.40 Y:-3.00 Z:0.00 E:0.00 Count X:18040 Y:-300 Z:0
     public static parseM114Response(line: string): [number, number, number, number] | null {
         return (line
-            .split("\n")
+            .split(/\r?\n/)
             .find((s) => s.startsWith("X:"))
             ?.trim()
             .split(" ")
@@ -95,7 +95,7 @@ class ParserUtil {
 
         const files: Record<string, IFileInfo | undefined> = {};
 
-        for (const fileInfo of line.split("\n").slice(1, -2)) {
+        for (const fileInfo of line.split(/\r?\n/).slice(1, -2)) {
             const arr = fileInfo.split(" ");
             const filename = arr[0].substring(0, arr[0].length - 4) + ".gcode";
             const size = Number.parseInt(arr[1]) || 0;
@@ -116,7 +116,7 @@ class ParserUtil {
     }
 
     public static parseM119Response(response: string): Record<string, string> {
-        return Object.fromEntries(response.split("\n")
+        return Object.fromEntries(response.split(/\r?\n/)
             .filter((s) => s.includes(":"))
             .map((s) => s.split(":")
                 .map((t) => t.trim())

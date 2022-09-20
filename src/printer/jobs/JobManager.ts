@@ -19,7 +19,7 @@ class JobManager {
         this.jobQueue = new JobQueue();
         this.totalDuration = 0;
         this.printDuration = 0;
-        this.displayMessages = config.getOrDefault("display_messages", true);
+        this.displayMessages = config.getBoolean("misc.display_messages", true);
 
         setInterval(() => {
             const state = this.currentPrintJob?.state;

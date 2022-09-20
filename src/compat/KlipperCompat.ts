@@ -54,7 +54,7 @@ class KlipperCompat {
                 if (!response) return;
 
                 // Bed X: >???< Y: >???< Z: ???
-                const [minX, minY, maxX, maxY] = response.split("\n")
+                const [minX, minY, maxX, maxY] = response.split(/\r?\n/)
                     .filter((s) => s.startsWith("Bed"))
                     .map((s) => s.split(" ")
                         .filter((_, i) => i === 2 || i === 4)
@@ -67,7 +67,7 @@ class KlipperCompat {
                     ]);
 
                 const grid: number[][] = [];
-                response.split("\n")
+                response.split(/\r?\n/)
                     .filter((s) => s.startsWith(" "))
                     .map((s) => s.trim().split(" "))
                     .map((arr) => arr.map((s) => Number.parseFloat(s)))

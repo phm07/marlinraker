@@ -1,0 +1,39 @@
+# Prusa i3 MK3S(+)
+
+[printer]
+bed_mesh = true
+print_volume = [210, 210, 250]
+
+[printer.extruder]
+min_temp = 0
+max_temp = 300
+min_extrude_temp = 180
+
+[printer.heater_bed]
+min_temp = 0
+max_temp = 100
+
+[macros.pause]
+rename_existing = "pause_base"
+gcode = """
+pause_base
+M601
+"""
+
+[macros.resume]
+rename_existing = "resume_base"
+gcode = """
+M602
+resume_base
+"""
+
+[macros.cancel_print]
+rename_existing = "cancel_base"
+gcode = """
+cancel_base
+G28 X Y
+M18
+M104 S0
+M140 S0
+M107
+"""

@@ -29,11 +29,10 @@ class ToolheadObject extends PrinterObject<IObject> {
         setInterval(this.emit.bind(this), 250);
         printer.on("homedAxesChange", this.emit.bind(this));
 
-        this.printVolume = [
-            config.getOrDefault("printer.print_volume.x", 0),
-            config.getOrDefault("printer.print_volume.y", 0),
-            config.getOrDefault("printer.print_volume.z", 0)
-        ];
+        this.printVolume = config.getGeneric<[number, number, number]>("printer.print_volume",
+            [220, 220, 240], (x): x is [number, number, number] =>
+                typeof x === "object" && Array.isArray(x) && x.length === 3
+        );
     }
 
     public get(_: string[] | null): IObject {

@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { logger, marlinRaker } from "../../Server";
+import { config, logger, marlinRaker } from "../../Server";
 import { TPrinterState } from "../../printer/Printer";
 import { Level } from "../../logger/Logger";
 import packageJson from "../../../package.json";
@@ -21,14 +21,9 @@ interface IResult {
 class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.info";
-    private readonly warnings: string[];
     private readonly versionArray: number[];
 
     public constructor() {
-        this.warnings = [];
-        if (logger.level > Level.info) {
-            this.warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
-        }
         this.versionArray = packageJson.version
             .replace(/[^0-9.]/g, "")
             .split(".")
@@ -37,6 +32,10 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
     }
 
     public invoke(_: TSender, __: undefined): IResult {
+        const warnings = config.warnings.slice();
+        if (logger.level > Level.info) {
+            warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
+        }
         return {
             klippy_connected: true,
             klippy_state: marlinRaker.printer?.state ?? "error",
@@ -52,7 +51,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
             ],
             failed_components: [],
             registered_directories: ["gcodes", "config"],
-            warnings: this.warnings,
+            warnings,
             websocket_count: marlinRaker.connectionManager.connections.length,
             moonraker_version: packageJson.version,
             api_version: this.versionArray,
