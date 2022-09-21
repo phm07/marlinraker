@@ -1,6 +1,7 @@
 import { Updatable } from "./Updatable";
 import { logger, marlinRaker } from "../Server";
 import { exec } from "child_process";
+import StringUtil from "../util/StringUtil";
 
 interface IInfo {
     version?: unknown;
@@ -27,13 +28,13 @@ class ScriptUpdatable extends Updatable<IInfo> {
                     try {
                         resolve(JSON.parse(stdout));
                     } catch (e) {
-                        reject(`${(e as Error).message}\nin ${stdout}`);
+                        reject(`${StringUtil.errorToString(e)}\nin ${stdout}`);
                     }
                 });
             });
             await marlinRaker.updateManager.emit();
         } catch (e) {
-            logger.error(`Error while checking for update for ${this.name}`);
+            logger.error(`Error while checking for update for ${this.name}:`);
             logger.error(e);
         }
     }

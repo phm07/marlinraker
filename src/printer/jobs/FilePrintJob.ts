@@ -51,7 +51,6 @@ class FilePrintJob extends PrintJob {
         this.fileSize = stat.size;
         this.pauseRequested = false;
         this.setState("printing");
-        await this.printer.queueGcode(`M75 ${this.filename}`, false, false);
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
         this.flush().then();
     }
@@ -109,13 +108,11 @@ class FilePrintJob extends PrintJob {
         this.pauseRequested = true;
         await promise;
         await this.waitForPrintMoves();
-        await this.printer.queueGcode("M76", false, false);
         this.setState("paused");
     }
 
     public async resume(): Promise<void> {
         if (this.state !== "paused") return;
-        await this.printer.queueGcode("M75", false, false);
         this.pauseRequested = false;
         this.setState("printing");
         this.flush().then();

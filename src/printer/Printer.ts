@@ -9,8 +9,17 @@ import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import KlipperCompat from "../compat/KlipperCompat";
 import SDCardWatcher from "./watchers/SDCardWatcher";
+import StringUtil from "../util/StringUtil";
 
 type TPrinterState = "ready" | "error" | "shutdown" | "startup";
+
+interface IPauseState {
+    x: number;
+    y: number;
+    isAbsolute: boolean;
+    isAbsoluteE: boolean;
+    feedrate: number;
+}
 
 class Printer extends SerialGcodeDevice {
 
@@ -32,6 +41,7 @@ class Printer extends SerialGcodeDevice {
     public homedAxes!: IHomedAxes;
     public isM73Supported!: boolean;
     public isPrusa!: boolean;
+    public pauseState?: IPauseState;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -152,15 +162,15 @@ class Printer extends SerialGcodeDevice {
     private handleAction(action: string): void {
         if (action === "cancel") {
             logger.info("Canceling print");
-            void marlinRaker.jobManager.cancel();
+            void this.dispatchCommand("cancel_print", false);
 
         } else if (action === "pause") {
             logger.info("Pausing print");
-            void marlinRaker.jobManager.pause();
+            void this.dispatchCommand("pause", false);
 
         } else if (action === "resume") {
             logger.info("Resuming print");
-            void marlinRaker.jobManager.resume();
+            void this.dispatchCommand("resume", false);
         }
     }
 
@@ -266,8 +276,9 @@ class Printer extends SerialGcodeDevice {
             return false;
         }
 
-        logger.info(`Printer info:\n${JSON.stringify(this.info, null, 2)}`);
-        logger.info(`Printer capabilities:\n${JSON.stringify(this.capabilities, null, 2)}`);
+        logger.info(`Identified ${this.info.machineType} on ${this.info.firmwareName} with ${Object.keys(this.capabilities).length} capabilities`);
+        logger.debug(`Printer info:\n${JSON.stringify(this.info, null, 2)}`);
+        logger.debug(`Printer capabilities:\n${JSON.stringify(this.capabilities, null, 2)}`);
         return true;
     }
 
@@ -336,8 +347,9 @@ class Printer extends SerialGcodeDevice {
                 return;
             }
         } catch (e) {
-            if (typeof e !== "string") return;
-            const errorStr = `!! Error on '${command}': ${e}`;
+            logger.error(`Error while executing "${command}"`);
+            logger.error(e);
+            const errorStr = `!! Error on '${command}': ${StringUtil.errorToString(e)}`;
             await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [errorStr]));
             this.gcodeStore.push({
                 message: errorStr,
@@ -369,5 +381,5 @@ class Printer extends SerialGcodeDevice {
     }
 }
 
-export { TPrinterState };
+export { TPrinterState, IPauseState };
 export default Printer;

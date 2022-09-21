@@ -29,7 +29,7 @@ This is where config files are stored. This folder will be exposed by the API an
 in your web interface of choice. See [Configuration](#configuration) for more info.
 
 #### ``gcodes/``
-User-uploaded Gcode files will be stored in this folder. It will too be exposed by the API.
+User-uploaded G-code files will be stored in this folder. It will too be exposed by the API.
 
 #### ``logs/``
 Logs are stored here. The most recent log file will always be called ``marlinraker.log``.
@@ -65,7 +65,6 @@ connection_timeout = 5000
 octoprint_compat = true
 extended_logs = false
 sd_card = true
-display_messages = true
 ```
 
 Notice the ``#<include printer.toml>`` instruction at the top of the file. This will automatically
@@ -88,34 +87,7 @@ min_extrude_temp = 180
 min_temp = 0
 max_temp = 100
 
-[macros.pause]
-rename_existing = "pause_base"
-gcode = """
-pause_base
-G91
-G1 Z5 E-20 F600
-G90
-G1 X0 Y0 F6000
-"""
-
-[macros.resume]
-rename_existing = "resume_base"
-gcode = """
-G91
-G1 Z-5 E20 F600
-resume_base
-"""
-
-[macros.cancel_print]
-rename_existing = "cancel_base"
-gcode = """
-cancel_base
-G28 X Y
-M18
-M104 S0
-M140 S0
-M107
-"""
+# gcode macros go here (see /config/printers for examples)
 ```
 
 [Here](config/printers) you can find pre-made printer profiles and pick one already made for
@@ -173,24 +145,86 @@ Minimum bed temperature. Default is ``0``.
 Maximum bed temperature. Default is ``100``.
 
 #### ``macros.{macro_name}.gcode: string``
-Defines a macro with the name ``{macro_name}`` and sets the gcode that will be executed.
+Defines a macro with the name ``{macro_name}`` and sets the G-code that will be executed.
 
 #### ``macros.{macro_name}.rename_existing: string``
 If a macro with the name ``{macro_name}`` already exists, it will be renamed to this value.
-
-#### ``misc.display_messages: boolean``
-Show ``M117`` messages. Default is ``true``.
 
 #### ``misc.sd_card: boolean``
 Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
 Default is ``true``.
 
 #### ``misc.octoprint_compat: boolean``
-Simulate OctoPrint API endpoints to allow Gcode upload from slicers. Default is ``true``.
+Simulate OctoPrint API endpoints to allow G-code upload from slicers. Default is ``true``.
 
 #### ``misc.extended_logs: boolean``
 Enable verbose logging. Useful for debugging and development. Default is ``false``. 
 **Note:** This will create very large log files quickly and will impact print performance.
+
+## G-code scripting
+Marlinraker evaluates G-code scripts using [Template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals).
+This allows you to create advanced gcode macros. Following objects are available in macro code:
+
+```typescript
+const args: Record<string, string | true | undefined>;
+
+const printer: {
+    state: "ready" | "error" | "shutdown" | "startup";
+    stateMessage: string;
+    x: number;
+    y: number;
+    z: number;
+    e: number;
+    hasEmergencyParser: boolean;
+    speedFactor: number;
+    extrudeFactor: number;
+    fanSpeed: number;
+    capabilities: Record<string, boolean | undefined>;
+    isAbsolute: boolean;
+    isAbsoluteE: boolean;
+    feedrate: number;
+    isSdCard: boolean;
+    isM73Supported: boolean;
+    isPrusa: boolean;
+    info: {
+        machineType: string;
+        firmwareName: string;
+    };
+    pauseState?: {
+        x: number;
+        y: number;
+        isAbsolute: boolean;
+        isAbsoluteE: boolean;
+        feedrate: number;
+    };
+    printJob?: {
+        state: "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
+        filepath: string;
+        filename: string;
+        filePosition: number;
+        progress: number;
+        isPrinting: boolean;
+        isReadyToPrint: boolean;
+    }
+};
+```
+
+### Example
+Below you can see a script that outputs all arguments given to it to console.
+```toml
+[macros.list_arguments]
+gcode = """
+${Object.entries(args).map(([key, value]) => `M118 E1 ${key}=${value}`).join("\n")}
+"""
+```
+
+For ``list_arguments hello=world bool_value`` you would expect following output:
+```
+hello=world
+bool_value=true
+```
+
+**Warning**: Advanced macros allow execution of code. Make sure to only use macros from trusted sources.
 
 ## Update scripts
 Marlinraker will load all scripts contained in ``update_scripts/`` and use them for updating

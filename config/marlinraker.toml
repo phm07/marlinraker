@@ -13,4 +13,3 @@ connection_timeout = 5000
 octoprint_compat = true
 extended_logs = false
 sd_card = true
-display_messages = true

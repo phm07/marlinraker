@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { logger } from "../Server";
 import TOML from "@iarna/toml";
+import StringUtil from "../util/StringUtil";
 
 class Config {
 
@@ -19,8 +20,9 @@ class Config {
         this.isConfigMalformed = false;
         this.config = this.load();
         this.klipperPseudoConfig = this.generateKlipperConfig();
-        logger.info(`Config:\n${JSON.stringify(this.config, null, 2)}`);
-        logger.info(`Klipper pseudo config:\n${JSON.stringify(this.klipperPseudoConfig, null, 2)}`);
+        logger.info("Config loaded");
+        logger.debug(`Config:\n${JSON.stringify(this.config, null, 2)}`);
+        logger.debug(`Klipper pseudo config:\n${JSON.stringify(this.klipperPseudoConfig, null, 2)}`);
     }
 
     private resolve(filepath: string, resolvedSoFar: string[] = []): string {
@@ -48,7 +50,7 @@ class Config {
                 resolvedContent = resolvedContent.replace(line, `\n${resolvedImport}\n`);
             } catch (e) {
                 const lineNum = originalContent.substring(0, match.index).split(/\r?\n/).length;
-                logger.error(`Cannot resolve import ${path.basename(target)} in ${path.basename(filepath)}, line ${lineNum}: ${(e as Error).message}`);
+                logger.error(`Cannot resolve import ${path.basename(target)} in ${path.basename(filepath)}, line ${lineNum}: ${StringUtil.errorToString(e)}`);
             }
         }
 
@@ -58,7 +60,7 @@ class Config {
     private load(): unknown {
         try {
             const toml = this.resolve(this.configFile);
-            return TOML.parse(toml);
+            return TOML.parse(toml.replace("\\", "\\\\"));
         } catch (e) {
             logger.error("Loading config failed:");
             logger.error(e);

@@ -13,27 +13,64 @@ min_extrude_temp = 180
 min_temp = 0
 max_temp = 100
 
+[macros.start_print]
+rename_existing = "start_base"
+gcode = """
+${
+printer.printJob?.isReadyToPrint ? `
+    M118 E1 Printing ${printer.printJob.filename} ; display in console
+    M117 Printing ${printer.printJob.filename} ; display on lcd
+    M75 ${printer.printJob.filename} ; start print job timer
+    start_base ; start print
+` : "M118 E1 !! Cannot start print"
+}
+"""
+
 [macros.pause]
 rename_existing = "pause_base"
 gcode = """
-pause_base
-M601
+${
+printer.printJob?.isPrinting ? `
+    pause_base ; pause print
+    M601 ; park toolhead and pause print timer
+` : "M118 E1 !! Not printing"
+}
 """
 
 [macros.resume]
 rename_existing = "resume_base"
 gcode = """
-M602
-resume_base
+${
+printer.pauseState ? `
+    M118 E1 Resuming ${printer.printJob.filename} ; display in console
+    M117 Printing ${printer.printJob.filename} ; display on lcd
+    M602 ; start print timer and move toolhead to last position
+    resume_base ; resume printing
+` : "M118 E1 !! Print is not paused"
+}
 """
 
 [macros.cancel_print]
 rename_existing = "cancel_base"
 gcode = """
-cancel_base
-G28 X Y
-M18
-M104 S0
-M140 S0
-M107
+${
+printer.printJob?.isPrinting ? `
+    cancel_base ; cancel print
+    M77 ; stop print job timer
+    M118 E1 Print aborted ; display in console
+    M117 Print aborted ; display on lcd
+    G28 XY ; home x and y
+    M18 ; turn off steppers
+    M104 S0 ; turn off hotend
+    M140 S0 ; turn off heated bed
+    M107 ; turn off print fan
+` : "M118 E1 !! Not printing"
+}
+"""
+
+[macros.sdcard_reset_file]
+rename_existing = "reset_base"
+gcode = """
+    reset_base ; reset selected print
+    M117 ; clear lcd screen
 """

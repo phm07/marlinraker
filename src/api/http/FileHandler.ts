@@ -65,12 +65,13 @@ class FileHandler {
             }
 
             if (print) {
-                const printStarted = await marlinRaker.jobManager.startPrintJob(path.join("gcodes", filepath, filename)
+                await marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
                     .replaceAll("\\", "/"));
+                await marlinRaker.printer?.dispatchCommand("start_print");
 
                 res.send({
                     ...response,
-                    print_started: printStarted
+                    print_started: marlinRaker.jobManager.isPrinting()
                 });
             } else {
                 res.send(response);

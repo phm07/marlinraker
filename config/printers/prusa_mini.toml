@@ -13,31 +13,62 @@ min_extrude_temp = 180
 min_temp = 0
 max_temp = 100
 
+[macros.start_print]
+rename_existing = "start_base"
+gcode = """
+${
+printer.printJob?.isReadyToPrint ? `
+    M118 E1 Printing ${printer.printJob.filename} ; display in console
+    start_base ; start print
+` : "M118 E1 !! Cannot start print"
+}
+"""
+
 [macros.pause]
 rename_existing = "pause_base"
 gcode = """
-pause_base
-G91
-G1 Z5 E-20 F600
-G90
-G1 X0 Y0 F6000
+${
+printer.printJob?.isPrinting ? `
+    pause_base ; pause print
+    M118 E1 Paused print ; display in console
+    G91
+    G1 Z5 E-20 F600 ; move nozzle up 5 mm and retract 20 mm
+    G90
+    G1 X0 Y0 F6000 ; move to 0,0
+` : "M118 E1 !! Not printing"
+}
 """
 
 [macros.resume]
 rename_existing = "resume_base"
 gcode = """
-G91
-G1 Z-5 E20 F600
-resume_base
+${
+printer.pauseState ? `
+    M118 E1 Resuming ${printer.printJob.filename} ; display in console
+    G90 ; set absolute positioning
+    G1 X${printer.pauseState.x} Y${printer.pauseState.y} F6000 ; move to last print position
+    G91
+    G1 Z-5 E20 F600 ; move nozzle down 5 mm and extrude 20 mm
+    ${printer.pauseState.isAbsolute ? "G90" : "G91"} ; reset positioning mode
+    ${printer.pauseState.isAbsoluteE ? "M82" : "M83"} ; reset extruder positioning mode
+    G0 F${printer.pauseState.feedrate} ; reset feedrate
+    resume_base ; resume printing
+` : "M118 E1 !! Print is not paused"
+}
 """
 
 [macros.cancel_print]
 rename_existing = "cancel_base"
 gcode = """
-cancel_base
-G28 X Y
-M18
-M104 S0
-M140 S0
-M107
+${
+printer.printJob?.isPrinting ? `
+    cancel_base ; cancel print
+    M118 E1 Print aborted ; display in console
+    G28 XY ; home x and y
+    M18 ; turn off steppers
+    M104 S0 ; turn off hotend
+    M140 S0 ; turn off heated bed
+    M107 ; turn off print fan
+` : "M118 E1 !! Not printing"
+}
 """

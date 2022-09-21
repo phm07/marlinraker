@@ -93,13 +93,7 @@ class KlipperCompat {
             return async () => {
                 await marlinRaker.printer?.restart();
             };
-
-        } else if (/^SDCARD_RESET_FILE(\s|$)/i.test(klipperCommand)) {
-            return async () => {
-                marlinRaker.jobManager.reset();
-            };
         }
-
         return null;
     }
 }

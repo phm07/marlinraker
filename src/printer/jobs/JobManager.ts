@@ -1,7 +1,6 @@
-import { config, marlinRaker } from "../../Server";
+import { marlinRaker } from "../../Server";
 import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
-import path from "path";
 
 class JobManager {
 
@@ -9,17 +8,11 @@ class JobManager {
     public currentPrintJob?: PrintJob;
     public totalDuration: number;
     public printDuration: number;
-    private readonly displayMessages: boolean;
-    private resumePosition?: [number, number];
-    private resumeIsAbsolute?: boolean;
-    private resumeIsEAbsolute?: boolean;
-    private resumeFeedrate?: number;
 
     public constructor() {
         this.jobQueue = new JobQueue();
         this.totalDuration = 0;
         this.printDuration = 0;
-        this.displayMessages = config.getBoolean("misc.display_messages", true);
 
         setInterval(() => {
             const state = this.currentPrintJob?.state;
@@ -46,108 +39,83 @@ class JobManager {
         }, 1000);
     }
 
-    public async startPrintJob(filename: string): Promise<boolean> {
-        if (!marlinRaker.printer) return false;
-        if (marlinRaker.updateManager.busy) return false;
-
-        if (this.isPrinting()) {
-            return false;
-        }
+    public async selectFile(filename: string): Promise<boolean> {
+        const printer = marlinRaker.printer;
+        if (!printer || this.isPrinting()) return false;
 
         const file = await marlinRaker.fileManager.getFile(filename);
         const printJob = file?.getPrintJob?.();
         if (!printJob) return false;
 
-        delete this.resumePosition;
-        delete this.resumeIsAbsolute;
-        delete this.resumeIsEAbsolute;
-        delete this.resumeFeedrate;
         this.currentPrintJob = printJob;
         printJob.on("stateChange", () => {
             marlinRaker.printer!.objectManager.objects.print_stats?.emit();
             marlinRaker.printer!.objectManager.objects.virtual_sdcard?.emit();
         });
-        if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`,
-                false, false);
-        }
-        await printJob.start();
+        delete printer.pauseState;
+        return true;
+    }
+
+    public async start(): Promise<boolean> {
+        if (!this.isReadyToPrint()) return false;
+        await this.currentPrintJob!.start();
         return true;
     }
 
     public async pause(): Promise<boolean> {
-        if (!marlinRaker.printer) return false;
-        if (this.currentPrintJob?.state !== "printing") return false;
+        const printer = marlinRaker.printer;
+        if (!printer || this.currentPrintJob?.state !== "printing") return false;
         await this.currentPrintJob.pause();
-        if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode("M117 Print paused", false, false);
-        }
-        this.resumePosition = marlinRaker.printer.toolheadPosition.slice(0, 2) as [number, number];
-        this.resumeIsAbsolute = marlinRaker.printer.isAbsolutePositioning;
-        this.resumeIsEAbsolute = marlinRaker.printer.isAbsoluteEPositioning;
-        this.resumeFeedrate = marlinRaker.printer.feedrate;
+        printer.pauseState = {
+            x: printer.toolheadPosition[0],
+            y: printer.toolheadPosition[1],
+            feedrate: printer.feedrate,
+            isAbsolute: printer.isAbsolutePositioning,
+            isAbsoluteE: printer.isAbsoluteEPositioning
+        };
         return true;
     }
 
     public async resume(): Promise<boolean> {
-        if (!marlinRaker.printer) return false;
-        if (this.currentPrintJob?.state !== "paused") return false;
-        const printer = marlinRaker.printer;
-
-        await printer.queueGcode(`G90\nG1 X${this.resumePosition?.[0] ?? 0} Y${this.resumePosition?.[1] ?? 0} F6000`,
-            false, false);
-
-        if (this.resumeIsAbsolute !== printer.isAbsolutePositioning) {
-            await printer.queueGcode(this.resumeIsAbsolute ? "G90" : "G91", false, false);
-        }
-        if (this.resumeIsEAbsolute !== printer.isAbsoluteEPositioning) {
-            await printer.queueGcode(this.resumeIsEAbsolute ? "M82" : "M83", false, false);
-        }
-        if (this.resumeFeedrate !== printer.feedrate) {
-            await printer.queueGcode(`G0 F${this.resumeFeedrate}`, false, false);
-        }
-
-        delete this.resumeIsAbsolute;
-        delete this.resumeIsEAbsolute;
-        delete this.resumePosition;
-        delete this.resumeFeedrate;
-        await marlinRaker.printer.queueGcode(`M117 Printing ${path.basename(this.currentPrintJob.filename)}...`,
-            false, false);
+        if (!marlinRaker.printer || this.currentPrintJob?.state !== "paused") return false;
+        delete marlinRaker.printer.pauseState;
         await this.currentPrintJob.resume();
         return true;
     }
 
     public async cancel(): Promise<boolean> {
-        if (!marlinRaker.printer) return false;
-        if (!this.isPrinting()) return false;
+        if (!marlinRaker.printer || !this.isPrinting()) return false;
+        delete marlinRaker.printer.pauseState;
         await this.currentPrintJob!.cancel();
-        if (this.displayMessages) {
-            await marlinRaker.printer.queueGcode("M117 Print canceled", false, false);
-        }
         return true;
     }
 
-    public reset(): boolean {
+    public async reset(): Promise<boolean> {
 
-        if (!marlinRaker.printer
+        const printer = marlinRaker.printer;
+        if (!printer
             || !this.currentPrintJob
             || this.isPrinting())
             return false;
 
-        if (this.displayMessages) {
-            void marlinRaker.printer.queueGcode("M117", false, false);
-        }
-
+        await printer.queueGcode("M117", false, false);
+        delete printer.pauseState;
         delete this.currentPrintJob;
         this.totalDuration = 0;
         this.printDuration = 0;
-        marlinRaker.printer.objectManager.objects.print_stats?.emit();
-        marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
+        printer.objectManager.objects.print_stats?.emit();
+        printer.objectManager.objects.virtual_sdcard?.emit();
         return true;
     }
 
     public isPrinting(): boolean {
-        return this.currentPrintJob?.state === "printing" || this.currentPrintJob?.state === "paused";
+        if (!this.currentPrintJob) return false;
+        return ["printing", "paused"].includes(this.currentPrintJob.state);
+    }
+
+    public isReadyToPrint(): boolean {
+        if (marlinRaker.updateManager.busy || !this.currentPrintJob) return false;
+        return ["standby", "complete", "cancelled"].includes(this.currentPrintJob.state);
     }
 }
 
