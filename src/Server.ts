@@ -49,21 +49,19 @@ let router: Router;
         process.exit(0);
     });
 
-    const loadResource = async (res: string): Promise<string> => {
-        return process.env.NODE_ENV === "production"
-            ? (await import(`../${res}`)).default
-            : await fs.readFile(res);
-    };
-
     const configFile = path.join(rootDir, "config/marlinraker.toml");
     await fs.mkdirs(path.dirname(configFile));
     if (!await fs.pathExists(configFile)) {
-        const defaultConfig = await loadResource("config/marlinraker.toml");
+        const defaultConfig = process.env.NODE_ENV === "production"
+            ? (await import("../config/marlinraker.toml")).default
+            : await fs.readFile("config/marlinraker.toml");
         await fs.writeFile(configFile, defaultConfig);
 
         const printerConfigFile = path.join(rootDir, "config/printer.toml");
         if (!await fs.pathExists(printerConfigFile)) {
-            const defaultPrinterConfig = await loadResource("config/printers/generic.toml");
+            const defaultPrinterConfig = process.env.NODE_ENV === "production"
+                ? (await import("../config/printers/generic.toml")).default
+                : await fs.readFile("config/printers/generic.toml");
             await fs.writeFile(printerConfigFile, defaultPrinterConfig);
         }
     }
