@@ -205,7 +205,7 @@ const printer: {
         progress: number;
         isPrinting: boolean;
         isReadyToPrint: boolean;
-    }
+    };
 };
 ```
 
