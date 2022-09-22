@@ -56,14 +56,9 @@ gcode = """
 ${
 printer.printJob?.isPrinting ? `
     cancel_base ; cancel print
-    M77 ; stop print job timer
+    M603 ; stop print job timer
     M118 E1 Print aborted ; display in console
     M117 Print aborted ; display on lcd
-    G28 XY ; home x and y
-    M18 ; turn off steppers
-    M104 S0 ; turn off hotend
-    M140 S0 ; turn off heated bed
-    M107 ; turn off print fan
 ` : "M118 E1 !! Not printing"
 }
 """
