@@ -36,19 +36,22 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
         if (logger.level > Level.info) {
             warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
         }
+        const components = [
+            "server",
+            "file_manager",
+            "machine",
+            "database",
+            "data_store",
+            "proc_stats"
+        ];
+        if (Object.keys(marlinRaker.updateManager.updatables).length) {
+            components.push("update_manager");
+        }
+
         return {
             klippy_connected: true,
             klippy_state: marlinRaker.printer?.state ?? "error",
-            components: [
-                "server",
-                "file_manager",
-                "machine",
-                "database",
-                "data_store",
-                "job_queue",
-                "announcements",
-                "update_manager"
-            ],
+            components,
             failed_components: [],
             registered_directories: ["gcodes", "config"],
             warnings,

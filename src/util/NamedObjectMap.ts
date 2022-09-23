@@ -6,7 +6,7 @@ class NamedObjectMap<T extends INamedObject> implements Record<string, T | undef
 
     [key: string]: T | undefined;
 
-    public constructor(objects: (T | false)[]) {
+    public constructor(objects: (T | false)[] = []) {
         objects.filter((o): o is T => Boolean(o)).forEach((o) => this[o.name] = o);
     }
 }

@@ -24,16 +24,18 @@ interface IRateLimit {
 
 class UpdateManager {
 
-    private readonly updatables: NamedObjectMap<Updatable<unknown>>;
     private readonly scheduledUpdates: [() => Promise<void>, () => void][];
+    public readonly updatables: NamedObjectMap<Updatable<unknown>>;
     public busy: boolean;
 
     public constructor() {
         this.busy = false;
         this.scheduledUpdates = [];
-        this.updatables = new NamedObjectMap<Updatable<unknown>>([
-            new SystemUpdatable()
-        ]);
+        this.updatables = new NamedObjectMap<Updatable<unknown>>();
+
+        if (process.platform === "linux") {
+            this.updatables.system = new SystemUpdatable();
+        }
 
         this.loadScripts();
         void this.checkForUpdates();

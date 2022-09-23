@@ -3,7 +3,7 @@
   "version": "v0.2.0-alpha",
   "main": "src/Server.ts",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --serve-static",
+    "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --serve-static --extended-logs",
     "build": "npm run lint && webpack && node scripts/after_build.js",
     "build.zip": "npm run build && node scripts/zip.js",
     "lint": "eslint src --max-warnings=0 --fix",
@@ -13,6 +13,7 @@
   "license": "GPLv3",
   "dependencies": {
     "@iarna/toml": "^2.2.5",
+    "@stroncium/procfs": "^1.2.1",
     "chalk": "^4.1.2",
     "express": "^4.18.1",
     "fs-extra": "^10.1.0",
@@ -22,7 +23,6 @@
     "rfc4648": "^1.5.2",
     "serialport": "^10.4.0",
     "source-map-support": "^0.5.21",
-    "systeminformation": "^5.12.4",
     "tslib": "^2.4.0",
     "unzipper": "^0.10.11",
     "ws": "^8.8.1"
@@ -32,8 +32,9 @@
     "@types/fs-extra": "^9.0.13",
     "@types/logrotate-stream": "^0.2.31",
     "@types/multer": "^1.4.7",
-    "@types/node": "^18.7.9",
+    "@types/node": "^18.7.19",
     "@types/source-map-support": "^0.5.6",
+    "@types/stroncium__procfs": "^1.2.0",
     "@types/unzipper": "^0.10.5",
     "@types/webpack-node-externals": "^2.5.3",
     "@types/ws": "^8.5.3",

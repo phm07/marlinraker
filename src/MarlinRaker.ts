@@ -10,6 +10,7 @@ import JobManager from "./printer/jobs/JobManager";
 import MacroManager from "./printer/macros/MacroManager";
 import MetadataManager from "./files/MetadataManager";
 import UpdateManager from "./update/UpdateManager";
+import SystemInfo from "./system/SystemInfo";
 
 class MarlinRaker {
 
@@ -23,6 +24,7 @@ class MarlinRaker {
     public readonly jobManager: JobManager;
     public readonly fileManager: FileManager;
     public readonly macroManager: MacroManager;
+    public readonly systemInfo: SystemInfo;
     public readonly printer?: Printer;
 
     public constructor(wss: WebSocketServer, port: string | null, baudRate: number | null) {
@@ -36,6 +38,8 @@ class MarlinRaker {
         this.fileManager = new FileManager();
         this.macroManager = new MacroManager();
         this.jobManager = new JobManager();
+        this.systemInfo = new SystemInfo();
+
         if (port && baudRate) {
             try {
                 this.printer = new Printer(port, baudRate);
