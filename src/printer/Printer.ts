@@ -137,7 +137,7 @@ class Printer extends SerialGcodeDevice {
         }
 
         {
-            const unknownCommand = /^echo:Unknown command: "(.*)"/.exec(line)?.[1];
+            const unknownCommand = /^(?:echo:Unknown command|Unknown [A-Z] code): "?(.*?)(?:"|$)/.exec(line)?.[1];
             if (unknownCommand) {
                 this.handleUnknownCommand(unknownCommand);
             }
@@ -161,16 +161,22 @@ class Printer extends SerialGcodeDevice {
 
     private handleAction(action: string): void {
         if (action === "cancel") {
-            logger.info("Canceling print");
-            void this.dispatchCommand("cancel_print", false);
+            if (marlinRaker.jobManager.isPrinting()) {
+                logger.info("Canceling print");
+                void this.dispatchCommand("cancel_print", false);
+            }
 
         } else if (action === "pause") {
-            logger.info("Pausing print");
-            void this.dispatchCommand("pause", false);
+            if (marlinRaker.jobManager.currentPrintJob?.state === "printing") {
+                logger.info("Pausing print");
+                void this.dispatchCommand("pause", false);
+            }
 
         } else if (action === "resume") {
-            logger.info("Resuming print");
-            void this.dispatchCommand("resume", false);
+            if (marlinRaker.jobManager.currentPrintJob?.state === "paused") {
+                logger.info("Resuming print");
+                void this.dispatchCommand("resume", false);
+            }
         }
     }
 
@@ -264,6 +270,19 @@ class Printer extends SerialGcodeDevice {
             if (this.serialPort.isOpen) {
                 this.serialPort.close();
             }
+
+        } else if (/^M118(\s|$)/.test(line) && this.isPrusa) { // prusa needs special care again :)
+            const parts = line.split(" ").slice(1);
+            let result = "";
+            if (parts[0] === "E1") {
+                result += "echo:";
+                parts.shift();
+            } else if (parts[0] === "A1") {
+                result += "//";
+                parts.shift();
+            }
+            result += parts.join(" ");
+            this.handleResponseLine(result);
         }
     }
 
@@ -284,6 +303,8 @@ class Printer extends SerialGcodeDevice {
 
     protected async setupPrinter(): Promise<void> {
 
+        this.resetValues();
+
         const timeout = setTimeout(() => {
             this.setState("error", "Printer initialization took too long");
             this.serialPort.close(() => {
@@ -292,6 +313,10 @@ class Printer extends SerialGcodeDevice {
         }, 10000);
 
         this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;
+        if (this.isPrusa) {
+            logger.info("Printer runs Prusa-Firmware");
+        }
+
         this.hasEmergencyParser = this.capabilities.EMERGENCY_PARSER || this.isPrusa;
 
         const sdCardConfig = config.getBoolean("misc.sd_card", true);
@@ -316,16 +341,17 @@ class Printer extends SerialGcodeDevice {
 
         await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
 
-        this.resetValues();
         this.emit("ready");
         clearTimeout(timeout);
     }
 
     public async dispatchCommand(command: string, log = true): Promise<void> {
         if (command.includes("\n")) {
+            const promises = [];
             for (const cmd of command.split(/\r?\n/).filter((s) => s)) {
-                await this.dispatchCommand(cmd, log);
+                promises.push(this.dispatchCommand(cmd, log));
             }
+            await Promise.all(promises);
             return;
         }
 

@@ -1,4 +1,4 @@
-import { marlinRaker } from "../../Server";
+import { config, marlinRaker } from "../../Server";
 import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
 
@@ -27,16 +27,18 @@ class JobManager {
             marlinRaker.printer!.objectManager.objects.print_stats?.emit();
         }, 1000);
 
-        let lastReportedProgress = 0;
-        setInterval(async () => {
-            if (!marlinRaker.printer || !marlinRaker.printer.isM73Supported) return;
-            const progress = this.currentPrintJob?.progress;
-            if (progress && lastReportedProgress !== progress) {
-                lastReportedProgress = progress;
-                marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
-                await marlinRaker.printer.queueGcode(`M73 P${Math.round(progress * 100)}`, false, false);
-            }
-        }, 1000);
+        if (config.getBoolean("printer.gcode.send_m73", true)) {
+            let lastReportedProgress = 0;
+            setInterval(async () => {
+                if (!marlinRaker.printer || !marlinRaker.printer.isM73Supported) return;
+                const progress = this.currentPrintJob?.progress;
+                if (progress && lastReportedProgress !== progress) {
+                    lastReportedProgress = progress;
+                    marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
+                    await marlinRaker.printer.queueGcode(`M73 P${Math.round(progress * 100)}`, false, false);
+                }
+            }, 1000);
+        }
     }
 
     public async selectFile(filename: string): Promise<boolean> {

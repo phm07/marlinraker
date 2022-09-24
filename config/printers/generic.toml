@@ -13,6 +13,9 @@ min_extrude_temp = 180
 min_temp = 0
 max_temp = 100
 
+[printer.gcode]
+send_m73 = true
+
 [macros.start_print]
 rename_existing = "start_base"
 gcode = """
@@ -31,6 +34,7 @@ rename_existing = "pause_base"
 gcode = """
 ${
 printer.printJob?.isPrinting ? `
+    M108 ; cancel heating
     pause_base ; pause print
     M76 ; pause print job timer
     M118 E1 Paused print ; display in console
@@ -68,6 +72,7 @@ rename_existing = "cancel_base"
 gcode = """
 ${
 printer.printJob?.isPrinting ? `
+    M108 ; cancel heating
     cancel_base ; cancel print
     M77 ; stop print job timer
     M118 E1 Print aborted ; display in console

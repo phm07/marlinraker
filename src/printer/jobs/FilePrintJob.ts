@@ -57,7 +57,9 @@ class FilePrintJob extends PrintJob {
 
     public async finish(): Promise<void> {
         await this.waitForPrintMoves();
-        await this.printer.queueGcode("M77", false, false);
+        if (!this.printer.isPrusa) {
+            await this.printer.queueGcode("M77", false, false);
+        }
         this.setState("complete");
         this.progress = 1;
     }
@@ -99,9 +101,6 @@ class FilePrintJob extends PrintJob {
 
     public async pause(): Promise<void> {
         if (this.state !== "printing" || this.pauseRequested) return;
-        if (this.printer.hasEmergencyParser) {
-            await this.printer.queueGcode("M108", true, false);
-        }
         const promise = new Promise<void>((resolve) => {
             this.onPausedListener = resolve.bind(this);
         });
@@ -119,9 +118,6 @@ class FilePrintJob extends PrintJob {
     }
 
     public async cancel(): Promise<void> {
-        if (this.printer.hasEmergencyParser) {
-            await this.printer.queueGcode("M108", true, false);
-        }
         if (!this.pauseRequested) {
             const promise = new Promise<void>((resolve) => {
                 this.onPausedListener = resolve.bind(this);
@@ -130,7 +126,6 @@ class FilePrintJob extends PrintJob {
             await promise;
         }
         await this.waitForPrintMoves();
-        await this.printer.queueGcode("M77", false, false);
         this.setState("cancelled");
     }
 

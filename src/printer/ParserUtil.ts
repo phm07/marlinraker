@@ -157,8 +157,8 @@ class ParserUtil {
         return homedAxes;
     }
 
-    public static isEmergencyCommand(command: string): boolean {
-        return Boolean(/^M(112|108|410|876)(\s|$)/.test(command));
+    public static isEmergencyCommand(command: string, prusa: boolean): boolean {
+        return (prusa ? /^M112(?:\s|$)/ : /^M(?:112|108|410|876)(?:\s|$)/).test(command);
     }
 
     public static trimGcodeLine(gcode: string): string {

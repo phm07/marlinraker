@@ -87,6 +87,9 @@ min_extrude_temp = 180
 min_temp = 0
 max_temp = 100
 
+[printer.gcode]
+send_m73 = true
+
 # gcode macros go here (see /config/printers for examples)
 ```
 
@@ -121,6 +124,17 @@ need to boot first before taking any commands. Default is ``5``.
 How long a connection attempt can take before it is canceled in milliseconds.
 Default is ``5000``.
 
+#### ``misc.sd_card: boolean``
+Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
+Default is ``true``.
+
+#### ``misc.octoprint_compat: boolean``
+Simulate OctoPrint API endpoints to allow G-code upload from slicers. Default is ``true``.
+
+#### ``misc.extended_logs: boolean``
+Enable verbose logging. Useful for debugging and development. Default is ``false``.
+**Note:** This will create very large log files quickly and will impact print performance.
+
 #### ``printer.bed_mesh: boolean``
 Specify if bed mesh leveling is enabled for this machine. Default is ``false``.
 
@@ -144,22 +158,15 @@ Minimum bed temperature. Default is ``0``.
 #### ``printer.heater_bed.max_temp: number``
 Maximum bed temperature. Default is ``100``.
 
+#### ``printer.gcode.send_m73: boolean``
+Whether to send M73 (print progress) G-code. G-codes sliced for some printers (like Prusa)
+already include this and it can be turned off. Default is ``true``.
+
 #### ``macros.{macro_name}.gcode: string``
 Defines a macro with the name ``{macro_name}`` and sets the G-code that will be executed.
 
 #### ``macros.{macro_name}.rename_existing: string``
 If a macro with the name ``{macro_name}`` already exists, it will be renamed to this value.
-
-#### ``misc.sd_card: boolean``
-Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
-Default is ``true``.
-
-#### ``misc.octoprint_compat: boolean``
-Simulate OctoPrint API endpoints to allow G-code upload from slicers. Default is ``true``.
-
-#### ``misc.extended_logs: boolean``
-Enable verbose logging. Useful for debugging and development. Default is ``false``. 
-**Note:** This will create very large log files quickly and will impact print performance.
 
 ## G-code scripting
 Marlinraker evaluates G-code scripts using [Template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals).

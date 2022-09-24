@@ -104,7 +104,6 @@ class SocketHandler extends MessageHandler {
     }
 
     public async broadcast<TParams>(notification: INotification<TParams>): Promise<void> {
-        logger.debug(`Broadcast notification: ${JSON.stringify(notification)}`);
         const message = await notification.toString();
         this.socketServer.clients.forEach((client) => {
             client.send(message);

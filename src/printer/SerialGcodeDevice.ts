@@ -34,6 +34,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
     protected ready: boolean;
     private readonly maxConnectionAttempts: number;
     private readonly connectionTimeout: number;
+    protected abstract isPrusa: boolean;
 
     protected constructor(serialPort: string, baudRate: number) {
         super();
@@ -139,11 +140,11 @@ abstract class SerialGcodeDevice extends EventEmitter {
         }
 
         if (gcodeRaw.includes("\n")) {
-            const responses = [];
+            const promises = [];
             for (const line of gcodeRaw.split(/\r?\n/).filter((s) => s)) {
-                responses.push(await this.queueGcode(line, important, log));
+                promises.push(this.queueGcode(line, important, log));
             }
-            return responses.join("\n");
+            return (await Promise.all(promises)).join("\n");
         }
 
         if (log) {
@@ -157,7 +158,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
         const gcode = ParserUtil.trimGcodeLine(gcodeRaw);
         if (!gcode) return "";
 
-        if (this.hasEmergencyParser && ParserUtil.isEmergencyCommand(gcode)) {
+        if (this.hasEmergencyParser && ParserUtil.isEmergencyCommand(gcode, this.isPrusa)) {
             const promise = new Promise<string>((resolve) => {
                 this.commandQueue.unshift({
                     gcode,
