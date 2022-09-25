@@ -92,7 +92,7 @@ class MacroManager {
 
         for (const macroName in this.macros) {
             if (macroName === this.macros[macroName]?.name) {
-                (config.klipperPseudoConfig as Record<string, unknown>)[`gcode_macro ${macroName.toLowerCase()}`] = {};
+                (config.klipperPseudoConfig as Record<string, unknown>)[`gcode_macro ${macroName.toUpperCase()}`] = {};
             }
         }
     }
