@@ -4,12 +4,18 @@ import { logger } from "../Server";
 import TOML from "@iarna/toml";
 import StringUtil from "../util/StringUtil";
 
+interface IFileInfo {
+    filename: string;
+    sections: string[];
+}
+
 class Config {
 
     public klipperPseudoConfig: unknown;
+    public readonly config: unknown;
+    public readonly files: IFileInfo[];
     public readonly warnings: string[];
     private readonly cache: Record<string, unknown | undefined>;
-    private readonly config: unknown;
     private readonly configFile: string;
     private readonly isConfigMalformed: boolean;
 
@@ -18,27 +24,32 @@ class Config {
         this.cache = {};
         this.configFile = path.resolve(configFile);
         this.isConfigMalformed = false;
-        this.config = this.load();
+        [this.config, this.files] = this.load();
         this.klipperPseudoConfig = this.generateKlipperConfig();
         logger.info("Config loaded");
         logger.debug(`Config:\n${JSON.stringify(this.config, null, 2)}`);
         logger.debug(`Klipper pseudo config:\n${JSON.stringify(this.klipperPseudoConfig, null, 2)}`);
     }
 
-    private resolve(filepath: string, resolvedSoFar: string[] = []): string {
+    private resolve(filepath: string, resolvedSoFar: string[] = []): [object, IFileInfo[]] {
 
         if (!fs.pathExistsSync(filepath)) {
             throw new Error(`${filepath} does not exist`);
         }
 
         const originalContent = fs.readFileSync(filepath).toString("utf-8");
-        let resolvedContent = originalContent;
+        const resolvedContent = TOML.parse(originalContent.replace("\\", "\\\\"));
         resolvedSoFar.push(filepath);
+
+        const fileInfo = [{
+            filename: path.relative(path.dirname(this.configFile), filepath),
+            sections: StringUtil.getDeepKeys(resolvedContent)
+        }];
 
         const regex = /^#<include +([\w\-. /\\]+?)>.*$/gmi;
         let match;
         while ((match = regex.exec(originalContent)) !== null) {
-            const [line, file] = match;
+            const file = match[1];
             const target = path.resolve(path.dirname(filepath), file);
 
             if (resolvedSoFar.some((resolved) => !path.relative(resolved, target))) {
@@ -46,26 +57,26 @@ class Config {
             }
 
             try {
-                const resolvedImport = this.resolve(target, resolvedSoFar);
-                resolvedContent = resolvedContent.replace(line, `\n${resolvedImport}\n`);
+                const [resolvedImport, importFileInfo] = this.resolve(target, resolvedSoFar);
+                Object.assign(resolvedContent, resolvedImport);
+                fileInfo.push(...importFileInfo);
             } catch (e) {
                 const lineNum = originalContent.substring(0, match.index).split(/\r?\n/).length;
                 logger.error(`Cannot resolve import ${path.basename(target)} in ${path.basename(filepath)}, line ${lineNum}: ${StringUtil.errorToString(e)}`);
             }
         }
 
-        return resolvedContent;
+        return [resolvedContent, fileInfo];
     }
 
-    private load(): unknown {
+    private load(): [unknown, IFileInfo[]] {
         try {
-            const toml = this.resolve(this.configFile);
-            return TOML.parse(toml.replace("\\", "\\\\"));
+            return this.resolve(this.configFile);
         } catch (e) {
             logger.error("Loading config failed:");
             logger.error(e);
         }
-        return {};
+        return [{}, []];
     }
 
     public getObject(property: string, defaultValue: object): object {
@@ -154,4 +165,5 @@ class Config {
     }
 }
 
+export { IFileInfo };
 export default Config;

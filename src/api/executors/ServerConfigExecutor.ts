@@ -1,14 +1,23 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
+import { IFileInfo } from "../../config/Config";
+import { config } from "../../Server";
 
-type TResult = unknown;
+interface TResult {
+    config: unknown;
+    orig: unknown;
+    files: IFileInfo[];
+}
 
 class ServerConfigExecutor implements IMethodExecutor<undefined, TResult> {
 
     public readonly name = "server.config";
 
-    public invoke(_: TSender, __: undefined): Promise<TResult> | TResult {
-        // @TODO
-        return {};
+    public invoke(_: TSender, __: undefined): TResult {
+        return {
+            config: config.config,
+            orig: config.config,
+            files: config.files
+        };
     }
 }
 
