@@ -64,6 +64,7 @@
     ],
     "eqeqeq": "warn",
     "key-spacing": "warn",
+    "linebreak-style": "error",
     "no-confusing-arrow": "warn",
     "no-console": "error",
     "no-implicit-coercion": "warn",
