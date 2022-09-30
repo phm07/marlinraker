@@ -48,7 +48,6 @@ class CustomMacro implements IMacro {
             isAbsoluteE: printer.isAbsoluteEPositioning,
             feedrate: printer.feedrate,
             info: printer.info,
-            isSdCard: printer.isSdCard,
             isM73Supported: printer.isM73Supported,
             isPrusa: printer.isPrusa,
             printJob: printJobObj

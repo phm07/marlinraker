@@ -64,7 +64,6 @@ connection_timeout = 5000
 [misc]
 octoprint_compat = true
 extended_logs = false
-sd_card = true
 m114_poll_rate = 0.2
 ```
 
@@ -124,10 +123,6 @@ need to boot first before taking any commands. Default is ``5``.
 #### ``serial.connection_timeout: number``
 How long a connection attempt can take before it is canceled in milliseconds.
 Default is ``5000``.
-
-#### ``misc.sd_card: boolean``
-Enable SD card if supported. This enables listing files on the SD card and starting SD prints.
-Default is ``true``.
 
 #### ``misc.octoprint_compat: boolean``
 Simulate OctoPrint API endpoints to allow G-code upload from slicers. Default is ``true``.
@@ -194,7 +189,6 @@ const printer: {
     isAbsolute: boolean;
     isAbsoluteE: boolean;
     feedrate: number;
-    isSdCard: boolean;
     isM73Supported: boolean;
     isPrusa: boolean;
     info: {

@@ -1,6 +1,5 @@
 import FileDirectory from "./FileDirectory";
 import { IDirectory } from "./IDirectory";
-import GcodeDirectory from "./GcodeDirectory";
 import { IFile } from "./IFile";
 import path from "path";
 import { marlinRaker, rootDir } from "../Server";
@@ -61,7 +60,7 @@ class FileManager {
 
     public constructor() {
         this.directories = [
-            new GcodeDirectory(null, path.join(rootDir, "gcodes"), "gcodes"),
+            new FileDirectory(null, path.join(rootDir, "gcodes"), "gcodes"),
             new FileDirectory(null, path.join(rootDir, "config"), "config")
         ];
     }

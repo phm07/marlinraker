@@ -2,13 +2,12 @@ import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
 import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo } from "./ParserUtil";
-import { config, logger, marlinRaker } from "../Server";
+import { logger, marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import KlipperCompat from "../compat/KlipperCompat";
-import SDCardWatcher from "./watchers/SDCardWatcher";
 import StringUtil from "../util/StringUtil";
 
 type TPrinterState = "ready" | "error" | "shutdown" | "startup";
@@ -38,7 +37,6 @@ class Printer extends SerialGcodeDevice {
     public fanSpeed!: number;
     public speedFactor!: number;
     public extrudeFactor!: number;
-    public isSdCard!: boolean;
     public homedAxes!: IHomedAxes;
     public isM73Supported!: boolean;
     public isPrusa!: boolean;
@@ -94,7 +92,6 @@ class Printer extends SerialGcodeDevice {
         this.fanSpeed = 0;
         this.speedFactor = 1.0;
         this.extrudeFactor = 1.0;
-        this.isSdCard = false;
         this.homedAxes = { x: false, y: false, z: false };
         this.isM73Supported = true;
         this.isPrusa = false;
@@ -189,13 +186,7 @@ class Printer extends SerialGcodeDevice {
     private handleUnknownCommand(command: string): void {
         logger.warn(`Unknown command: "${command}"`);
 
-        if (/^M2[01](\s|$)/.test(command)) {
-            if (this.isSdCard) {
-                logger.warn("SD Card support was enabled in config but is not supported by printer");
-                this.isSdCard = false;
-            }
-
-        } else if (/^M73(\s|$)/.test(command)) {
+        if (/^M73(\s|$)/.test(command)) {
             if (this.isM73Supported) {
                 logger.warn("Printer does not support M73 command");
                 this.isM73Supported = false;
@@ -325,12 +316,6 @@ class Printer extends SerialGcodeDevice {
 
         this.hasEmergencyParser = this.capabilities.EMERGENCY_PARSER || this.isPrusa;
 
-        const sdCardConfig = config.getBoolean("misc.sd_card", true);
-        this.isSdCard = this.capabilities.SDCARD !== false && sdCardConfig;
-        if (this.isSdCard !== sdCardConfig) {
-            logger.warn("SD Card support was enabled in config but is not supported by printer");
-        }
-
         this.watchers = [
             new TemperatureWatcher(this),
             new PositionWatcher(this)
@@ -338,11 +323,6 @@ class Printer extends SerialGcodeDevice {
 
         if (this.isPrusa) {
             await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
-        }
-
-        if (this.isSdCard) {
-            await this.queueGcode("M21", false, false);
-            this.watchers.push(new SDCardWatcher("SD"));
         }
 
         await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
