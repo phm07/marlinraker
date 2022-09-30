@@ -11,7 +11,7 @@ min_extrude_temp = 180
 
 [printer.heater_bed]
 min_temp = 0
-max_temp = 100
+max_temp = 120
 
 [printer.gcode]
 send_m73 = false
