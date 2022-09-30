@@ -40,24 +40,24 @@ class SdInfo {
             const csd = Buffer.from(SystemInfo.read("/sys/block/mmcblk0/device/csd").trim().toLowerCase(), "hex");
             switch (csd[0] >> 6 & 0x3) {
             case 0: {
-                const maxBlockLen = Math.pow(csd[5] & 0xf, 2);
+                const maxBlockLen = (csd[5] & 0xf) ** 2;
                 const cSize = (csd[6] & 0x3) << 10 | csd[7] << 2 | csd[8] >> 6 & 0x3;
                 const cMultReg = (csd[9] & 0x3) << 1 | csd[10] >> 7;
-                const cMult = Math.pow(cMultReg + 2, 2);
+                const cMult = (cMultReg + 2) ** 2;
                 totalBytes = (cSize + 1) * cMult * maxBlockLen;
-                capacity = `${Math.round(totalBytes / Math.pow(1024, 2) * 10) / 10} MiB`;
+                capacity = `${Math.round(totalBytes / 1024 ** 2 * 10) / 10} MiB`;
                 break;
             }
             case 1: {
                 const cSize = (csd[7] & 0x3f) << 16 | csd[8] << 8 | csd[9];
                 totalBytes = (cSize + 1) * 512 * 1024;
-                capacity = `${Math.round(totalBytes / Math.pow(1024, 3) * 10) / 10} GiB`;
+                capacity = `${Math.round(totalBytes / 1024 ** 3 * 10) / 10} GiB`;
                 break;
             }
             case 2: {
                 const cSize = (csd[6] & 0xf) << 24 | csd[7] << 16 | csd[8] << 8 | csd[9];
                 totalBytes = (cSize + 1) * 512 * 1024;
-                capacity = `${Math.round(totalBytes / Math.pow(1024, 4) / 10)} TiB`;
+                capacity = `${Math.round(totalBytes / 1024 ** 4 / 10)} TiB`;
             }
             }
 

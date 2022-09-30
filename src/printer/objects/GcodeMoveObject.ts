@@ -1,6 +1,5 @@
 import PrinterObject from "./PrinterObject";
 import { marlinRaker } from "../../Server";
-import Printer from "../Printer";
 
 interface IResult {
     speed_factor: number;
@@ -17,17 +16,9 @@ class GcodeMoveObject extends PrinterObject<IResult> {
 
     public readonly name = "gcode_move";
 
-    public constructor(printer: Printer) {
+    public constructor() {
         super();
-        let lastEmit = 0;
-        printer.on("positionChange", () => {
-            const now = Date.now();
-            if (now - lastEmit < 250) return; // avoid spamming
-            lastEmit = now;
-            this.emit();
-        });
-        printer.on("positioningChange", this.emit.bind(this));
-        printer.on("factorChange", this.emit.bind(this));
+        setInterval(this.emit.bind(this), 250);
     }
 
     protected get(_: string[] | null): IResult {
@@ -38,8 +29,8 @@ class GcodeMoveObject extends PrinterObject<IResult> {
             absolute_coordinates: marlinRaker.printer?.isAbsolutePositioning ?? true,
             absolute_extrude: marlinRaker.printer?.isAbsolutePositioning ?? true,
             homing_origin: [0, 0, 0, 0],
-            position: marlinRaker.printer?.toolheadPosition ?? [0, 0, 0, 0],
-            gcode_position: marlinRaker.printer?.toolheadPosition ?? [0, 0, 0, 0]
+            position: marlinRaker.printer?.gcodePosition ?? [0, 0, 0, 0],
+            gcode_position: marlinRaker.printer?.gcodePosition ?? [0, 0, 0, 0]
         };
     }
 }

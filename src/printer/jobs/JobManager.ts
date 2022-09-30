@@ -69,8 +69,8 @@ class JobManager {
         if (!printer || this.currentPrintJob?.state !== "printing") return false;
         await this.currentPrintJob.pause();
         printer.pauseState = {
-            x: printer.toolheadPosition[0],
-            y: printer.toolheadPosition[1],
+            x: printer.gcodePosition[0],
+            y: printer.gcodePosition[1],
             feedrate: printer.feedrate,
             isAbsolute: printer.isAbsolutePositioning,
             isAbsoluteE: printer.isAbsoluteEPositioning

@@ -65,6 +65,7 @@ connection_timeout = 5000
 octoprint_compat = true
 extended_logs = false
 sd_card = true
+m114_poll_rate = 0.2
 ```
 
 Notice the ``#<include printer.toml>`` instruction at the top of the file. This will automatically
@@ -134,6 +135,9 @@ Simulate OctoPrint API endpoints to allow G-code upload from slicers. Default is
 #### ``misc.extended_logs: boolean``
 Enable verbose logging. Useful for debugging and development. Default is ``false``.
 **Note:** This will create very large log files quickly and will impact print performance.
+
+#### ``misc.m114_poll_rate: number``
+Interval between ``M114`` G-codes in seconds. Default is ``0.2``.
 
 #### ``printer.bed_mesh: boolean``
 Specify if bed mesh leveling is enabled for this machine. Default is ``false``.

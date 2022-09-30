@@ -14,6 +14,7 @@ import VirtualSdCardObject from "./VirtualSdCardObject";
 import NamedObjectMap from "../../util/NamedObjectMap";
 import FanObject from "./FanObject";
 import SystemStatsObject from "./SystemStatsObject";
+import MotionReportObject from "./MotionReportObject";
 
 class ObjectManager {
 
@@ -26,8 +27,9 @@ class ObjectManager {
         this.objects = new NamedObjectMap<PrinterObject<unknown>>([
             new WebhooksObject(this.printer),
             new ToolheadObject(this.printer),
-            new GcodeMoveObject(this.printer),
             new FanObject(this.printer),
+            new GcodeMoveObject(),
+            new MotionReportObject(),
             new SystemStatsObject(),
             new HeatersObject(),
             new ConfigFileObject(),

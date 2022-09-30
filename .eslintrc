@@ -76,6 +76,7 @@
       "warn",
       "before"
     ],
+    "prefer-exponentiation-operator": "warn",
     "rest-spread-spacing": "warn",
     "space-before-blocks": "warn",
     "space-in-parens": "warn",

@@ -13,3 +13,4 @@ connection_timeout = 5000
 octoprint_compat = true
 extended_logs = false
 sd_card = true
+m114_poll_rate = 0.2

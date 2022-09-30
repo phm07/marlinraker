@@ -41,7 +41,7 @@ class ToolheadObject extends PrinterObject<IObject> {
             print_time: 0,
             estimated_print_time: 0,
             extruder: "extruder",
-            position: this.printer.toolheadPosition,
+            position: this.printer.actualPosition,
             axis_minimum: [0, 0, 0, 0],
             axis_maximum: [...this.printVolume, 0]
         };

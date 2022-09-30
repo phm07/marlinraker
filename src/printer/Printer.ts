@@ -30,7 +30,8 @@ class Printer extends SerialGcodeDevice {
     public stateMessage: string;
     public capabilities: TPrinterCapabilities;
     public watchers: Watcher[];
-    public toolheadPosition!: [number, number, number, number];
+    public actualPosition!: [number, number, number, number];
+    public gcodePosition!: [number, number, number, number];
     public isAbsolutePositioning!: boolean;
     public isAbsoluteEPositioning!: boolean;
     public feedrate!: number;
@@ -42,6 +43,8 @@ class Printer extends SerialGcodeDevice {
     public isM73Supported!: boolean;
     public isPrusa!: boolean;
     public pauseState?: IPauseState;
+    public actualSpeed!: number;
+    public actualExtruderSpeed!: number;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -83,7 +86,8 @@ class Printer extends SerialGcodeDevice {
     }
 
     private resetValues(): void {
-        this.toolheadPosition = [0, 0, 0, 0];
+        this.actualPosition = [0, 0, 0, 0];
+        this.gcodePosition = [0, 0, 0, 0];
         this.isAbsolutePositioning = true;
         this.isAbsoluteEPositioning = true;
         this.feedrate = 0;
@@ -94,6 +98,8 @@ class Printer extends SerialGcodeDevice {
         this.homedAxes = { x: false, y: false, z: false };
         this.isM73Supported = true;
         this.isPrusa = false;
+        this.actualSpeed = 0;
+        this.actualExtruderSpeed = 0;
     }
 
     public async connect(): Promise<void> {
@@ -220,27 +226,27 @@ class Printer extends SerialGcodeDevice {
             const positions = ParserUtil.parseG0G1G92Request(line);
             if (line.startsWith("G92")) {
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
-                    this.toolheadPosition[i] = positions[s] ?? this.toolheadPosition[i];
+                    this.gcodePosition[i] = positions[s] ?? this.gcodePosition[i];
                 });
             } else {
                 if (this.isAbsolutePositioning) {
                     ["X", "Y", "Z"].forEach((s, i) => {
-                        this.toolheadPosition[i] = positions[s] ?? this.toolheadPosition[i];
+                        this.gcodePosition[i] = positions[s] ?? this.gcodePosition[i];
                     });
                 } else {
                     ["X", "Y", "Z"].forEach((s, i) => {
-                        this.toolheadPosition[i] += positions[s] ?? 0;
+                        this.gcodePosition[i] += positions[s] ?? 0;
                     });
                 }
                 if (this.isAbsoluteEPositioning) {
-                    this.toolheadPosition[3] = positions.E ?? this.toolheadPosition[3];
+                    this.gcodePosition[3] = positions.E ?? this.gcodePosition[3];
                 } else {
-                    this.toolheadPosition[3] += positions.E ?? 0;
+                    this.gcodePosition[3] += positions.E ?? 0;
                 }
 
                 this.feedrate = positions.F ?? this.feedrate;
             }
-            this.emit("positionChange");
+            this.emit("gcodePositionChange");
 
         } else if (/^M106(\s|$)/.test(line)) {
             const fanSpeed = ParserUtil.parseM106Request(line);
