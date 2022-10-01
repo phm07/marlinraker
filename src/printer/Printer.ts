@@ -114,6 +114,12 @@ class Printer extends SerialGcodeDevice {
         this.state = state;
         this.stateMessage = stateMessage ?? "";
         this.emit("stateChange");
+
+        if (state === "ready") {
+            void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_klippy_ready"));
+        } else if (state === "shutdown") {
+            void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_klippy_shutdown"));
+        }
     }
 
     public emergencyStop(): void {
