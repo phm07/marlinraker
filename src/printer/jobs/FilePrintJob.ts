@@ -10,11 +10,11 @@ class FilePrintJob extends PrintJob {
 
     public readonly filename: string;
     public readonly filepath: string;
+    public readonly fileSize: number;
     public filePosition: number;
     public progress: number;
+    private readonly metadata: Promise<IGcodeMetadata | null>;
     private readonly printer: Printer;
-    private fileSize?: number;
-    private metadata?: IGcodeMetadata;
     private lineReader?: LineReader;
     private latestCommand?: Promise<string>;
     private onPausedListener?: () => void;
@@ -35,20 +35,19 @@ class FilePrintJob extends PrintJob {
         this.printer.on("commandOk", async () => {
             await this.flush();
         });
+
+        this.metadata = marlinRaker.metadataManager.getOrGenerateMetadata(this.filename);
+
+        try {
+            this.fileSize = fs.statSync(this.filepath).size;
+        } catch (_) {
+            this.fileSize = 0;
+        }
     }
 
     public async start(): Promise<void> {
         if (this.state !== "standby") throw new Error("Job already started");
-        const metadata = await marlinRaker.metadataManager.getOrGenerateMetadata(this.filename);
-        let stat = null;
-        try {
-            stat = await fs.stat(this.filepath);
-        } catch (_) {
-            //
-        }
-        if (!metadata || !stat) throw new Error("Cannot find file");
-        this.metadata = metadata;
-        this.fileSize = stat.size;
+        if (!this.fileSize || !await this.metadata) throw new Error("Cannot find file");
         this.pauseRequested = false;
         this.setState("printing");
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
@@ -91,10 +90,10 @@ class FilePrintJob extends PrintJob {
         const position = this.lineReader.position;
         this.latestCommand = this.printer.queueGcode(nextCommand, false, false);
 
-        this.latestCommand.then(() => {
+        this.latestCommand.then(async () => {
             this.filePosition = position;
-            const start = this.metadata?.gcode_start_byte ?? 0;
-            const end = this.metadata?.gcode_end_byte ?? this.fileSize ?? 0;
+            const start = (await this.metadata)?.gcode_start_byte ?? 0;
+            const end = (await this.metadata)?.gcode_end_byte ?? this.fileSize;
             this.progress = Math.min(1, Math.max(0, (position - start) / (end - start)));
         });
     }

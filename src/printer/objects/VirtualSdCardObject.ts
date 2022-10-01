@@ -2,9 +2,11 @@ import PrinterObject from "./PrinterObject";
 import { marlinRaker } from "../../Server";
 
 interface IObject {
-    progress: number;
     is_active: boolean;
+    progress: number;
+    file_path: string;
     file_position: number;
+    file_size: number;
 }
 
 class VirtualSdCardObject extends PrinterObject<IObject> {
@@ -17,9 +19,11 @@ class VirtualSdCardObject extends PrinterObject<IObject> {
 
     protected get(_: string[] | null): IObject {
         return {
-            progress: marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
             is_active: marlinRaker.jobManager.currentPrintJob?.state === "printing",
-            file_position: marlinRaker.jobManager.currentPrintJob?.filePosition ?? 0
+            progress: marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
+            file_path: marlinRaker.jobManager.currentPrintJob?.filepath ?? "",
+            file_position: marlinRaker.jobManager.currentPrintJob?.filePosition ?? 0,
+            file_size: marlinRaker.jobManager.currentPrintJob?.fileSize ?? 0
         };
     }
 }

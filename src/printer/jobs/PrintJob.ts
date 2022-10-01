@@ -5,6 +5,8 @@ type TState = "standby" | "printing" | "paused" | "complete" | "cancelled" | "er
 abstract class PrintJob extends EventEmitter {
 
     public readonly abstract filename: string;
+    public readonly abstract filepath: string;
+    public readonly abstract fileSize: number;
     public abstract filePosition: number;
     public abstract progress: number;
     public state: TState;

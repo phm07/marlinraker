@@ -331,20 +331,22 @@ class Printer extends SerialGcodeDevice {
         clearTimeout(timeout);
     }
 
-    public async dispatchCommand(command: string, log = true): Promise<void> {
-        if (command.includes("\n")) {
+    public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
+        if (commandRaw.includes("\n")) {
             const promises = [];
-            for (const cmd of command.split(/\r?\n/).filter((s) => s)) {
+            for (const cmd of commandRaw.split(/\r?\n/).filter((s) => s)) {
                 promises.push(this.dispatchCommand(cmd, log));
             }
             await Promise.all(promises);
             return;
         }
 
+        const command = ParserUtil.trimGcodeLine(commandRaw);
+
         try {
             const logCommand = (): void => {
                 this.gcodeStore.push({
-                    message: command,
+                    message: commandRaw,
                     time: Date.now() / 1000,
                     type: "command"
                 });
