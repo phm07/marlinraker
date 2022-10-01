@@ -221,10 +221,12 @@ class Printer extends SerialGcodeDevice {
                 if (positions.E !== undefined) {
                     this.extrudedFilamentOffset += this.gcodePosition[3] - positions.E;
                 }
+                this.gcodePosition = [...this.gcodePosition]; // do not modify original array
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
                     this.gcodePosition[i] = positions[s] ?? this.gcodePosition[i];
                 });
             } else {
+                this.gcodePosition = [...this.gcodePosition];
                 if (this.isAbsolutePositioning) {
                     ["X", "Y", "Z"].forEach((s, i) => {
                         this.gcodePosition[i] = positions[s] ?? this.gcodePosition[i];

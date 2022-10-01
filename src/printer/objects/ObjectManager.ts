@@ -28,7 +28,7 @@ class ObjectManager {
             new WebhooksObject(this.printer),
             new ToolheadObject(this.printer),
             new FanObject(this.printer),
-            new GcodeMoveObject(),
+            new GcodeMoveObject(this.printer),
             new MotionReportObject(),
             new SystemStatsObject(),
             new HeatersObject(),

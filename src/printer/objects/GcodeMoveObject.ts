@@ -1,5 +1,5 @@
 import PrinterObject from "./PrinterObject";
-import { marlinRaker } from "../../Server";
+import Printer from "../Printer";
 
 interface IResult {
     speed_factor: number;
@@ -15,22 +15,24 @@ interface IResult {
 class GcodeMoveObject extends PrinterObject<IResult> {
 
     public readonly name = "gcode_move";
+    private readonly printer: Printer;
 
-    public constructor() {
+    public constructor(printer: Printer) {
         super();
+        this.printer = printer;
         setInterval(this.emit.bind(this), 250);
     }
 
-    protected get(_: string[] | null): IResult {
+    public get(_: string[] | null): IResult {
         return {
-            speed_factor: marlinRaker.printer?.speedFactor ?? 1.0,
+            speed_factor: this.printer.speedFactor,
             speed: 0.0,
-            extrude_factor: marlinRaker.printer?.extrudeFactor ?? 1.0,
-            absolute_coordinates: marlinRaker.printer?.isAbsolutePositioning ?? true,
-            absolute_extrude: marlinRaker.printer?.isAbsolutePositioning ?? true,
+            extrude_factor: this.printer.extrudeFactor,
+            absolute_coordinates: this.printer.isAbsolutePositioning,
+            absolute_extrude: this.printer.isAbsolutePositioning,
             homing_origin: [0, 0, 0, 0],
-            position: marlinRaker.printer?.gcodePosition ?? [0, 0, 0, 0],
-            gcode_position: marlinRaker.printer?.gcodePosition ?? [0, 0, 0, 0]
+            position: this.printer.gcodePosition,
+            gcode_position: this.printer.gcodePosition
         };
     }
 }

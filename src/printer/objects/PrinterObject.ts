@@ -21,7 +21,7 @@ abstract class PrinterObject<TResponse> {
     public getDifference(subscriber: () => void, topics: string[] | null): Partial<TResponse> {
         const subscriberObject = this.subscribers.find((s) => s.subscriber === subscriber);
         const previous: Partial<TResponse> = subscriberObject?.previous ?? {};
-        const now = this.get(topics);
+        const now = Object.freeze(this.get(topics));
         const diff: Partial<TResponse> = {};
         for (const key in now) {
             try {
@@ -31,7 +31,7 @@ abstract class PrinterObject<TResponse> {
             }
         }
         if (subscriberObject && Object.keys(diff).length) {
-            subscriberObject.previous = JSON.parse(JSON.stringify(now)); // not proud
+            subscriberObject.previous = now;
         }
         return diff;
     }
