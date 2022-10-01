@@ -43,6 +43,7 @@ class Printer extends SerialGcodeDevice {
     public pauseState?: IPauseState;
     public actualSpeed!: number;
     public actualExtruderSpeed!: number;
+    public extrudedFilamentOffset!: number;
 
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
@@ -97,6 +98,7 @@ class Printer extends SerialGcodeDevice {
         this.isPrusa = false;
         this.actualSpeed = 0;
         this.actualExtruderSpeed = 0;
+        this.extrudedFilamentOffset = 0;
     }
 
     public async connect(): Promise<void> {
@@ -216,6 +218,9 @@ class Printer extends SerialGcodeDevice {
         } else if (/^G(0|1|92)(\s|$)/.test(line)) {
             const positions = ParserUtil.parseG0G1G92Request(line);
             if (line.startsWith("G92")) {
+                if (positions.E !== undefined) {
+                    this.extrudedFilamentOffset += this.gcodePosition[3] - positions.E;
+                }
                 ["X", "Y", "Z", "E"].forEach((s, i) => {
                     this.gcodePosition[i] = positions[s] ?? this.gcodePosition[i];
                 });
@@ -268,7 +273,7 @@ class Printer extends SerialGcodeDevice {
                 this.serialPort.close();
             }
 
-        } else if (/^M118(\s|$)/.test(line) && this.isPrusa) { // prusa needs special care again :)
+        } else if (/^M118(\s|$)/.test(line) && this.isPrusa) {
             const parts = line.split(" ").slice(1);
             let result = "";
             if (parts[0] === "E1") {
@@ -322,7 +327,7 @@ class Printer extends SerialGcodeDevice {
         ];
 
         if (this.isPrusa) {
-            await this.queueGcode(`M155 S1 C${1 << 0 | 1 << 2}`, false, false);
+            await this.queueGcode(`M155 S1 C${1 << 0}`, false, false);
         }
 
         await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
@@ -392,6 +397,10 @@ class Printer extends SerialGcodeDevice {
         if (this.homedAxes.y) s += "y";
         if (this.homedAxes.z) s += "z";
         return s;
+    }
+
+    public getExtrudedFilament(): number {
+        return this.extrudedFilamentOffset + this.gcodePosition[3];
     }
 }
 

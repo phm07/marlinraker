@@ -25,7 +25,7 @@ class PrintStatsObject extends PrinterObject<IObject> {
             filename: marlinRaker.jobManager.currentPrintJob?.filename ?? "",
             total_duration: marlinRaker.jobManager.totalDuration,
             print_duration: marlinRaker.jobManager.printDuration,
-            filament_used: 0,
+            filament_used: marlinRaker.jobManager.getFilamentUsed(),
             state: marlinRaker.jobManager.currentPrintJob?.state ?? "standby",
             message: ""
         };
