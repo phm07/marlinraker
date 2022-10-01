@@ -1,7 +1,7 @@
 import { IMacro } from "./IMacro";
 import { logger, marlinRaker } from "../../Server";
 import SimpleNotification from "../../api/notifications/SimpleNotification";
-import StringUtil from "../../util/StringUtil";
+import Utils from "../../util/Utils";
 import path from "path";
 
 type TGcodeEvaluator = (args: Record<string, string>, printer: unknown) => string;
@@ -59,7 +59,7 @@ class CustomMacro implements IMacro {
         } catch (e) {
             logger.error(`Cannot evaluate gcode macro "${this.name}":`);
             logger.error(e);
-            const errorStr = `!! Error on '${this.name}': ${StringUtil.errorToString(e)}`;
+            const errorStr = `!! Error on '${this.name}': ${Utils.errorToString(e)}`;
             await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [errorStr]));
         }
     }

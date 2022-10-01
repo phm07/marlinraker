@@ -43,7 +43,7 @@ import MachineUpdateClientExecutor from "./executors/MachineUpdateClientExecutor
 import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor";
 import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
 import MachineUpdateFullExecutor from "./executors/MachineUpdateFullExecutor";
-import StringUtil from "../util/StringUtil";
+import Utils from "../util/Utils";
 
 interface ISocketResponse {
     id: number;
@@ -123,7 +123,7 @@ class SocketHandler extends MessageHandler {
         try {
             json = JSON.parse(messageString);
         } catch (e) {
-            logger.error(`Error while parsing message: ${StringUtil.errorToString(e)}`);
+            logger.error(`Error while parsing message: ${Utils.errorToString(e)}`);
             return;
         }
         const response = await this.handle(socket, json);

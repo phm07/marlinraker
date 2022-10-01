@@ -1,5 +1,6 @@
 import PrinterObject from "./PrinterObject";
 import { config } from "../../Server";
+import Utils from "../../util/Utils";
 
 interface IObject {
     config: unknown;
@@ -18,7 +19,7 @@ class ConfigFileObject extends PrinterObject<IObject> {
     public get(_: string[] | null): IObject {
         return {
             config: config.klipperPseudoConfig,
-            settings: config.klipperPseudoConfig,
+            settings: Utils.toLowerCaseKeys(config.klipperPseudoConfig),
             save_config_pending: false
         };
     }

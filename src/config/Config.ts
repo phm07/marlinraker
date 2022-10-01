@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { logger } from "../Server";
 import TOML from "@iarna/toml";
-import StringUtil from "../util/StringUtil";
+import Utils from "../util/Utils";
 
 interface IFileInfo {
     filename: string;
@@ -43,7 +43,7 @@ class Config {
 
         const fileInfo = [{
             filename: path.relative(path.dirname(this.configFile), filepath),
-            sections: StringUtil.getDeepKeys(resolvedContent)
+            sections: Utils.getDeepKeys(resolvedContent)
         }];
 
         const regex = /^#<include +([\w\-. /\\]+?)>.*$/gmi;
@@ -62,7 +62,7 @@ class Config {
                 fileInfo.push(...importFileInfo);
             } catch (e) {
                 const lineNum = originalContent.substring(0, match.index).split(/\r?\n/).length;
-                logger.error(`Cannot resolve import ${path.basename(target)} in ${path.basename(filepath)}, line ${lineNum}: ${StringUtil.errorToString(e)}`);
+                logger.error(`Cannot resolve import ${path.basename(target)} in ${path.basename(filepath)}, line ${lineNum}: ${Utils.errorToString(e)}`);
             }
         }
 

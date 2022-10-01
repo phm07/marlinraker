@@ -8,7 +8,7 @@ import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import KlipperCompat from "../compat/KlipperCompat";
-import StringUtil from "../util/StringUtil";
+import Utils from "../util/Utils";
 
 type TPrinterState = "ready" | "error" | "shutdown" | "startup";
 
@@ -370,7 +370,7 @@ class Printer extends SerialGcodeDevice {
         } catch (e) {
             logger.error(`Error while executing "${command}"`);
             logger.error(e);
-            const errorStr = `!! Error on '${command}': ${StringUtil.errorToString(e)}`;
+            const errorStr = `!! Error on '${command}': ${Utils.errorToString(e)}`;
             await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [errorStr]));
             this.gcodeStore.push({
                 message: errorStr,

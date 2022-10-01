@@ -1,7 +1,7 @@
 import { Updatable } from "./Updatable";
 import { logger, marlinRaker } from "../Server";
 import { exec } from "child_process";
-import StringUtil from "../util/StringUtil";
+import Utils from "../util/Utils";
 
 interface IInfo {
     version?: unknown;
@@ -28,7 +28,7 @@ class ScriptUpdatable extends Updatable<IInfo> {
                     try {
                         resolve(JSON.parse(stdout));
                     } catch (e) {
-                        reject(`${StringUtil.errorToString(e)}\nin ${stdout}`);
+                        reject(`${Utils.errorToString(e)}\nin ${stdout}`);
                     }
                 });
             });
