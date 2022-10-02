@@ -156,7 +156,7 @@ class Printer extends SerialGcodeDevice {
 
         if (this.state === "ready" && line.startsWith("echo:")) {
             const response = line.substring(5);
-            if (response === "busy: processing") return false;
+            if (response.startsWith("busy:")) return false;
             void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
 
             this.gcodeStore.push({
