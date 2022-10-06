@@ -8,12 +8,14 @@ class JobManager {
     public currentPrintJob?: PrintJob;
     public totalDuration: number;
     public printDuration: number;
+    public startTime: number;
     private ePosStart: number;
 
     public constructor() {
         this.jobQueue = new JobQueue();
         this.totalDuration = 0;
         this.printDuration = 0;
+        this.startTime = 0;
         this.ePosStart = 0;
 
         setInterval(() => {
@@ -62,6 +64,7 @@ class JobManager {
 
     public async start(): Promise<boolean> {
         if (!this.isReadyToPrint()) return false;
+        this.startTime = Date.now() / 1000;
         this.ePosStart = marlinRaker.printer!.getExtrudedFilament();
         await this.currentPrintJob!.start();
         return true;
@@ -108,6 +111,7 @@ class JobManager {
         delete this.currentPrintJob;
         this.totalDuration = 0;
         this.printDuration = 0;
+        this.startTime = 0;
         this.ePosStart = 0;
         printer.objectManager.objects.print_stats?.emit();
         printer.objectManager.objects.virtual_sdcard?.emit();

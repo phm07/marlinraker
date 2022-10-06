@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
-import FilePrintJob from "../printer/jobs/FilePrintJob";
+import PrintJob from "../printer/jobs/PrintJob";
 import ErrnoException = NodeJS.ErrnoException;
 import { rootDir } from "../Server";
 
@@ -55,7 +55,7 @@ class FileDirectory implements IDirectory {
                     modified: stat.mtimeMs / 1000,
                     permissions: "rw",
                     size: stat.size,
-                    getPrintJob: () => new FilePrintJob(path.relative(
+                    getPrintJob: () => new PrintJob(path.relative(
                         path.join(rootDir, "gcodes"), path.join(this.path, name)
                     ).replaceAll("\\", "/"))
                 });

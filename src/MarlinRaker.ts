@@ -11,6 +11,7 @@ import MacroManager from "./printer/macros/MacroManager";
 import MetadataManager from "./files/MetadataManager";
 import UpdateManager from "./update/UpdateManager";
 import SystemInfo from "./system/SystemInfo";
+import JobHistory from "./printer/jobs/JobHistory";
 
 class MarlinRaker {
 
@@ -22,6 +23,7 @@ class MarlinRaker {
     public readonly metadataManager: MetadataManager;
     public readonly accessManager: AccessManager;
     public readonly jobManager: JobManager;
+    public readonly jobHistory: JobHistory;
     public readonly fileManager: FileManager;
     public readonly macroManager: MacroManager;
     public readonly systemInfo: SystemInfo;
@@ -38,6 +40,7 @@ class MarlinRaker {
         this.fileManager = new FileManager();
         this.macroManager = new MacroManager();
         this.jobManager = new JobManager();
+        this.jobHistory = new JobHistory(this.database);
         this.systemInfo = new SystemInfo();
 
         if (port && baudRate) {

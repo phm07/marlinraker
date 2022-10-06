@@ -82,6 +82,12 @@ class Printer extends SerialGcodeDevice {
         this.on("startup", () => {
             this.setState("startup");
         });
+
+        this.on("stateChange", async (state: TPrinterState) => {
+            if (state !== "ready") {
+                await marlinRaker.jobHistory.saveCurrentJob("klippy_shutdown");
+            }
+        });
     }
 
     private resetValues(): void {

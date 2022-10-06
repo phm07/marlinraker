@@ -44,6 +44,11 @@ import MachineUpdateSystemExecutor from "./executors/MachineUpdateSystemExecutor
 import PrinterQueryEndstopsStatusExecutor from "./executors/PrinterQueryEndstopsStatusExecutor";
 import MachineUpdateFullExecutor from "./executors/MachineUpdateFullExecutor";
 import Utils from "../util/Utils";
+import ServerHistoryListExecutor from "./executors/ServerHistoryListExecutor";
+import ServerHistoryResetTotals from "./executors/ServerHistoryResetTotals";
+import ServerHistoryTotals from "./executors/ServerHistoryTotals";
+import ServerHistoryGetJobExecutor from "./executors/ServerHistoryGetJobExecutor";
+import ServerHistoryDeleteJobExecutor from "./executors/ServerHistoryDeleteJobExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -91,6 +96,11 @@ class SocketHandler extends MessageHandler {
             new ServerFilesMoveExecutor(),
             new ServerFilesPostDirectoryExecutor(),
             new ServerGcodeStoreExecutor(),
+            new ServerHistoryDeleteJobExecutor(),
+            new ServerHistoryGetJobExecutor(),
+            new ServerHistoryListExecutor(),
+            new ServerHistoryResetTotals(),
+            new ServerHistoryTotals(),
             new ServerInfoExecutor(),
             new ServerJobQueueStatus(),
             new ServerTemperatureStoreExecutor()

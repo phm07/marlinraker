@@ -14,8 +14,8 @@ interface IThumbnail {
 }
 
 interface IGcodeMetadata {
-    print_start_time?: number;
-    job_id?: string;
+    print_start_time: number | null;
+    job_id: string | null;
     size: number;
     modified: number;
     slicer?: string;
@@ -82,8 +82,24 @@ class MetadataManager {
         }
 
         metadata = await this.generateMetadata(filename);
-        await this.database.addItem("gcode_metadata", id, metadata);
+        if (metadata) await this.storeMetadata(metadata);
         return metadata;
+    }
+
+    public async storeMetadata(metadata: IGcodeMetadata): Promise<void> {
+        const id = this.getId(metadata.filename);
+        await this.database.addItem("gcode_metadata", id, metadata);
+    }
+
+    public async removeJobIds(ids: string[]): Promise<void> {
+        const allMetadata = (await this.database.getItem("gcode_metadata") ?? {}) as Record<string, IGcodeMetadata>;
+        for (const id in allMetadata) {
+            const metadata = allMetadata[id];
+            if (metadata.job_id && ids.includes(metadata.job_id)) {
+                metadata.job_id = null;
+            }
+        }
+        await this.database.addItem("gcode_metadata", undefined, allMetadata);
     }
 
     public getId(filename: string): string {
@@ -109,6 +125,8 @@ class MetadataManager {
 
         const stat = await fs.stat(filepath);
         const metadata: IGcodeMetadata = {
+            job_id: null,
+            print_start_time: null,
             filename,
             size: stat.size,
             modified: stat.mtimeMs / 1000,

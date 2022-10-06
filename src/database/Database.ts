@@ -29,7 +29,7 @@ class Database {
         }
     }
 
-    public async addItem(namespace: string, key: string, value: unknown): Promise<unknown> {
+    public async addItem(namespace: string, key: string | undefined, value: unknown): Promise<unknown> {
         await this.jsonDb.push(Database.getPath(namespace, key), value, true);
         return value;
     }
