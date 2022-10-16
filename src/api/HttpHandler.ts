@@ -44,6 +44,8 @@ import ServerHistoryResetTotals from "./executors/ServerHistoryResetTotals";
 import ServerHistoryTotals from "./executors/ServerHistoryTotals";
 import ServerHistoryGetJobExecutor from "./executors/ServerHistoryGetJobExecutor";
 import ServerHistoryDeleteJobExecutor from "./executors/ServerHistoryDeleteJobExecutor";
+import MachineRebootExecutor from "./executors/MachineRebootExecutor";
+import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
 
 class HttpHandler extends MessageHandler {
 
@@ -52,6 +54,8 @@ class HttpHandler extends MessageHandler {
         [
             new AccessOneshotTokenExecutor(),
             new MachineProcStatsExecutor(),
+            new MachineRebootExecutor(),
+            new MachineShutdownExecutor(),
             new MachineSystemInfoExecutor(),
             new MachineUpdateClientExecutor(),
             new MachineUpdateFullExecutor(),

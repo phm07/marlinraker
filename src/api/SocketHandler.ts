@@ -49,6 +49,8 @@ import ServerHistoryResetTotals from "./executors/ServerHistoryResetTotals";
 import ServerHistoryTotals from "./executors/ServerHistoryTotals";
 import ServerHistoryGetJobExecutor from "./executors/ServerHistoryGetJobExecutor";
 import ServerHistoryDeleteJobExecutor from "./executors/ServerHistoryDeleteJobExecutor";
+import MachineRebootExecutor from "./executors/MachineRebootExecutor";
+import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -61,7 +63,8 @@ class SocketHandler extends MessageHandler {
     private readonly methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
         [
             new MachineProcStatsExecutor(),
-            new MachineSystemInfoExecutor(),
+            new MachineRebootExecutor(),
+            new MachineShutdownExecutor(),
             new MachineSystemInfoExecutor(),
             new MachineUpdateClientExecutor(),
             new MachineUpdateFullExecutor(),
