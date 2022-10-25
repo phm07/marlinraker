@@ -1,10 +1,11 @@
 import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
+import { TVec2 } from "../../util/Utils";
 
 interface IObject {
     profile_name: string;
-    mesh_min: [number, number];
-    mesh_max: [number, number];
+    mesh_min: TVec2;
+    mesh_max: TVec2;
     probed_matrix?: number[][];
     mesh_matrix?: number[][];
 }
@@ -13,8 +14,8 @@ class BedMeshObject extends PrinterObject<IObject> {
 
     public readonly name = "bed_mesh";
     private readonly profile?: string;
-    private readonly min: [number, number];
-    private readonly max: [number, number];
+    private readonly min: TVec2;
+    private readonly max: TVec2;
     private readonly grid: number[][];
 
     public constructor(printer: Printer) {
@@ -24,12 +25,8 @@ class BedMeshObject extends PrinterObject<IObject> {
         this.max = [0, 0];
         this.grid = [[]];
 
-        printer.on("updateBedMesh", (args: {
-            grid: number[][];
-            min: [number, number];
-            max: [number, number];
-        }) => {
-            Object.assign(this, args);
+        printer.on("updateBedMesh", (bedMesh) => {
+            Object.assign(this, bedMesh);
             this.emit();
         });
     }

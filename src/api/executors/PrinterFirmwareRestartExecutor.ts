@@ -6,7 +6,7 @@ class PrinterFirmwareRestartExecutor implements IMethodExecutor<undefined, strin
     public readonly name = "printer.firmware_restart";
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.printer?.restart();
+        await marlinRaker.reconnect();
         return "ok";
     }
 }

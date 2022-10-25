@@ -1,7 +1,7 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import os from "os";
 import { marlinRaker } from "../../Server";
-import { TPrinterState } from "../../printer/Printer";
+import { TPrinterState } from "../../MarlinRaker";
 
 interface IResult {
     state: TPrinterState;
@@ -17,8 +17,8 @@ class PrinterInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public async invoke(_: TSender, __: undefined): Promise<IResult> {
         return {
-            state: marlinRaker.printer?.state ?? "error",
-            state_message: marlinRaker.printer?.stateMessage ?? "Cannot connect to serial port",
+            state: marlinRaker.state,
+            state_message: marlinRaker.stateMessage,
             hostname: os.hostname(),
             software_version: "1.0",
             cpu_info: ""

@@ -1,6 +1,7 @@
 import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
 import { config } from "../../Server";
+import { TVec3 } from "../../util/Utils";
 
 interface IObject {
     homed_axes: string;
@@ -20,7 +21,7 @@ class ToolheadObject extends PrinterObject<IObject> {
 
     public readonly name = "toolhead";
     private readonly printer: Printer;
-    private readonly printVolume: [number, number, number];
+    private readonly printVolume: TVec3;
 
     public constructor(printer: Printer) {
         super();
@@ -29,8 +30,8 @@ class ToolheadObject extends PrinterObject<IObject> {
         setInterval(this.emit.bind(this), 250);
         printer.on("homedAxesChange", this.emit.bind(this));
 
-        this.printVolume = config.getGeneric<[number, number, number]>("printer.print_volume",
-            [220, 220, 240], (x): x is [number, number, number] =>
+        this.printVolume = config.getGeneric<TVec3>("printer.print_volume",
+            [220, 220, 240], (x): x is TVec3 =>
                 typeof x === "object" && Array.isArray(x) && x.length === 3
         );
     }

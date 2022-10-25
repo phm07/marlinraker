@@ -1,5 +1,6 @@
 import PrinterObject from "./PrinterObject";
 import Printer from "../Printer";
+import { TVec4 } from "../../util/Utils";
 
 interface IResult {
     speed_factor: number;
@@ -7,9 +8,9 @@ interface IResult {
     extrude_factor: number;
     absolute_coordinates: boolean;
     absolute_extrude: boolean;
-    homing_origin: [number, number, number, number];
-    position: [number, number, number, number];
-    gcode_position: [number, number, number, number];
+    homing_origin: TVec4;
+    position: TVec4;
+    gcode_position: TVec4;
 }
 
 class GcodeMoveObject extends PrinterObject<IResult> {

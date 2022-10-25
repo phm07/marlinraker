@@ -1,3 +1,5 @@
+import { TVec4 } from "../util/Utils";
+
 interface IHeater {
     temp?: number;
     target?: number;
@@ -80,7 +82,7 @@ class ParserUtil {
     }
 
     // X:180.40 Y:-3.00 Z:0.00 E:0.00 Count X:18040 Y:-300 Z:0
-    public static parseM114Response(line: string): [number, number, number, number] | null {
+    public static parseM114Response(line: string): TVec4 | null {
         return (line
             .split(/\r?\n/)
             .find((s) => s.startsWith("X:"))
@@ -88,7 +90,7 @@ class ParserUtil {
             .split(" ")
             .map((s) => s.substring(2))
             .slice(0, 4)
-            .map((s) => Number.parseFloat(s)) ?? null) as [number, number, number, number] | null;
+            .map((s) => Number.parseFloat(s)) ?? null) as TVec4 | null;
     }
 
     public static parseM20Response(line: string): Record<string, IFileInfo | undefined> {

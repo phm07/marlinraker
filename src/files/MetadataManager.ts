@@ -5,6 +5,7 @@ import crypto from "crypto";
 import LineReader from "./LineReader";
 import Database from "../database/Database";
 import HashUtils from "./HashUtils";
+import MarlinRaker from "../MarlinRaker";
 
 interface IThumbnail {
     width: number;
@@ -46,8 +47,8 @@ class MetadataManager {
 
     private readonly database: Database;
 
-    public constructor(database: Database) {
-        this.database = database;
+    public constructor(marlinRakerInstance: MarlinRaker) {
+        this.database = marlinRakerInstance.database;
         void this.cleanup();
     }
 

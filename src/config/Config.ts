@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { logger } from "../Server";
 import TOML from "@iarna/toml";
-import Utils from "../util/Utils";
+import Utils, { TVec3 } from "../util/Utils";
 
 interface IFileInfo {
     filename: string;
@@ -135,8 +135,8 @@ class Config {
     }
 
     private generateKlipperConfig(): unknown {
-        const printVolume = this.getGeneric<[number, number, number]>("printer.print_volume",
-            [220, 220, 240], (x): x is [number, number, number] =>
+        const printVolume = this.getGeneric<TVec3>("printer.print_volume",
+            [220, 220, 240], (x): x is TVec3 =>
                 typeof x === "object" && Array.isArray(x) && x.length === 3
         );
         const klipperConfig = {

@@ -8,9 +8,7 @@ import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import KlipperCompat from "../compat/KlipperCompat";
-import Utils from "../util/Utils";
-
-type TPrinterState = "ready" | "error" | "shutdown" | "startup";
+import Utils, { TVec2, TVec4 } from "../util/Utils";
 
 interface IPauseState {
     x: number;
@@ -20,17 +18,35 @@ interface IPauseState {
     feedrate: number;
 }
 
+interface IBedMesh {
+    grid: number[][];
+    min: TVec2;
+    max: TVec2;
+    profile: string;
+}
+
+declare interface Printer {
+    on(event: "ready" | "startup" | "commandOk" | "positioningChange" | "gcodePositionChange" |
+        "fanSpeedChange" | "factorChange" | "homedAxesChange", listener: () => void): this;
+    on(event: "actualPositionChange", listener: (oldPos: TVec4, newPos: TVec4) => void): this;
+    on(event: "error", listener: (err: Error) => void): this;
+    on(event: "updateBedMesh", listener: (bedMesh: IBedMesh) => void): this;
+    emit(event: "ready" | "startup" | "commandOk" | "positioningChange" | "gcodePositionChange" |
+        "fanSpeedChange" | "factorChange" | "homedAxesChange"): boolean;
+    emit(event: "actualPositionChange", oldPos: TVec4, newPos: TVec4): boolean;
+    emit(event: "error", err: Error): boolean;
+    emit(event: "updateBedMesh", bedMesh: IBedMesh): boolean;
+}
+
 class Printer extends SerialGcodeDevice {
 
     public objectManager: ObjectManager;
     public heaterManager: HeaterManager;
-    public state: TPrinterState;
     public info?: IPrinterInfo;
-    public stateMessage: string;
     public capabilities: TPrinterCapabilities;
     public watchers: Watcher[];
-    public actualPosition!: [number, number, number, number];
-    public gcodePosition!: [number, number, number, number];
+    public actualPosition!: TVec4;
+    public gcodePosition!: TVec4;
     public isAbsolutePositioning!: boolean;
     public isAbsoluteEPositioning!: boolean;
     public feedrate!: number;
@@ -48,8 +64,6 @@ class Printer extends SerialGcodeDevice {
     public constructor(serialPort: string, baudRate: number) {
         super(serialPort, baudRate);
 
-        this.state = "startup";
-        this.stateMessage = "";
         this.objectManager = new ObjectManager(this);
         this.heaterManager = new HeaterManager(this);
         this.capabilities = {};
@@ -57,36 +71,24 @@ class Printer extends SerialGcodeDevice {
         this.resetValues();
 
         this.serialPort.on("close", () => {
-            if (this.state === "ready") {
-                this.setState("shutdown", "Disconnected from serial port");
+            if (marlinRaker.state === "ready") {
+                marlinRaker.disconnect("shutdown", "Disconnected from serial port");
             }
-            delete this.info;
-            this.objectManager = new ObjectManager(this);
-            this.heaterManager = new HeaterManager(this);
-            this.capabilities = {};
-            this.watchers.forEach((w) => w.delete());
-            this.watchers = [];
         });
 
         this.on("error", (err) => {
             logger.error(err);
-            if (this.state === "ready" || this.state === "startup") {
-                this.setState("error", err.toString());
+            if (marlinRaker.state === "ready" || marlinRaker.state === "startup") {
+                marlinRaker.disconnect("error", err.toString());
             }
         });
 
         this.on("ready", () => {
-            this.setState("ready");
+            marlinRaker.setState("ready", "Printer ready");
         });
 
         this.on("startup", () => {
-            this.setState("startup");
-        });
-
-        this.on("stateChange", async (state: TPrinterState) => {
-            if (state !== "ready") {
-                await marlinRaker.jobHistory.saveCurrentJob("klippy_shutdown");
-            }
+            marlinRaker.setState("startup", "Connecting...");
         });
     }
 
@@ -107,36 +109,8 @@ class Printer extends SerialGcodeDevice {
         this.extrudedFilamentOffset = 0;
     }
 
-    public async connect(): Promise<void> {
-        if (this.serialPort.isOpen) {
-            await new Promise<void>((resolve) => this.serialPort.close(() => {
-                resolve();
-            }));
-        }
-        this.setup();
-    }
-
-    public setState(state: TPrinterState, stateMessage?: string): void {
-        this.state = state;
-        this.stateMessage = stateMessage ?? "";
-        this.emit("stateChange");
-
-        if (state === "ready") {
-            void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_klippy_ready"));
-        } else if (state === "shutdown") {
-            void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_klippy_shutdown"));
-        }
-    }
-
     public emergencyStop(): void {
         void this.queueGcode("M112", true, false);
-    }
-
-    public reset(): void {
-        this.serialPort.write("M997\n");
-        if (this.serialPort.isOpen) {
-            this.serialPort.close();
-        }
     }
 
     protected handleResponseLine(line: string): boolean {
@@ -160,7 +134,7 @@ class Printer extends SerialGcodeDevice {
             }
         }
 
-        if (this.state === "ready" && line.startsWith("echo:")) {
+        if (marlinRaker.state === "ready" && line.startsWith("echo:")) {
             const response = line.substring(5);
             if (response.startsWith("busy:")) return false;
             void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
@@ -282,7 +256,7 @@ class Printer extends SerialGcodeDevice {
             this.emit("homedAxesChange");
 
         } else if (/^M112(\s|$)/.test(line)) {
-            this.emit("error", "Emergency stop triggered");
+            this.emit("error", new Error("Emergency stop triggered"));
             if (this.serialPort.isOpen) {
                 this.serialPort.close();
             }
@@ -322,10 +296,7 @@ class Printer extends SerialGcodeDevice {
         this.resetValues();
 
         const timeout = setTimeout(() => {
-            this.setState("error", "Printer initialization took too long");
-            this.serialPort.close(() => {
-                //
-            });
+            marlinRaker.disconnect("error", "Printer initialization took too long");
         }, 10000);
 
         this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;
@@ -394,12 +365,6 @@ class Printer extends SerialGcodeDevice {
         await this.queueGcode(command, false, log);
     }
 
-    public async restart(): Promise<void> {
-        await this.setState("startup");
-        await this.reset();
-        await this.connect();
-    }
-
     public async queryEndstops(): Promise<Record<string, string>> {
         const response = await this.queueGcode("M119", false, false);
         return ParserUtil.parseM119Response(response);
@@ -418,5 +383,5 @@ class Printer extends SerialGcodeDevice {
     }
 }
 
-export { TPrinterState, IPauseState };
+export { IPauseState, IBedMesh };
 export default Printer;

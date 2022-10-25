@@ -1,6 +1,7 @@
 import { IGcodeMetadata } from "../../files/MetadataManager";
-import { marlinRaker } from "../../Server";
 import Database from "../../database/Database";
+import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
+import { marlinRaker } from "../../Server";
 
 type TCompletedJobStatus = "completed" | "cancelled" | "error" | "klippy_shutdown" | "klippy_disconnect" | "server_exit";
 
@@ -32,14 +33,20 @@ class JobHistory {
     private readonly database: Database;
     private completedJobs: ICompletedJob[];
 
-    public constructor(database: Database) {
-        this.database = database;
+    public constructor(marlinRakerInstance: MarlinRaker) {
+        this.database = marlinRakerInstance.database;
         this.completedJobs = [];
         this.jobTotals = JobHistory.getDefaultJobTotals();
         void this.loadHistory();
 
         process.on("exit", async () => {
             await this.saveCurrentJob("server_exit");
+        });
+
+        marlinRakerInstance.on("stateChange", async (state: TPrinterState) => {
+            if (state !== "ready") {
+                await this.saveCurrentJob("klippy_shutdown");
+            }
         });
     }
 

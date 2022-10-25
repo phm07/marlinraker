@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { config, logger, marlinRaker } from "../../Server";
-import { TPrinterState } from "../../printer/Printer";
+import { TPrinterState } from "../../MarlinRaker";
 import { Level } from "../../logger/Logger";
 import packageJson from "../../../package.json";
 
@@ -51,7 +51,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
         return {
             klippy_connected: true,
-            klippy_state: marlinRaker.printer?.state ?? "error",
+            klippy_state: marlinRaker.state,
             components,
             failed_components: [],
             registered_directories: ["gcodes", "config"],

@@ -23,11 +23,18 @@ interface ICommand {
     timeInQueue?: number;
 }
 
+declare interface SerialGcodeDevice {
+    on(event: "startup" | "commandOk", listener: () => void): this;
+    on(event: "error", listener: (err: Error) => void): this;
+    emit(event: "startup" | "commandOk"): boolean;
+    emit(event: "error", err: Error): boolean;
+}
+
 abstract class SerialGcodeDevice extends EventEmitter {
 
     public readonly gcodeStore: IGcodeLog[];
+    public readonly serialPort: SerialPort;
     public hasEmergencyParser: boolean;
-    protected readonly serialPort: SerialPort;
     protected readline: ReadLine;
     protected commandQueue: ICommand[];
     protected currentCommand?: ICommand;
@@ -90,7 +97,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
                 ]);
 
                 if (tryToConnect && ++tries >= this.maxConnectionAttempts) {
-                    this.emit("error", "Marlin firmware did not respond");
+                    this.emit("error", new Error("Marlin firmware did not respond"));
                     this.serialPort.close(() => {
                         //
                     });
@@ -216,4 +223,4 @@ abstract class SerialGcodeDevice extends EventEmitter {
 }
 
 export default SerialGcodeDevice;
-export { IGcodeLog };
+export { IGcodeLog, SerialGcodeDevice };

@@ -6,7 +6,6 @@ import Config from "./config/Config";
 import path from "path";
 import fs from "fs-extra";
 import { SerialPort } from "serialport";
-import SerialPortSearch from "./util/SerialPortSearch";
 import sourceMapSupport from "source-map-support";
 import Logger, { Level } from "./logger/Logger";
 
@@ -73,19 +72,6 @@ let router: Router;
         logger.level = Level.debug;
     }
 
-    let port: string | null = config.getString("serial.port", "auto");
-    let baudRate: number | null = Number.parseInt(config.getStringOrNumber("serial.baud_rate", "auto") as string);
-    if (!port || port.toLowerCase() === "auto") {
-        const serialPortSearch = new SerialPortSearch(baudRate);
-        [port, baudRate] = await serialPortSearch.findSerialPort() ?? [null, null];
-    }
-
-    if (!port) {
-        logger.error("Could not determine serial port to connect to.");
-    } else {
-        logger.info(`Using serial port ${port} with baud rate ${baudRate}`);
-    }
-
     const app = express();
 
     if (isDebug) {
@@ -131,7 +117,7 @@ let router: Router;
     httpServer.listen(httpPort);
     logger.info(`App listening on port ${httpPort}`);
 
-    marlinRaker = new MarlinRaker(wss, port, baudRate);
+    marlinRaker = new MarlinRaker(wss);
 })().catch((e) => {
     throw e;
 });

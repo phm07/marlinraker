@@ -91,7 +91,7 @@ class KlipperCompat {
 
         } else if (/^FIRMWARE_RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                await marlinRaker.printer?.restart();
+                await marlinRaker.reconnect();
             };
         }
         return null;

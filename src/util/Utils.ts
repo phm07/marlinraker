@@ -1,3 +1,7 @@
+type TVec2 = [number, number];
+type TVec3 = [number, number, number];
+type TVec4 = [number, number, number, number];
+
 class Utils {
     public static errorToString(e: unknown): string {
         if (e instanceof Error) {
@@ -30,4 +34,5 @@ class Utils {
     }
 }
 
+export { TVec2, TVec3, TVec4 };
 export default Utils;

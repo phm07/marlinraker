@@ -9,6 +9,11 @@ import { TCompletedJobStatus } from "./JobHistory";
 
 type TJobStatus = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
+declare interface PrintJob {
+    on(event: "stateChange", listener: (state: TJobStatus) => void): this;
+    emit(eventName: "stateChange", args: TJobStatus): boolean;
+}
+
 class PrintJob extends EventEmitter {
 
     public readonly filename: string;
@@ -147,5 +152,5 @@ class PrintJob extends EventEmitter {
     }
 }
 
-export { TJobStatus };
+export { TJobStatus, PrintJob };
 export default PrintJob;

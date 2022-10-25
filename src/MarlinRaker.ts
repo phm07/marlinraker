@@ -12,8 +12,22 @@ import MetadataManager from "./files/MetadataManager";
 import UpdateManager from "./update/UpdateManager";
 import SystemInfo from "./system/SystemInfo";
 import JobHistory from "./printer/jobs/JobHistory";
+import EventEmitter from "events";
+import SimpleNotification from "./api/notifications/SimpleNotification";
+import SerialPortSearch from "./util/SerialPortSearch";
+import { config, logger } from "./Server";
 
-class MarlinRaker {
+type TPrinterState = "ready" | "error" | "shutdown" | "startup";
+
+declare interface MarlinRaker {
+    on(event: "stateChange", listener: (state: TPrinterState) => void): this;
+    emit(eventName: "stateChange", args: TPrinterState): boolean;
+}
+
+class MarlinRaker extends EventEmitter {
+
+    public state: TPrinterState;
+    public stateMessage: string;
 
     public readonly socketHandler: SocketHandler;
     public readonly httpHandler: HttpHandler;
@@ -27,29 +41,84 @@ class MarlinRaker {
     public readonly fileManager: FileManager;
     public readonly macroManager: MacroManager;
     public readonly systemInfo: SystemInfo;
-    public readonly printer?: Printer;
+    public printer?: Printer;
 
-    public constructor(wss: WebSocketServer, port: string | null, baudRate: number | null) {
+    public constructor(wss: WebSocketServer) {
+        super();
+
+        this.state = "startup";
+        this.stateMessage = "";
         this.socketHandler = new SocketHandler(wss);
         this.httpHandler = new HttpHandler();
         this.updateManager = new UpdateManager();
         this.connectionManager = new ConnectionManager();
         this.database = new Database();
-        this.metadataManager = new MetadataManager(this.database);
+        this.metadataManager = new MetadataManager(this);
         this.accessManager = new AccessManager();
         this.fileManager = new FileManager();
         this.macroManager = new MacroManager();
-        this.jobManager = new JobManager();
-        this.jobHistory = new JobHistory(this.database);
+        this.jobManager = new JobManager(this);
+        this.jobHistory = new JobHistory(this);
         this.systemInfo = new SystemInfo();
 
-        if (port && baudRate) {
-            try {
-                this.printer = new Printer(port, baudRate);
-            } catch (_) {
-                //
-            }
+        setTimeout(this.connect.bind(this));
+    }
+
+    public setState(state: TPrinterState, stateMessage: string): void {
+        this.stateMessage = stateMessage;
+        this.state = state;
+        this.emit("stateChange", state);
+
+        if (state === "ready") {
+            void this.socketHandler.broadcast(new SimpleNotification("notify_klippy_ready"));
+        } else if (state === "shutdown") {
+            void this.socketHandler.broadcast(new SimpleNotification("notify_klippy_shutdown"));
         }
+    }
+
+    public async connect(): Promise<void> {
+        if (this.printer) return;
+        this.setState("startup", "Connecting...");
+
+        let port: string | null = config.getString("serial.port", "auto");
+        let baudRate: number | null = Number.parseInt(config.getStringOrNumber("serial.baud_rate", "auto") as string);
+        if (!port || port.toLowerCase() === "auto") {
+            const serialPortSearch = new SerialPortSearch(baudRate);
+            [port, baudRate] = await serialPortSearch.findSerialPort() ?? [null, null];
+        }
+
+        if (!port) {
+            logger.error("Could not determine serial port to connect to.");
+        } else {
+            logger.info(`Using serial port ${port} with baud rate ${baudRate}`);
+        }
+
+        if (port && baudRate) {
+            this.printer = new Printer(port, baudRate);
+        } else {
+            await this.setState("error", "Cannot connect to printer");
+        }
+    }
+
+    public disconnect(state: TPrinterState, stateMessage: string): void {
+        if (this.printer) {
+            if (this.printer.serialPort.isOpen) {
+                this.printer.serialPort.close();
+            }
+            delete this.printer;
+            this.setState(state, stateMessage);
+        }
+    }
+
+    public async reconnect(): Promise<void> {
+        if (this.printer) {
+            this.printer.serialPort.write("M997\n");
+            if (this.printer.serialPort.isOpen) {
+                this.printer.serialPort.close();
+            }
+            delete this.printer;
+        }
+        await this.connect();
     }
 
     public restart(): void {
@@ -57,4 +126,5 @@ class MarlinRaker {
     }
 }
 
+export { TPrinterState };
 export default MarlinRaker;

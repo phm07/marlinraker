@@ -32,8 +32,8 @@ class CustomMacro implements IMacro {
         };
 
         const printerObject = Object.freeze({
-            state: printer.state,
-            stateMessage: printer.stateMessage,
+            state: marlinRaker.state,
+            stateMessage: marlinRaker.stateMessage,
             x: printer.actualPosition[0],
             y: printer.actualPosition[1],
             z: printer.actualPosition[2],

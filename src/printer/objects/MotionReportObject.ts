@@ -1,8 +1,9 @@
 import PrinterObject from "./PrinterObject";
 import { marlinRaker } from "../../Server";
+import { TVec4 } from "../../util/Utils";
 
 interface IObject {
-    live_position: [number, number, number, number];
+    live_position: TVec4;
     live_velocity: number;
     live_extruder_velocity: number;
 }
@@ -13,7 +14,6 @@ class MotionReportObject extends PrinterObject<IObject> {
 
     public constructor() {
         super();
-
         setInterval(this.emit.bind(this), 250);
     }
 

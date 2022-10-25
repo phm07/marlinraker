@@ -1,6 +1,7 @@
 import { config, marlinRaker } from "../../Server";
 import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
+import MarlinRaker from "../../MarlinRaker";
 
 class JobManager {
 
@@ -11,7 +12,7 @@ class JobManager {
     public startTime: number;
     private ePosStart: number;
 
-    public constructor() {
+    public constructor(marlinRakerInstance: MarlinRaker) {
         this.jobQueue = new JobQueue();
         this.totalDuration = 0;
         this.printDuration = 0;
@@ -19,6 +20,7 @@ class JobManager {
         this.ePosStart = 0;
 
         setInterval(() => {
+            if (!marlinRaker.printer) return;
             const state = this.currentPrintJob?.state;
             if (!state) return;
             if (state === "printing"
@@ -28,7 +30,7 @@ class JobManager {
                     this.printDuration++;
                 }
             }
-            marlinRaker.printer!.objectManager.objects.print_stats?.emit();
+            marlinRaker.printer.objectManager.objects.print_stats?.emit();
         }, 1000);
 
         if (config.getBoolean("printer.gcode.send_m73", true)) {
@@ -43,6 +45,16 @@ class JobManager {
                 }
             }, 1000);
         }
+
+        marlinRakerInstance.on("stateChange", (state) => {
+            if (state !== "ready") {
+                delete this.currentPrintJob;
+                this.totalDuration = 0;
+                this.printDuration = 0;
+                this.startTime = 0;
+                this.ePosStart = 0;
+            }
+        });
     }
 
     public async selectFile(filename: string): Promise<boolean> {
