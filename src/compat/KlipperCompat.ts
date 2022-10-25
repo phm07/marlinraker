@@ -93,6 +93,11 @@ class KlipperCompat {
             return async () => {
                 await marlinRaker.reconnect();
             };
+
+        } else if (/^TURN_OFF_HEATERS(\s|$)/i.test(klipperCommand)) {
+            return async () => {
+                await marlinRaker.printer?.queueGcode("M104 S0\nM140 S0", false, false);
+            };
         }
         return null;
     }
