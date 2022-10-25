@@ -7,8 +7,7 @@ import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
-import KlipperCompat from "../compat/KlipperCompat";
-import Utils, { TVec2, TVec4 } from "../util/Utils";
+import { TVec2, TVec4 } from "../util/Utils";
 
 interface IPauseState {
     x: number;
@@ -122,7 +121,7 @@ class Printer extends SerialGcodeDevice {
         if (line.startsWith("//")) {
             const action = /^\/\/( *)action:(.*)$/.exec(line)?.[2];
             if (action) {
-                this.handleAction(action);
+                Printer.handleAction(action);
             }
             return false;
         }
@@ -139,7 +138,7 @@ class Printer extends SerialGcodeDevice {
             if (response.startsWith("busy:")) return false;
             void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
 
-            this.gcodeStore.push({
+            marlinRaker.gcodeStore.push({
                 message: response,
                 time: Date.now() / 1000,
                 type: "response"
@@ -150,23 +149,23 @@ class Printer extends SerialGcodeDevice {
         return true;
     }
 
-    private handleAction(action: string): void {
+    private static handleAction(action: string): void {
         if (action === "cancel") {
             if (marlinRaker.jobManager.isPrinting()) {
                 logger.info("Canceling print");
-                void this.dispatchCommand("cancel_print", false);
+                void marlinRaker.dispatchCommand("cancel_print", false);
             }
 
         } else if (action === "pause") {
             if (marlinRaker.jobManager.currentPrintJob?.state === "printing") {
                 logger.info("Pausing print");
-                void this.dispatchCommand("pause", false);
+                void marlinRaker.dispatchCommand("pause", false);
             }
 
         } else if (action === "resume") {
             if (marlinRaker.jobManager.currentPrintJob?.state === "paused") {
                 logger.info("Resuming print");
-                void this.dispatchCommand("resume", false);
+                void marlinRaker.dispatchCommand("resume", false);
             }
         }
     }
@@ -319,50 +318,6 @@ class Printer extends SerialGcodeDevice {
 
         this.emit("ready");
         clearTimeout(timeout);
-    }
-
-    public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
-        if (commandRaw.includes("\n")) {
-            const promises = [];
-            for (const cmd of commandRaw.split(/\r?\n/).filter((s) => s)) {
-                promises.push(this.dispatchCommand(cmd, log));
-            }
-            await Promise.all(promises);
-            return;
-        }
-
-        const command = ParserUtil.trimGcodeLine(commandRaw);
-
-        try {
-            const logCommand = (): void => {
-                this.gcodeStore.push({
-                    message: commandRaw,
-                    time: Date.now() / 1000,
-                    type: "command"
-                });
-            };
-            const commandPromise = KlipperCompat.translateCommand(command);
-            if (commandPromise) {
-                if (log) logCommand();
-                await commandPromise();
-                return;
-            } else if (await marlinRaker.macroManager.execute(command)) {
-                if (log) logCommand();
-                return;
-            }
-        } catch (e) {
-            logger.error(`Error while executing "${command}"`);
-            logger.error(e);
-            const errorStr = `!! Error on '${command}': ${Utils.errorToString(e)}`;
-            await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [errorStr]));
-            this.gcodeStore.push({
-                message: errorStr,
-                time: Date.now() / 1000,
-                type: "response"
-            });
-            return;
-        }
-        await this.queueGcode(command, false, log);
     }
 
     public async queryEndstops(): Promise<Record<string, string>> {

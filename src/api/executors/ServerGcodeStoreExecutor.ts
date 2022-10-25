@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { IGcodeLog } from "../../printer/SerialGcodeDevice";
 import { marlinRaker } from "../../Server";
+import { IGcodeLog } from "../../MarlinRaker";
 
 interface IParams {
     count: number;
@@ -16,7 +16,7 @@ class ServerGcodeStoreExecutor implements IMethodExecutor<IParams, IResult> {
 
     public invoke(_: TSender, params: Partial<IParams>): IResult {
         return {
-            gcode_store: marlinRaker.printer?.gcodeStore.slice(-Math.min(params.count ?? Infinity, 1000)) ?? []
+            gcode_store: marlinRaker.gcodeStore.slice(-Math.min(params.count ?? Infinity, 1000))
         };
     }
 }

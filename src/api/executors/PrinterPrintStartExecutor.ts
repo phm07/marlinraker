@@ -13,7 +13,7 @@ class PrinterPrintStartExecutor implements IMethodExecutor<IParams, string> {
     public async invoke(_: TSender, params: Partial<IParams>): Promise<string> {
         if (!params.filename) throw new Error("Invalid filename");
         await marlinRaker.jobManager.selectFile(`gcodes/${params.filename}`);
-        await marlinRaker.printer?.dispatchCommand("start_print", false);
+        await marlinRaker.dispatchCommand("start_print", false);
         return "ok";
     }
 }

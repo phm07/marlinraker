@@ -5,6 +5,7 @@ class KlipperCompat {
     public static translateCommand(klipperCommand: string): (() => Promise<void>) | null {
 
         if (/^SET_HEATER_TEMPERATURE(\s|$)/i.test(klipperCommand)) {
+
             const args = klipperCommand.split(" ").slice(1);
 
             const heaterName = args.find((s) => s.toUpperCase().startsWith("HEATER="))?.substring(7);
@@ -30,12 +31,14 @@ class KlipperCompat {
 
             if (marlinHeater.startsWith("T")) {
                 return async () => {
+                    if (!marlinRaker.printer) return;
                     const param = marlinHeater + (marlinHeater.length === 1 ? "0" : "");
-                    await marlinRaker.printer?.queueGcode(`M104 ${param} S${target}`, false, false);
+                    await marlinRaker.printer.queueGcode(`M104 ${param} S${target}`, false, false);
                 };
             } else if (marlinHeater === "B") {
                 return async () => {
-                    await marlinRaker.printer?.queueGcode(`M140 S${target}`, false, false);
+                    if (!marlinRaker.printer) return;
+                    await marlinRaker.printer.queueGcode(`M140 S${target}`, false, false);
                 };
             } else {
                 throw new Error("Internal error");
@@ -50,7 +53,8 @@ class KlipperCompat {
                 ?.substring(8) ?? "default";
              */
             return async () => {
-                const response = await marlinRaker.printer?.queueGcode("G29 V4", false, false);
+                if (!marlinRaker.printer) return;
+                const response = await marlinRaker.printer.queueGcode("G29 V4", false, false);
                 if (!response) return;
 
                 // Bed X: >???< Y: >???< Z: ???
@@ -76,7 +80,7 @@ class KlipperCompat {
                 const mean = grid.flat().reduce((a, b) => a + b) / grid.flat().length;
                 grid.forEach((arr) => arr.forEach((_, i) => arr[i] = Math.round((arr[i] - mean) * 100) / 100));
 
-                marlinRaker.printer?.emit("updateBedMesh", {
+                marlinRaker.printer.emit("updateBedMesh", {
                     grid,
                     min: [minX, minY],
                     max: [maxX, maxY],
@@ -96,7 +100,9 @@ class KlipperCompat {
 
         } else if (/^TURN_OFF_HEATERS(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                await marlinRaker.printer?.queueGcode("M104 S0\nM140 S0", false, false);
+                if (marlinRaker.printer) {
+                    await marlinRaker.printer.queueGcode("M104 S0\nM140 S0", false, false);
+                }
             };
         }
         return null;

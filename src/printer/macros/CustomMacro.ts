@@ -55,7 +55,7 @@ class CustomMacro implements IMacro {
 
         try {
             const gcode = this.evaluate(args, printerObject);
-            await printer.dispatchCommand(gcode, false);
+            await marlinRaker.dispatchCommand(gcode, false);
         } catch (e) {
             logger.error(`Cannot evaluate gcode macro "${this.name}":`);
             logger.error(e);

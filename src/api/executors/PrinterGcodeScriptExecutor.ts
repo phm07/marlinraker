@@ -11,7 +11,7 @@ class PrinterGcodeScriptExecutor implements IMethodExecutor<IParams, string> {
     public readonly timeout = null;
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<string> {
-        await marlinRaker.printer?.dispatchCommand(params.script ?? "");
+        await marlinRaker.dispatchCommand(params.script ?? "");
         return "ok";
     }
 }

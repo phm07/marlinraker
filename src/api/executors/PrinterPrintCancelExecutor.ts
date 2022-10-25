@@ -7,7 +7,7 @@ class PrinterPrintCancelExecutor implements IMethodExecutor<undefined, string> {
     public readonly timeout = null;
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.printer?.dispatchCommand("cancel_print", false);
+        await marlinRaker.dispatchCommand("cancel_print", false);
         return "ok";
     }
 }

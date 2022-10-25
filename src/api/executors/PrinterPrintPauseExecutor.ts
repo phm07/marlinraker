@@ -7,7 +7,7 @@ class PrinterPrintPauseExecutor implements IMethodExecutor<undefined, string> {
     public readonly timeout = null;
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.printer?.dispatchCommand("pause", false);
+        await marlinRaker.dispatchCommand("pause", false);
         return "ok";
     }
 }

@@ -67,7 +67,7 @@ class FileHandler {
             if (print) {
                 await marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
                     .replaceAll("\\", "/"));
-                await marlinRaker.printer?.dispatchCommand("start_print", false);
+                await marlinRaker.dispatchCommand("start_print", false);
 
                 res.send({
                     ...response,

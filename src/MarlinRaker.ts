@@ -15,7 +15,16 @@ import JobHistory from "./printer/jobs/JobHistory";
 import EventEmitter from "events";
 import SimpleNotification from "./api/notifications/SimpleNotification";
 import SerialPortSearch from "./util/SerialPortSearch";
-import { config, logger } from "./Server";
+import { config, logger, marlinRaker } from "./Server";
+import ParserUtil from "./printer/ParserUtil";
+import KlipperCompat from "./compat/KlipperCompat";
+import Utils from "./util/Utils";
+
+interface IGcodeLog {
+    message: string;
+    time: number;
+    type: "command" | "response";
+}
 
 type TPrinterState = "ready" | "error" | "shutdown" | "startup";
 
@@ -29,6 +38,7 @@ class MarlinRaker extends EventEmitter {
     public state: TPrinterState;
     public stateMessage: string;
 
+    public readonly gcodeStore: IGcodeLog[];
     public readonly socketHandler: SocketHandler;
     public readonly httpHandler: HttpHandler;
     public readonly updateManager: UpdateManager;
@@ -46,6 +56,7 @@ class MarlinRaker extends EventEmitter {
     public constructor(wss: WebSocketServer) {
         super();
 
+        this.gcodeStore = [];
         this.state = "startup";
         this.stateMessage = "";
         this.socketHandler = new SocketHandler(wss);
@@ -124,7 +135,52 @@ class MarlinRaker extends EventEmitter {
     public restart(): void {
         process.exit(0);
     }
+
+    public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
+        if (commandRaw.includes("\n")) {
+            const promises = [];
+            for (const cmd of commandRaw.split(/\r?\n/).filter((s) => s)) {
+                promises.push(this.dispatchCommand(cmd, log));
+            }
+            await Promise.all(promises);
+            return;
+        }
+
+        const command = ParserUtil.trimGcodeLine(commandRaw);
+
+        try {
+            const logCommand = (): void => {
+                this.gcodeStore.push({
+                    message: commandRaw,
+                    time: Date.now() / 1000,
+                    type: "command"
+                });
+            };
+            const commandPromise = KlipperCompat.translateCommand(command);
+            if (commandPromise) {
+                if (log) logCommand();
+                await commandPromise();
+                return;
+            } else if (await marlinRaker.macroManager.execute(command)) {
+                if (log) logCommand();
+                return;
+            }
+        } catch (e) {
+            logger.error(`Error while executing "${command}"`);
+            logger.error(e);
+            const errorStr = `!! Error on '${command}': ${Utils.errorToString(e)}`;
+            await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [errorStr]));
+            this.gcodeStore.push({
+                message: errorStr,
+                time: Date.now() / 1000,
+                type: "response"
+            });
+            return;
+        }
+
+        await this.printer?.queueGcode(command, false, log);
+    }
 }
 
-export { TPrinterState };
+export { TPrinterState, IGcodeLog };
 export default MarlinRaker;
