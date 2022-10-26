@@ -78,6 +78,15 @@ class MarlinRaker extends EventEmitter {
         this.systemInfo = new SystemInfo(this);
         this.klipperCompat = new KlipperCompat(this);
 
+        process.removeAllListeners("uncaughtException");
+        process.on("uncaughtException", async (e) => {
+            logger.error(e);
+            await this.shutdownGracefully();
+        });
+        ["beforeExit", "SIGINT", "SIGUSR1", "SIGUSR2", "SIGTERM"].forEach((event) => process.on(event, async () => {
+            await this.shutdownGracefully();
+        }));
+
         setTimeout(this.connect.bind(this));
     }
 
@@ -123,11 +132,11 @@ class MarlinRaker extends EventEmitter {
 
     public disconnect(state: TPrinterState, stateMessage: string): void {
         if (this.printer) {
+            this.setState(state, stateMessage);
             if (this.printer.serialPort.isOpen) {
                 this.printer.serialPort.close();
             }
             delete this.printer;
-            this.setState(state, stateMessage);
         }
     }
 
@@ -142,8 +151,8 @@ class MarlinRaker extends EventEmitter {
         await this.connect();
     }
 
-    public restart(): void {
-        process.exit(0);
+    public async restart(): Promise<void> {
+        await this.shutdownGracefully();
     }
 
     public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
@@ -189,6 +198,13 @@ class MarlinRaker extends EventEmitter {
         }
 
         await this.printer?.queueGcode(command, false, log);
+    }
+
+    public async shutdownGracefully(): Promise<void> {
+        logger.info("Gracefully shutting down...");
+        await this.jobHistory.saveCurrentJob("server_exit");
+        await logger.shutdownGracefully();
+        process.exit(0);
     }
 }
 

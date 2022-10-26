@@ -97,7 +97,7 @@ class KlipperCompat {
 
         } else if (/^RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                this.marlinRaker.restart();
+                await this.marlinRaker.restart();
             };
 
         } else if (/^FIRMWARE_RESTART(\s|$)/i.test(klipperCommand)) {

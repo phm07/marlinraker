@@ -7,19 +7,16 @@ class JobManager {
 
     public readonly jobQueue: JobQueue;
     public currentPrintJob?: PrintJob;
-    public totalDuration: number;
-    public printDuration: number;
-    public startTime: number;
+    public totalDuration!: number;
+    public printDuration!: number;
+    public startTime!: number;
     private readonly marlinRaker: MarlinRaker;
-    private ePosStart: number;
+    private ePosStart!: number;
 
     public constructor(marlinRaker: MarlinRaker) {
         this.marlinRaker = marlinRaker;
         this.jobQueue = new JobQueue();
-        this.totalDuration = 0;
-        this.printDuration = 0;
-        this.startTime = 0;
-        this.ePosStart = 0;
+        this.resetStats();
 
         setInterval(() => {
             if (!marlinRaker.printer) return;
@@ -48,13 +45,11 @@ class JobManager {
             }, 1000);
         }
 
-        marlinRaker.on("stateChange", (state) => {
+        marlinRaker.on("stateChange", async (state) => {
             if (state !== "ready") {
+                await this.marlinRaker.jobHistory.saveCurrentJob("klippy_shutdown");
                 delete this.currentPrintJob;
-                this.totalDuration = 0;
-                this.printDuration = 0;
-                this.startTime = 0;
-                this.ePosStart = 0;
+                this.resetStats();
             }
         });
     }
@@ -75,11 +70,13 @@ class JobManager {
             }
         });
         delete printer.pauseState;
+        this.resetStats();
         return true;
     }
 
     public async start(): Promise<boolean> {
         if (!this.isReadyToPrint()) return false;
+        this.resetStats();
         this.startTime = Date.now() / 1000;
         this.ePosStart = this.marlinRaker.printer!.getExtrudedFilament();
         await this.currentPrintJob!.start();
@@ -125,10 +122,7 @@ class JobManager {
         await printer.queueGcode("M117", false, false);
         delete printer.pauseState;
         delete this.currentPrintJob;
-        this.totalDuration = 0;
-        this.printDuration = 0;
-        this.startTime = 0;
-        this.ePosStart = 0;
+        this.resetStats();
         printer.objectManager.objects.print_stats?.emit();
         printer.objectManager.objects.virtual_sdcard?.emit();
         return true;
@@ -145,7 +139,15 @@ class JobManager {
     }
 
     public getFilamentUsed(): number {
-        return (this.marlinRaker.printer?.getExtrudedFilament() ?? 0) - this.ePosStart;
+        const extrudedFilament = this.marlinRaker.printer?.getExtrudedFilament();
+        return extrudedFilament ? extrudedFilament - this.ePosStart : 0;
+    }
+
+    private resetStats(): void {
+        this.totalDuration = 0;
+        this.printDuration = 0;
+        this.startTime = 0;
+        this.ePosStart = 0;
     }
 }
 

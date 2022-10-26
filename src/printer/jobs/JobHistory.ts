@@ -1,5 +1,5 @@
 import { IGcodeMetadata } from "../../files/MetadataManager";
-import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
+import MarlinRaker from "../../MarlinRaker";
 
 type TCompletedJobStatus = "completed" | "cancelled" | "error" | "klippy_shutdown" | "klippy_disconnect" | "server_exit";
 
@@ -25,6 +25,8 @@ interface IJobTotals {
     longest_print: number;
 }
 
+export { ICompletedJob, IJobTotals, TCompletedJobStatus };
+
 class JobHistory {
 
     public jobTotals: IJobTotals;
@@ -39,12 +41,6 @@ class JobHistory {
 
         process.on("exit", async () => {
             await this.saveCurrentJob("server_exit");
-        });
-
-        marlinRaker.on("stateChange", async (state: TPrinterState) => {
-            if (state !== "ready") {
-                await this.saveCurrentJob("klippy_shutdown");
-            }
         });
     }
 
@@ -65,9 +61,6 @@ class JobHistory {
     public async saveCurrentJob(status: TCompletedJobStatus): Promise<void> {
         const id = this.findNextJobId();
         if (!this.marlinRaker.jobManager.currentPrintJob) return;
-
-        const jobState = this.marlinRaker.jobManager.currentPrintJob.state;
-        if (!["complete", "cancelled", "error"].includes(jobState)) return;
 
         const metadata = this.marlinRaker.jobManager.currentPrintJob.metadata;
         if (!metadata) return;
@@ -158,6 +151,4 @@ class JobHistory {
         };
     }
 }
-
-export { ICompletedJob, IJobTotals, TCompletedJobStatus };
 export default JobHistory;
