@@ -52,6 +52,7 @@ import ServerHistoryDeleteJobExecutor from "./executors/ServerHistoryDeleteJobEx
 import MachineRebootExecutor from "./executors/MachineRebootExecutor";
 import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
 import MarlinRaker from "../MarlinRaker";
+import ServerRestartExecutor from "./executors/ServerRestartExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -112,6 +113,7 @@ class SocketHandler extends MessageHandler {
                 new ServerHistoryTotals(marlinRaker),
                 new ServerInfoExecutor(marlinRaker),
                 new ServerJobQueueStatusExecutor(marlinRaker),
+                new ServerRestartExecutor(marlinRaker),
                 new ServerTemperatureStoreExecutor(marlinRaker)
             ] as IMethodExecutor<unknown, unknown>[]
         );
