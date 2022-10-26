@@ -35,7 +35,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public invoke(_: TSender, __: undefined): IResult {
         const warnings = config.warnings.slice();
-        if (logger.level > Level.info) {
+        if (logger.level > Level.info && process.env.NODE_ENV !== "development") {
             warnings.push("\"extended_logs\" is enabled. Only use this option for debugging purposes. This option can affect print performance.");
         }
         const components = [
