@@ -12,18 +12,20 @@ abstract class MessageHandler {
         let timeout: NodeJS.Timer | undefined;
         return await Promise.race<Response>([
             new Promise((resolve) => {
-                Promise.resolve(executor.invoke(sender, (params ?? {}) as Partial<unknown>)).then((response) => {
-                    clearTimeout(timeout);
-                    if (response === null) {
-                        logger.error(`Error in ${executor.name}: No response`);
-                        resolve(new ErrorResponse(500, "No response"));
-                    }
-                    resolve(new ResultResponse<typeof response>(response));
-                }).catch((e) => {
+                try {
+                    Promise.resolve(executor.invoke(sender, (params ?? {}) as Partial<unknown>)).then((response) => {
+                        clearTimeout(timeout);
+                        if (response === null) {
+                            logger.error(`Error in ${executor.name}: No response`);
+                            resolve(new ErrorResponse(500, "No response"));
+                        }
+                        resolve(new ResultResponse<typeof response>(response));
+                    });
+                } catch (e) {
                     clearTimeout(timeout);
                     logger.error(`Error in ${executor.name}: ${e}`);
                     resolve(new ErrorResponse(500, `Method error: ${e}`));
-                });
+                }
             }),
             new Promise((resolve) => {
                 if (executor.timeout === null) return;
