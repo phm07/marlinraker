@@ -90,7 +90,7 @@ max_temp = 100
 [printer.gcode]
 send_m73 = true
 
-# gcode macros go here (see /config/printers for examples)
+# G-code macros go here (see /config/printers for examples)
 ```
 
 [Here](config/printers) you can find pre-made printer profiles and pick one already made for
@@ -169,7 +169,7 @@ If a macro with the name ``{macro_name}`` already exists, it will be renamed to 
 
 ## G-code scripting
 Marlinraker evaluates G-code scripts using [Template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals).
-This allows you to create advanced gcode macros. Following objects are available in macro code:
+This allows you to create advanced G-code macros. Following objects are available in macro code:
 
 ```typescript
 const args: Record<string, string | true | undefined>;
