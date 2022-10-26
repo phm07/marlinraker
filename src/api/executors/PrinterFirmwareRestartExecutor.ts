@@ -4,6 +4,7 @@ import MarlinRaker from "../../MarlinRaker";
 class PrinterFirmwareRestartExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "printer.firmware_restart";
+    public readonly httpMethod = "post";
     private readonly marlinRaker: MarlinRaker;
 
     public constructor(marlinRaker: MarlinRaker) {

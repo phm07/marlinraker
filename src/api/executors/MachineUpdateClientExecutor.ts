@@ -8,6 +8,7 @@ interface IParams {
 class MachineUpdateClientExecutor implements IMethodExecutor<IParams, string> {
 
     public readonly name = "machine.update.client";
+    public readonly httpMethod = "post";
     public readonly timeout = null;
     private readonly marlinRaker: MarlinRaker;
 

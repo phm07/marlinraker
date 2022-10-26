@@ -9,6 +9,7 @@ interface IResult {
 class ServerHistoryResetTotals implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.history.reset_totals";
+    public readonly httpMethod = "post";
     private readonly marlinRaker: MarlinRaker;
 
     public constructor(marlinRaker: MarlinRaker) {

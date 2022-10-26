@@ -4,6 +4,7 @@ import MarlinRaker from "../../MarlinRaker";
 class MachineUpdateSystemExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "machine.update.system";
+    public readonly httpMethod = "post";
     public readonly timeout = null;
     private readonly marlinRaker: MarlinRaker;
 

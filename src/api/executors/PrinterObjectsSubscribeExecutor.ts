@@ -14,6 +14,7 @@ interface IResult {
 class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IResult> {
 
     public readonly name = "printer.objects.subscribe";
+    public readonly httpMethod = "post";
     private readonly marlinRaker: MarlinRaker;
 
     public constructor(marlinRaker: MarlinRaker) {

@@ -4,6 +4,7 @@ import MarlinRaker from "../../MarlinRaker";
 class PrinterPrintPauseExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "printer.print.pause";
+    public readonly httpMethod = "post";
     public readonly timeout = null;
     private readonly marlinRaker: MarlinRaker;
 

@@ -8,6 +8,7 @@ interface IParams {
 class PrinterGcodeScriptExecutor implements IMethodExecutor<IParams, string> {
 
     public readonly name = "printer.gcode.script";
+    public readonly httpMethod = "post";
     public readonly timeout = null;
     private readonly marlinRaker: MarlinRaker;
 

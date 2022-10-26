@@ -8,6 +8,7 @@ interface IParams {
 class PrinterPrintStartExecutor implements IMethodExecutor<IParams, string> {
 
     public readonly name = "printer.print.start";
+    public readonly httpMethod = "post";
     public readonly timeout = null;
     private readonly marlinRaker: MarlinRaker;
 
