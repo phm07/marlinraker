@@ -6,6 +6,13 @@ import { rootDir } from "../Server";
 import fs from "fs-extra";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
+import diskUsage from "diskusage";
+
+interface IDiskUsage {
+    total: number;
+    used: number;
+    free: number;
+}
 
 interface IDirInfo {
     dirs: {
@@ -20,11 +27,7 @@ interface IDirInfo {
         permissions: string;
         filename: string;
     }[];
-    disk_usage: {
-        total: number;
-        used: number;
-        free: number;
-    };
+    disk_usage: IDiskUsage;
     root_info: {
         name: string;
         permissions: string;
@@ -72,13 +75,13 @@ class FileManager {
         const parts = filepath.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const filename = parts.pop();
         if (!filename) return null;
-        const dirPath = parts.join("/");
-        const dir = await this.getDirectory(dirPath);
+        const dirname = parts.join("/");
+        const dir = await this.getDirectory(dirname);
         return dir?.getFile(filename) ?? null;
     }
 
-    public async getDirectory(dirpath: string): Promise<IDirectory | null> {
-        const pathArr = dirpath.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
+    public async getDirectory(dirname: string): Promise<IDirectory | null> {
+        const pathArr = dirname.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const root = this.directories.find((dir) => dir.dirname === pathArr[0]);
         let currentDir = root;
         if (!root) return null;
@@ -112,8 +115,8 @@ class FileManager {
         return files;
     }
 
-    public async getDirectoryInfo(dirpath: string): Promise<IDirInfo | null> {
-        const dir = await this.getDirectory(dirpath);
+    public async getDirectoryInfo(dirname: string): Promise<IDirInfo | null> {
+        const dir = await this.getDirectory(dirname);
         if (!dir) return null;
         return {
             dirs: (await dir.getSubDirs()).map((subDir) => ({
@@ -128,11 +131,7 @@ class FileManager {
                 permissions: file.permissions,
                 modified: file.modified
             })),
-            disk_usage: {
-                free: 0,
-                used: 0,
-                total: 0
-            },
+            disk_usage: await this.getDiskUsage(path.join(rootDir, dirname)),
             root_info: {
                 name: dir.root.dirname,
                 permissions: dir.root.permissions
@@ -350,7 +349,16 @@ class FileManager {
         await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
         return notification;
     }
+
+    public async getDiskUsage(dirpath: string): Promise<IDiskUsage> {
+        const usage = await diskUsage.check(dirpath);
+        return {
+            free: usage.available,
+            total: usage.total,
+            used: usage.total - usage.available
+        };
+    }
 }
 
-export { IFileInfo, IDirInfo, IFileChangeNotification };
+export { IFileInfo, IDirInfo, IFileChangeNotification, IDiskUsage };
 export default FileManager;

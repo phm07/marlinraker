@@ -1,6 +1,8 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { IDirInfo } from "../../files/FileManager";
 import MarlinRaker from "../../MarlinRaker";
+import { rootDir } from "../../Server";
+import path from "path";
 
 interface IParams {
     path: string;
@@ -17,16 +19,13 @@ class ServerFilesGetDirectoryExecutor implements IMethodExecutor<IParams, IDirIn
     }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IDirInfo> {
-        return await this.marlinRaker.fileManager.getDirectoryInfo(params.path ?? "gcodes") ?? {
+        const dirname = params.path ?? "gcodes";
+        return await this.marlinRaker.fileManager.getDirectoryInfo(dirname) ?? {
             dirs: [],
             files: [],
-            disk_usage: {
-                total: 0,
-                used: 0,
-                free: 0
-            },
+            disk_usage: await this.marlinRaker.fileManager.getDiskUsage(path.join(rootDir, dirname)),
             root_info: {
-                name: params.path ?? "gcodes",
+                name: dirname,
                 permissions: "r"
             }
         };
