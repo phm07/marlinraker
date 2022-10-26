@@ -1,13 +1,18 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 class PrinterPrintPauseExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "printer.print.pause";
     public readonly timeout = null;
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.dispatchCommand("pause", false);
+        await this.marlinRaker.dispatchCommand("pause", false);
         return "ok";
     }
 }

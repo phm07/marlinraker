@@ -1,18 +1,25 @@
-import { marlinRaker } from "../Server";
+import MarlinRaker from "../MarlinRaker";
 
 class KlipperCompat {
 
-    public static translateCommand(klipperCommand: string): (() => Promise<void>) | null {
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
+
+    public translateCommand(klipperCommand: string): (() => Promise<void>) | null {
 
         if (/^SET_HEATER_TEMPERATURE(\s|$)/i.test(klipperCommand)) {
 
+            if (!this.marlinRaker.printer) return null;
             const args = klipperCommand.split(" ").slice(1);
 
             const heaterName = args.find((s) => s.toUpperCase().startsWith("HEATER="))?.substring(7);
             if (!heaterName) {
                 throw new Error("missing HEATER");
             }
-            const marlinHeater = Object.entries(marlinRaker.printer?.heaterManager.klipperHeaterNames ?? [])
+            const marlinHeater = Object.entries(this.marlinRaker.printer.heaterManager.klipperHeaterNames)
                 .find(([_, value]) => value === heaterName)?.[0];
             if (!marlinHeater) {
                 throw new Error(`The value '${heaterName}' is not valid for HEATER`);
@@ -31,14 +38,14 @@ class KlipperCompat {
 
             if (marlinHeater.startsWith("T")) {
                 return async () => {
-                    if (!marlinRaker.printer) return;
+                    if (!this.marlinRaker.printer) return;
                     const param = marlinHeater + (marlinHeater.length === 1 ? "0" : "");
-                    await marlinRaker.printer.queueGcode(`M104 ${param} S${target}`, false, false);
+                    await this.marlinRaker.printer.queueGcode(`M104 ${param} S${target}`, false, false);
                 };
             } else if (marlinHeater === "B") {
                 return async () => {
-                    if (!marlinRaker.printer) return;
-                    await marlinRaker.printer.queueGcode(`M140 S${target}`, false, false);
+                    if (!this.marlinRaker.printer) return;
+                    await this.marlinRaker.printer.queueGcode(`M140 S${target}`, false, false);
                 };
             } else {
                 throw new Error("Internal error");
@@ -53,8 +60,8 @@ class KlipperCompat {
                 ?.substring(8) ?? "default";
              */
             return async () => {
-                if (!marlinRaker.printer) return;
-                const response = await marlinRaker.printer.queueGcode("G29 V4", false, false);
+                if (!this.marlinRaker.printer) return;
+                const response = await this.marlinRaker.printer.queueGcode("G29 V4", false, false);
                 if (!response) return;
 
                 // Bed X: >???< Y: >???< Z: ???
@@ -80,7 +87,7 @@ class KlipperCompat {
                 const mean = grid.flat().reduce((a, b) => a + b) / grid.flat().length;
                 grid.forEach((arr) => arr.forEach((_, i) => arr[i] = Math.round((arr[i] - mean) * 100) / 100));
 
-                marlinRaker.printer.emit("updateBedMesh", {
+                this.marlinRaker.printer.emit("updateBedMesh", {
                     grid,
                     min: [minX, minY],
                     max: [maxX, maxY],
@@ -90,18 +97,18 @@ class KlipperCompat {
 
         } else if (/^RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                marlinRaker.restart();
+                this.marlinRaker.restart();
             };
 
         } else if (/^FIRMWARE_RESTART(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                await marlinRaker.reconnect();
+                await this.marlinRaker.reconnect();
             };
 
         } else if (/^TURN_OFF_HEATERS(\s|$)/i.test(klipperCommand)) {
             return async () => {
-                if (marlinRaker.printer) {
-                    await marlinRaker.printer.queueGcode("M104 S0\nM140 S0", false, false);
+                if (this.marlinRaker.printer) {
+                    await this.marlinRaker.printer.queueGcode("M104 S0\nM140 S0", false, false);
                 }
             };
         }

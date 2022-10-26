@@ -3,14 +3,18 @@ import multer from "multer";
 import fs from "fs-extra";
 import path from "path";
 import crypto from "crypto";
-import { marlinRaker, rootDir, router } from "../../Server";
+import { rootDir, router } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 class FileHandler {
 
-    public constructor() {
-        FileHandler.handleUpload("/server/files/upload");
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+        this.handleUpload("/server/files/upload");
+        this.handleDelete();
         FileHandler.handleDownload();
-        FileHandler.handleDelete();
     }
 
     private static handleDownload(): void {
@@ -18,11 +22,11 @@ class FileHandler {
         router.use("/server/files/config/", express.static(path.join(rootDir, "config")));
     }
 
-    private static handleDelete(): void {
+    private handleDelete(): void {
         router.delete("/server/files/:filepath(*)", async (req, res) => {
             const filepath = req.params.filepath;
             try {
-                const response = await marlinRaker.fileManager.deleteFile(filepath);
+                const response = await this.marlinRaker.fileManager.deleteFile(filepath);
                 res.send(response);
             } catch (e) {
                 res.status(400).send(e);
@@ -30,7 +34,7 @@ class FileHandler {
         });
     }
 
-    public static handleUpload(url: string): void {
+    public handleUpload(url: string): void {
         const upload = multer({ storage: multer.diskStorage({}) });
 
         router.post(url, upload.single("file"), async (req, res) => {
@@ -58,20 +62,20 @@ class FileHandler {
 
             let response;
             try {
-                response = await marlinRaker.fileManager.uploadFile(root, filepath, filename, source);
+                response = await this.marlinRaker.fileManager.uploadFile(root, filepath, filename, source);
             } catch (e) {
                 res.status(400).send(e);
                 return;
             }
 
             if (print) {
-                await marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
+                await this.marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
                     .replaceAll("\\", "/"));
-                await marlinRaker.dispatchCommand("start_print", false);
+                await this.marlinRaker.dispatchCommand("start_print", false);
 
                 res.send({
                     ...response,
-                    print_started: marlinRaker.jobManager.isPrinting()
+                    print_started: this.marlinRaker.jobManager.isPrinting()
                 });
             } else {
                 res.send(response);

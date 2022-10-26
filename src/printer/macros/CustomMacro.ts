@@ -1,8 +1,9 @@
 import { IMacro } from "./IMacro";
-import { logger, marlinRaker } from "../../Server";
+import { logger } from "../../Server";
 import SimpleNotification from "../../api/notifications/SimpleNotification";
 import Utils from "../../util/Utils";
 import path from "path";
+import MarlinRaker from "../../MarlinRaker";
 
 type TGcodeEvaluator = (args: Record<string, string>, printer: unknown) => string;
 
@@ -17,6 +18,7 @@ class CustomMacro implements IMacro {
     }
 
     public async execute(args: Record<string, string>): Promise<void> {
+        const marlinRaker = MarlinRaker.getInstance();
         const printer = marlinRaker.printer;
         if (!printer) return;
 

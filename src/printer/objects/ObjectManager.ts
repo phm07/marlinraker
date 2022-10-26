@@ -15,27 +15,26 @@ import NamedObjectMap from "../../util/NamedObjectMap";
 import FanObject from "./FanObject";
 import SystemStatsObject from "./SystemStatsObject";
 import MotionReportObject from "./MotionReportObject";
+import MarlinRaker from "../../MarlinRaker";
 
 class ObjectManager {
 
     public readonly objects: NamedObjectMap<PrinterObject<unknown>>;
-    private readonly printer: Printer;
     private subscriptions: { socket: WebSocket; unsubscribeAll: () => void }[] = [];
 
-    public constructor(printer: Printer) {
-        this.printer = printer;
+    public constructor(marlinRaker: MarlinRaker, printer: Printer) {
         this.objects = new NamedObjectMap<PrinterObject<unknown>>([
-            new WebhooksObject(this.printer),
-            new ToolheadObject(this.printer),
-            new FanObject(this.printer),
-            new GcodeMoveObject(this.printer),
-            new MotionReportObject(),
+            new WebhooksObject(marlinRaker),
+            new ToolheadObject(printer),
+            new FanObject(printer),
+            new GcodeMoveObject(printer),
+            new MotionReportObject(marlinRaker),
             new SystemStatsObject(),
             new HeatersObject(),
             new ConfigFileObject(),
-            new PrintStatsObject(),
-            new VirtualSdCardObject(),
-            config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(this.printer)
+            new PrintStatsObject(marlinRaker),
+            new VirtualSdCardObject(marlinRaker),
+            config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(printer)
         ]);
     }
 

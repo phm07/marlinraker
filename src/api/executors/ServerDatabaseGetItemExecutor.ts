@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     namespace: string;
@@ -16,10 +16,15 @@ class ServerDatabaseGetItemExecutor implements IMethodExecutor<IParams, IResult>
 
     public readonly name = "server.database.get_item";
     public readonly httpName = "server.database.item";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IResult> {
         if (!params.namespace) throw new Error("Invalid namespace");
-        const value = await marlinRaker.database.getItem(params.namespace, params.key ?? undefined);
+        const value = await this.marlinRaker.database.getItem(params.namespace, params.key ?? undefined);
         if (value === null) throw new Error(`${params.namespace}${params.key ? `.${params.key}` : ""} doesn't exist`);
         return {
             namespace: params.namespace,

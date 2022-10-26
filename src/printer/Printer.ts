@@ -2,12 +2,13 @@ import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
 import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo } from "./ParserUtil";
-import { logger, marlinRaker } from "../Server";
+import { logger } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import { TVec2, TVec4 } from "../util/Utils";
+import MarlinRaker from "../MarlinRaker";
 
 interface IPauseState {
     x: number;
@@ -60,10 +61,10 @@ class Printer extends SerialGcodeDevice {
     public actualExtruderSpeed!: number;
     public extrudedFilamentOffset!: number;
 
-    public constructor(serialPort: string, baudRate: number) {
-        super(serialPort, baudRate);
+    public constructor(marlinRaker: MarlinRaker, serialPort: string, baudRate: number) {
+        super(marlinRaker, serialPort, baudRate);
 
-        this.objectManager = new ObjectManager(this);
+        this.objectManager = new ObjectManager(marlinRaker, this);
         this.heaterManager = new HeaterManager(this);
         this.capabilities = {};
         this.watchers = [];
@@ -133,12 +134,12 @@ class Printer extends SerialGcodeDevice {
             }
         }
 
-        if (marlinRaker.state === "ready" && line.startsWith("echo:")) {
+        if (this.marlinRaker.state === "ready" && line.startsWith("echo:")) {
             const response = line.substring(5);
             if (response.startsWith("busy:")) return false;
-            void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
+            void this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_gcode_response", [response]));
 
-            marlinRaker.gcodeStore.push({
+            this.marlinRaker.gcodeStore.push({
                 message: response,
                 time: Date.now() / 1000,
                 type: "response"
@@ -150,6 +151,8 @@ class Printer extends SerialGcodeDevice {
     }
 
     private static handleAction(action: string): void {
+        const marlinRaker = MarlinRaker.getInstance();
+
         if (action === "cancel") {
             if (marlinRaker.jobManager.isPrinting()) {
                 logger.info("Canceling print");
@@ -295,7 +298,7 @@ class Printer extends SerialGcodeDevice {
         this.resetValues();
 
         const timeout = setTimeout(() => {
-            marlinRaker.disconnect("error", "Printer initialization took too long");
+            this.marlinRaker.disconnect("error", "Printer initialization took too long");
         }, 10000);
 
         this.isPrusa = this.info?.firmwareName.startsWith("Prusa-Firmware") ?? false;

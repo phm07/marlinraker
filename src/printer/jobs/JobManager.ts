@@ -1,4 +1,4 @@
-import { config, marlinRaker } from "../../Server";
+import { config } from "../../Server";
 import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
 import MarlinRaker from "../../MarlinRaker";
@@ -10,9 +10,11 @@ class JobManager {
     public totalDuration: number;
     public printDuration: number;
     public startTime: number;
+    private readonly marlinRaker: MarlinRaker;
     private ePosStart: number;
 
-    public constructor(marlinRakerInstance: MarlinRaker) {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.jobQueue = new JobQueue();
         this.totalDuration = 0;
         this.printDuration = 0;
@@ -46,7 +48,7 @@ class JobManager {
             }, 1000);
         }
 
-        marlinRakerInstance.on("stateChange", (state) => {
+        marlinRaker.on("stateChange", (state) => {
             if (state !== "ready") {
                 delete this.currentPrintJob;
                 this.totalDuration = 0;
@@ -58,17 +60,19 @@ class JobManager {
     }
 
     public async selectFile(filename: string): Promise<boolean> {
-        const printer = marlinRaker.printer;
+        const printer = this.marlinRaker.printer;
         if (!printer || this.isPrinting()) return false;
 
-        const file = await marlinRaker.fileManager.getFile(filename);
+        const file = await this.marlinRaker.fileManager.getFile(filename);
         const printJob = file?.getPrintJob?.();
         if (!printJob) return false;
 
         this.currentPrintJob = printJob;
         printJob.on("stateChange", () => {
-            marlinRaker.printer!.objectManager.objects.print_stats?.emit();
-            marlinRaker.printer!.objectManager.objects.virtual_sdcard?.emit();
+            if (this.marlinRaker.printer) {
+                this.marlinRaker.printer.objectManager.objects.print_stats?.emit();
+                this.marlinRaker.printer.objectManager.objects.virtual_sdcard?.emit();
+            }
         });
         delete printer.pauseState;
         return true;
@@ -77,13 +81,13 @@ class JobManager {
     public async start(): Promise<boolean> {
         if (!this.isReadyToPrint()) return false;
         this.startTime = Date.now() / 1000;
-        this.ePosStart = marlinRaker.printer!.getExtrudedFilament();
+        this.ePosStart = this.marlinRaker.printer!.getExtrudedFilament();
         await this.currentPrintJob!.start();
         return true;
     }
 
     public async pause(): Promise<boolean> {
-        const printer = marlinRaker.printer;
+        const printer = this.marlinRaker.printer;
         if (!printer || this.currentPrintJob?.state !== "printing") return false;
         await this.currentPrintJob.pause();
         printer.pauseState = {
@@ -97,22 +101,22 @@ class JobManager {
     }
 
     public async resume(): Promise<boolean> {
-        if (!marlinRaker.printer || this.currentPrintJob?.state !== "paused") return false;
-        delete marlinRaker.printer.pauseState;
+        if (!this.marlinRaker.printer || this.currentPrintJob?.state !== "paused") return false;
+        delete this.marlinRaker.printer.pauseState;
         await this.currentPrintJob.resume();
         return true;
     }
 
     public async cancel(): Promise<boolean> {
-        if (!marlinRaker.printer || !this.isPrinting()) return false;
-        delete marlinRaker.printer.pauseState;
+        if (!this.marlinRaker.printer || !this.isPrinting()) return false;
+        delete this.marlinRaker.printer.pauseState;
         await this.currentPrintJob!.cancel();
         return true;
     }
 
     public async reset(): Promise<boolean> {
 
-        const printer = marlinRaker.printer;
+        const printer = this.marlinRaker.printer;
         if (!printer
             || !this.currentPrintJob
             || this.isPrinting())
@@ -136,12 +140,12 @@ class JobManager {
     }
 
     public isReadyToPrint(): boolean {
-        if (!marlinRaker.printer || marlinRaker.updateManager.busy || !this.currentPrintJob) return false;
+        if (!this.marlinRaker.printer || this.marlinRaker.updateManager.busy || !this.currentPrintJob) return false;
         return ["standby", "complete", "cancelled"].includes(this.currentPrintJob.state);
     }
 
     public getFilamentUsed(): number {
-        return (marlinRaker.printer?.getExtrudedFilament() ?? 0) - this.ePosStart;
+        return (this.marlinRaker.printer?.getExtrudedFilament() ?? 0) - this.ePosStart;
     }
 }
 

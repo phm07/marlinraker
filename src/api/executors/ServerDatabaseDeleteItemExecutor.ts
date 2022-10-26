@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     namespace: string;
@@ -17,11 +17,16 @@ class ServerDatabaseDeleteItemExecutor implements IMethodExecutor<IParams, IResu
     public readonly name = "server.database.delete_item";
     public readonly httpName = "server.database.item";
     public readonly httpMethod = "delete";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IResult> {
         if (!params.namespace) throw new Error("Invalid namespace");
         if (!params.key) throw new Error("Invalid key");
-        const value = await marlinRaker.database.deleteItem(params.namespace, params.key);
+        const value = await this.marlinRaker.database.deleteItem(params.namespace, params.key);
         return {
             namespace: params.namespace,
             key: params.key,

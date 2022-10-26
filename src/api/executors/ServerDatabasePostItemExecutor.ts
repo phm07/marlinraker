@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     namespace: string;
@@ -18,6 +18,11 @@ class ServerDatabasePostItemExecutor implements IMethodExecutor<IParams, IResult
     public readonly name = "server.database.post_item";
     public readonly httpName = "server.database.item";
     public readonly httpMethod = "post";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IResult> {
         if (!params.namespace) throw new Error("Invalid namespace");
@@ -25,7 +30,7 @@ class ServerDatabasePostItemExecutor implements IMethodExecutor<IParams, IResult
         return {
             namespace: params.namespace,
             key: params.key,
-            value: await marlinRaker.database.addItem(params.namespace, params.key, params.value)
+            value: await this.marlinRaker.database.addItem(params.namespace, params.key, params.value)
         };
     }
 }

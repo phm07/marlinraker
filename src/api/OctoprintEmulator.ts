@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { marlinRaker, router } from "../Server";
+import { router } from "../Server";
 import FileHandler from "./http/FileHandler";
+import MarlinRaker from "../MarlinRaker";
 
 class OctoprintEmulator {
 
-    public constructor() {
+    public constructor(fileHandler: FileHandler) {
         router.get("/api/version", OctoprintEmulator.handleApiVersion.bind(this));
         router.get("/api/server", OctoprintEmulator.handleApiServer.bind(this));
         router.get("/api/login", OctoprintEmulator.handleApiLogin.bind(this));
@@ -13,7 +14,7 @@ class OctoprintEmulator {
         router.get("/api/printer", OctoprintEmulator.handleApiPrinter.bind(this));
         router.get("/api/printerprofiles", OctoprintEmulator.handleApiPrinterprofiles.bind(this));
         router.post("/api/printer/command", OctoprintEmulator.handleApiPrinterCommand.bind(this));
-        FileHandler.handleUpload("/api/files/local");
+        fileHandler.handleUpload("/api/files/local");
     }
 
     private static handleApiVersion(_: Request, res: Response): void {
@@ -146,7 +147,7 @@ class OctoprintEmulator {
     private static handleApiPrinterCommand(req: Request, res: Response): void {
         const commands = (req.body?.commands as (string[] | undefined)) ?? [];
         commands.forEach(async (command) => {
-            await marlinRaker.printer?.queueGcode(command);
+            await MarlinRaker.getInstance().printer?.queueGcode(command);
         });
         res.send({});
     }

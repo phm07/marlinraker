@@ -1,13 +1,18 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 class MachineUpdateFullExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "machine.update.full";
     public readonly timeout = null;
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.updateManager.fullUpdate();
+        await this.marlinRaker.updateManager.fullUpdate();
         return "ok";
     }
 }

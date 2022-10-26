@@ -2,9 +2,10 @@ import FileDirectory from "./FileDirectory";
 import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
 import path from "path";
-import { marlinRaker, rootDir } from "../Server";
+import { rootDir } from "../Server";
 import fs from "fs-extra";
 import SimpleNotification from "../api/notifications/SimpleNotification";
+import MarlinRaker from "../MarlinRaker";
 
 interface IDirInfo {
     dirs: {
@@ -56,9 +57,11 @@ interface IFileChangeNotification {
 
 class FileManager {
 
+    private readonly marlinRaker: MarlinRaker;
     private readonly directories: IDirectory[];
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.directories = [
             new FileDirectory(null, path.join(rootDir, "gcodes"), "gcodes"),
             new FileDirectory(null, path.join(rootDir, "config"), "config")
@@ -169,7 +172,7 @@ class FileManager {
             }
         };
 
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
         return notification;
     }
 
@@ -214,7 +217,7 @@ class FileManager {
             },
             action: "create_dir"
         };
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
         return { // why??? @arksine
             item: {
                 path: dirpath,
@@ -245,7 +248,7 @@ class FileManager {
         }
 
         await fs.remove(diskPath);
-        await marlinRaker.metadataManager.cleanup();
+        await this.marlinRaker.metadataManager.cleanup();
         const notification: IFileChangeNotification = {
             item: {
                 path: dirpath.split("/").filter((s) => s).slice(1).join("/"),
@@ -256,7 +259,7 @@ class FileManager {
             },
             action: "delete_dir"
         };
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
         return { // again, why??? @arksine
             item: {
                 path: dirpath,
@@ -287,7 +290,7 @@ class FileManager {
             await fs.copy(sourceOnDisk, destOnDisk);
         } else {
             await fs.move(sourceOnDisk, destOnDisk);
-            await marlinRaker.metadataManager.cleanup();
+            await this.marlinRaker.metadataManager.cleanup();
         }
         const stat = await fs.stat(destOnDisk);
         const action = stat.isFile() ? "move_file" : "move_dir";
@@ -306,7 +309,7 @@ class FileManager {
             },
             action
         };
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
 
         return {
             item: {
@@ -344,7 +347,7 @@ class FileManager {
             },
             action: "delete_file"
         };
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_filelist_changed", [notification]));
         return notification;
     }
 }

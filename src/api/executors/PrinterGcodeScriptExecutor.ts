@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     script: string;
@@ -9,9 +9,14 @@ class PrinterGcodeScriptExecutor implements IMethodExecutor<IParams, string> {
 
     public readonly name = "printer.gcode.script";
     public readonly timeout = null;
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<string> {
-        await marlinRaker.dispatchCommand(params.script ?? "");
+        await this.marlinRaker.dispatchCommand(params.script ?? "");
         return "ok";
     }
 }

@@ -1,5 +1,5 @@
 import PrinterObject from "./PrinterObject";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
     is_active: boolean;
@@ -12,18 +12,20 @@ interface IObject {
 class VirtualSdCardObject extends PrinterObject<IObject> {
 
     public readonly name = "virtual_sdcard";
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
+        this.marlinRaker = marlinRaker;
     }
 
     protected get(_: string[] | null): IObject {
         return {
-            is_active: marlinRaker.jobManager.currentPrintJob?.state === "printing",
-            progress: marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
-            file_path: marlinRaker.jobManager.currentPrintJob?.filepath ?? "",
-            file_position: marlinRaker.jobManager.currentPrintJob?.filePosition ?? 0,
-            file_size: marlinRaker.jobManager.currentPrintJob?.fileSize ?? 0
+            is_active: this.marlinRaker.jobManager.currentPrintJob?.state === "printing",
+            progress: this.marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
+            file_path: this.marlinRaker.jobManager.currentPrintJob?.filepath ?? "",
+            file_position: this.marlinRaker.jobManager.currentPrintJob?.filePosition ?? 0,
+            file_size: this.marlinRaker.jobManager.currentPrintJob?.fileSize ?? 0
         };
     }
 }

@@ -1,5 +1,5 @@
 import PrinterObject from "./PrinterObject";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 type TPrintState = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
@@ -14,19 +14,21 @@ interface IObject {
 
 class PrintStatsObject extends PrinterObject<IObject> {
 
+    private readonly marlinRaker: MarlinRaker;
     public readonly name = "print_stats";
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
+        this.marlinRaker = marlinRaker;
     }
 
     public get(_: string[] | null): IObject {
         return {
-            filename: marlinRaker.jobManager.currentPrintJob?.filename ?? "",
-            total_duration: marlinRaker.jobManager.totalDuration,
-            print_duration: marlinRaker.jobManager.printDuration,
-            filament_used: marlinRaker.jobManager.getFilamentUsed(),
-            state: marlinRaker.jobManager.currentPrintJob?.state ?? "standby",
+            filename: this.marlinRaker.jobManager.currentPrintJob?.filename ?? "",
+            total_duration: this.marlinRaker.jobManager.totalDuration,
+            print_duration: this.marlinRaker.jobManager.printDuration,
+            filament_used: this.marlinRaker.jobManager.getFilamentUsed(),
+            state: this.marlinRaker.jobManager.currentPrintJob?.state ?? "standby",
             message: ""
         };
     }

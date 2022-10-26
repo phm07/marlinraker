@@ -1,11 +1,12 @@
 import path from "path";
 import fs from "fs-extra";
-import { marlinRaker, rootDir } from "../../Server";
+import { rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
 import EventEmitter from "events";
 import { TCompletedJobStatus } from "./JobHistory";
+import MarlinRaker from "../../MarlinRaker";
 
 type TJobStatus = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
@@ -23,6 +24,7 @@ class PrintJob extends EventEmitter {
     public filePosition: number;
     public progress: number;
     public metadata?: IGcodeMetadata;
+    private readonly marlinRaker: MarlinRaker;
     private readonly printer: Printer;
     private lineReader?: LineReader;
     private latestCommand?: Promise<string>;
@@ -31,9 +33,10 @@ class PrintJob extends EventEmitter {
 
     public constructor(filename: string) {
         super();
-        if (!marlinRaker.printer) throw new Error();
+        this.marlinRaker = MarlinRaker.getInstance();
+        if (!this.marlinRaker.printer) throw new Error();
 
-        this.printer = marlinRaker.printer;
+        this.printer = this.marlinRaker.printer;
         this.filename = filename;
         this.filepath = path.join(rootDir, "gcodes", filename);
         this.state = "standby";
@@ -55,7 +58,7 @@ class PrintJob extends EventEmitter {
     public async start(): Promise<void> {
         if (this.state !== "standby") throw new Error("Job already started");
 
-        this.metadata = await marlinRaker.metadataManager.getOrGenerateMetadata(this.filename) ?? undefined;
+        this.metadata = await this.marlinRaker.metadataManager.getOrGenerateMetadata(this.filename) ?? undefined;
         if (!this.fileSize || !this.metadata) throw new Error("Cannot find file");
         this.pauseRequested = false;
         this.setState("printing");
@@ -147,7 +150,7 @@ class PrintJob extends EventEmitter {
         this.emit("stateChange", state);
         if (["complete", "error", "cancelled"].includes(state)) {
             const status = state === "complete" ? "completed" : state as TCompletedJobStatus;
-            void marlinRaker.jobHistory.saveCurrentJob(status);
+            void this.marlinRaker.jobHistory.saveCurrentJob(status);
         }
     }
 }

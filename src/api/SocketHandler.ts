@@ -20,7 +20,7 @@ import MachineProcStatsExecutor from "./executors/MachineProcStatsExecutor";
 import ServerGcodeStoreExecutor from "./executors/ServerGcodeStoreExecutor";
 import PrinterGcodeScriptExecutor from "./executors/PrinterGcodeScriptExecutor";
 import PrinterEmergencyStopExecutor from "./executors/PrinterEmergencyStopExecutor";
-import ServerJobQueueStatus from "./executors/ServerJobQueueStatus";
+import ServerJobQueueStatusExecutor from "./executors/ServerJobQueueStatusExecutor";
 import ServerAnnouncementsListExecutor from "./executors/ServerAnnouncementsListExecutor";
 import ServerFilesListExecutor from "./executors/ServerFilesListExecutor";
 import ServerFilesGetDirectoryExecutor from "./executors/ServerFilesGetDirectoryExecutor";
@@ -51,6 +51,7 @@ import ServerHistoryGetJobExecutor from "./executors/ServerHistoryGetJobExecutor
 import ServerHistoryDeleteJobExecutor from "./executors/ServerHistoryDeleteJobExecutor";
 import MachineRebootExecutor from "./executors/MachineRebootExecutor";
 import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
+import MarlinRaker from "../MarlinRaker";
 
 interface ISocketResponse {
     id: number;
@@ -60,58 +61,61 @@ interface ISocketResponse {
 class SocketHandler extends MessageHandler {
 
     private readonly socketServer: WebSocketServer;
-    private readonly methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
-        [
-            new MachineProcStatsExecutor(),
-            new MachineRebootExecutor(),
-            new MachineShutdownExecutor(),
-            new MachineSystemInfoExecutor(),
-            new MachineUpdateClientExecutor(),
-            new MachineUpdateFullExecutor(),
-            new MachineUpdateStatusExecutor(),
-            new MachineUpdateSystemExecutor(),
-            new PrinterEmergencyStopExecutor(),
-            new PrinterFirmwareRestartExecutor(),
-            new PrinterGcodeHelpExecutor(),
-            new PrinterGcodeScriptExecutor(),
-            new PrinterInfoExecutor(),
-            new PrinterObjectsListExecutor(),
-            new PrinterObjectsSubscribeExecutor(),
-            new PrinterPrintCancelExecutor(),
-            new PrinterPrintPauseExecutor(),
-            new PrinterPrintResumeExecutor(),
-            new PrinterPrintStartExecutor(),
-            new PrinterQueryEndstopsStatusExecutor(),
-            new PrinterRestartExecutor(),
-            new ServerAnnouncementsListExecutor(),
-            new ServerConfigExecutor(),
-            new ServerConnectionIdentifyExecutor(),
-            new ServerDatabaseDeleteItemExecutor(),
-            new ServerDatabaseGetItemExecutor(),
-            new ServerDatabaseListExecutor(),
-            new ServerDatabasePostItemExecutor(),
-            new ServerFilesCopyExecutor(),
-            new ServerFilesDeleteDirectoryExecutor(),
-            new ServerFilesDeleteFileExecutor(),
-            new ServerFilesGetDirectoryExecutor(),
-            new ServerFilesListExecutor(),
-            new ServerFilesMetadataExecutor(),
-            new ServerFilesMoveExecutor(),
-            new ServerFilesPostDirectoryExecutor(),
-            new ServerGcodeStoreExecutor(),
-            new ServerHistoryDeleteJobExecutor(),
-            new ServerHistoryGetJobExecutor(),
-            new ServerHistoryListExecutor(),
-            new ServerHistoryResetTotals(),
-            new ServerHistoryTotals(),
-            new ServerInfoExecutor(),
-            new ServerJobQueueStatus(),
-            new ServerTemperatureStoreExecutor()
-        ] as IMethodExecutor<unknown, unknown>[]
-    );
+    private readonly methodExecutors;
 
-    public constructor(socketServer: WebSocketServer) {
+    public constructor(marlinRaker: MarlinRaker, socketServer: WebSocketServer) {
         super();
+
+        this.methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
+            [
+                new MachineProcStatsExecutor(marlinRaker),
+                new MachineRebootExecutor(),
+                new MachineShutdownExecutor(),
+                new MachineSystemInfoExecutor(marlinRaker),
+                new MachineUpdateClientExecutor(marlinRaker),
+                new MachineUpdateFullExecutor(marlinRaker),
+                new MachineUpdateStatusExecutor(marlinRaker),
+                new MachineUpdateSystemExecutor(marlinRaker),
+                new PrinterEmergencyStopExecutor(marlinRaker),
+                new PrinterFirmwareRestartExecutor(marlinRaker),
+                new PrinterGcodeHelpExecutor(),
+                new PrinterGcodeScriptExecutor(marlinRaker),
+                new PrinterInfoExecutor(marlinRaker),
+                new PrinterObjectsListExecutor(marlinRaker),
+                new PrinterObjectsSubscribeExecutor(marlinRaker),
+                new PrinterPrintCancelExecutor(marlinRaker),
+                new PrinterPrintPauseExecutor(marlinRaker),
+                new PrinterPrintResumeExecutor(marlinRaker),
+                new PrinterPrintStartExecutor(marlinRaker),
+                new PrinterQueryEndstopsStatusExecutor(marlinRaker),
+                new PrinterRestartExecutor(marlinRaker),
+                new ServerAnnouncementsListExecutor(),
+                new ServerConfigExecutor(),
+                new ServerConnectionIdentifyExecutor(marlinRaker),
+                new ServerDatabaseDeleteItemExecutor(marlinRaker),
+                new ServerDatabaseGetItemExecutor(marlinRaker),
+                new ServerDatabaseListExecutor(marlinRaker),
+                new ServerDatabasePostItemExecutor(marlinRaker),
+                new ServerFilesCopyExecutor(marlinRaker),
+                new ServerFilesDeleteDirectoryExecutor(marlinRaker),
+                new ServerFilesDeleteFileExecutor(marlinRaker),
+                new ServerFilesGetDirectoryExecutor(marlinRaker),
+                new ServerFilesListExecutor(marlinRaker),
+                new ServerFilesMetadataExecutor(marlinRaker),
+                new ServerFilesMoveExecutor(marlinRaker),
+                new ServerFilesPostDirectoryExecutor(marlinRaker),
+                new ServerGcodeStoreExecutor(marlinRaker),
+                new ServerHistoryDeleteJobExecutor(marlinRaker),
+                new ServerHistoryGetJobExecutor(marlinRaker),
+                new ServerHistoryListExecutor(marlinRaker),
+                new ServerHistoryResetTotals(marlinRaker),
+                new ServerHistoryTotals(marlinRaker),
+                new ServerInfoExecutor(marlinRaker),
+                new ServerJobQueueStatusExecutor(marlinRaker),
+                new ServerTemperatureStoreExecutor(marlinRaker)
+            ] as IMethodExecutor<unknown, unknown>[]
+        );
+
         this.socketServer = socketServer;
         this.socketServer.on("connection", this.connect.bind(this));
     }

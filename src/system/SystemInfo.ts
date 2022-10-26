@@ -5,6 +5,7 @@ import { IDistribution } from "./Distribution";
 import Network, { TNetwork } from "./Network";
 import Distribution from "./Distribution";
 import ProcStats from "./ProcStats";
+import MarlinRaker from "../MarlinRaker";
 
 interface IMachineInfo {
     system_info: {
@@ -20,9 +21,9 @@ class SystemInfo {
     public readonly machineInfo: IMachineInfo;
     public readonly procStats?: ProcStats;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
         this.machineInfo = SystemInfo.loadMachineInfo();
-        this.procStats = new ProcStats();
+        this.procStats = new ProcStats(marlinRaker);
     }
 
     private static loadMachineInfo(): IMachineInfo {

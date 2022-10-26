@@ -1,7 +1,5 @@
 import { IGcodeMetadata } from "../../files/MetadataManager";
-import Database from "../../database/Database";
 import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
-import { marlinRaker } from "../../Server";
 
 type TCompletedJobStatus = "completed" | "cancelled" | "error" | "klippy_shutdown" | "klippy_disconnect" | "server_exit";
 
@@ -30,11 +28,11 @@ interface IJobTotals {
 class JobHistory {
 
     public jobTotals: IJobTotals;
-    private readonly database: Database;
+    private readonly marlinRaker: MarlinRaker;
     private completedJobs: ICompletedJob[];
 
-    public constructor(marlinRakerInstance: MarlinRaker) {
-        this.database = marlinRakerInstance.database;
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.completedJobs = [];
         this.jobTotals = JobHistory.getDefaultJobTotals();
         void this.loadHistory();
@@ -43,7 +41,7 @@ class JobHistory {
             await this.saveCurrentJob("server_exit");
         });
 
-        marlinRakerInstance.on("stateChange", async (state: TPrinterState) => {
+        marlinRaker.on("stateChange", async (state: TPrinterState) => {
             if (state !== "ready") {
                 await this.saveCurrentJob("klippy_shutdown");
             }
@@ -51,8 +49,8 @@ class JobHistory {
     }
 
     private async loadHistory(): Promise<void> {
-        this.completedJobs = (await this.database.getItem("history", "jobs") ?? []) as ICompletedJob[];
-        this.jobTotals = (await this.database.getItem("history", "totals")
+        this.completedJobs = (await this.marlinRaker.database.getItem("history", "jobs") ?? []) as ICompletedJob[];
+        this.jobTotals = (await this.marlinRaker.database.getItem("history", "totals")
             ?? JobHistory.getDefaultJobTotals()) as IJobTotals;
     }
 
@@ -66,54 +64,54 @@ class JobHistory {
 
     public async saveCurrentJob(status: TCompletedJobStatus): Promise<void> {
         const id = this.findNextJobId();
-        if (!marlinRaker.jobManager.currentPrintJob) return;
+        if (!this.marlinRaker.jobManager.currentPrintJob) return;
 
-        const jobState = marlinRaker.jobManager.currentPrintJob.state;
+        const jobState = this.marlinRaker.jobManager.currentPrintJob.state;
         if (!["complete", "cancelled", "error"].includes(jobState)) return;
 
-        const metadata = marlinRaker.jobManager.currentPrintJob.metadata;
+        const metadata = this.marlinRaker.jobManager.currentPrintJob.metadata;
         if (!metadata) return;
 
         this.completedJobs.push({
             job_id: id,
             exists: true,
             end_time: Date.now() / 1000,
-            filament_used: marlinRaker.jobManager.getFilamentUsed(),
-            print_duration: marlinRaker.jobManager.printDuration,
-            start_time: marlinRaker.jobManager.startTime,
+            filament_used: this.marlinRaker.jobManager.getFilamentUsed(),
+            print_duration: this.marlinRaker.jobManager.printDuration,
+            start_time: this.marlinRaker.jobManager.startTime,
             status,
-            total_duration: marlinRaker.jobManager.totalDuration,
-            filename: marlinRaker.jobManager.currentPrintJob.filename,
+            total_duration: this.marlinRaker.jobManager.totalDuration,
+            filename: this.marlinRaker.jobManager.currentPrintJob.filename,
             metadata
         });
 
         this.jobTotals.total_jobs++;
-        this.jobTotals.longest_job = Math.max(this.jobTotals.longest_job, marlinRaker.jobManager.totalDuration);
-        this.jobTotals.total_time += marlinRaker.jobManager.totalDuration;
-        this.jobTotals.total_print_time += marlinRaker.jobManager.printDuration;
-        this.jobTotals.total_filament_used += marlinRaker.jobManager.getFilamentUsed();
-        this.jobTotals.longest_print = Math.max(this.jobTotals.longest_print, marlinRaker.jobManager.printDuration);
+        this.jobTotals.longest_job = Math.max(this.jobTotals.longest_job, this.marlinRaker.jobManager.totalDuration);
+        this.jobTotals.total_time += this.marlinRaker.jobManager.totalDuration;
+        this.jobTotals.total_print_time += this.marlinRaker.jobManager.printDuration;
+        this.jobTotals.total_filament_used += this.marlinRaker.jobManager.getFilamentUsed();
+        this.jobTotals.longest_print = Math.max(this.jobTotals.longest_print, this.marlinRaker.jobManager.printDuration);
 
-        await JobHistory.updateMetadata(marlinRaker.jobManager.currentPrintJob.filename, id, marlinRaker.jobManager.startTime);
+        await JobHistory.updateMetadata(this.marlinRaker.jobManager.currentPrintJob.filename, id, this.marlinRaker.jobManager.startTime);
         await this.saveTotals();
         await this.saveJobs();
     }
 
     private static async updateMetadata(filename: string, id: string, timeStarted: number): Promise<void> {
-        const metadata = await marlinRaker.metadataManager.getOrGenerateMetadata(filename);
+        const metadata = await MarlinRaker.getInstance().metadataManager.getOrGenerateMetadata(filename);
         if (metadata) {
             metadata.job_id = id;
             metadata.print_start_time = timeStarted;
-            await marlinRaker.metadataManager.storeMetadata(metadata);
+            await MarlinRaker.getInstance().metadataManager.storeMetadata(metadata);
         }
     }
 
     private async saveJobs(): Promise<void> {
-        await this.database.addItem("history", "jobs", this.completedJobs);
+        await this.marlinRaker.database.addItem("history", "jobs", this.completedJobs);
     }
 
     private async saveTotals(): Promise<void> {
-        await this.database.addItem("history", "totals", this.jobTotals);
+        await this.marlinRaker.database.addItem("history", "totals", this.jobTotals);
     }
 
     public getJobFromId(id: string): ICompletedJob | null {
@@ -132,7 +130,7 @@ class JobHistory {
         }
         this.completedJobs = leftOver;
         await this.saveJobs();
-        await marlinRaker.metadataManager.removeJobIds(deleted);
+        await this.marlinRaker.metadataManager.removeJobIds(deleted);
         return deleted;
     }
 

@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import { exec } from "child_process";
-import { marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
+import MarlinRaker from "../MarlinRaker";
 
 interface IThrottledState {
     bits: number;
@@ -12,8 +12,10 @@ class VcgenCmd {
 
     public readonly throttledState: IThrottledState;
     public readonly isActive: boolean;
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.throttledState = {
             bits: 0,
             flags: []
@@ -42,7 +44,7 @@ class VcgenCmd {
             if (this.throttledState.bits !== bits) {
                 this.throttledState.bits = bits;
                 this.throttledState.flags = flags;
-                void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_cpu_throttled", [this.throttledState]));
+                void this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_cpu_throttled", [this.throttledState]));
             }
         });
     }

@@ -1,6 +1,6 @@
 import PrinterObject from "./PrinterObject";
-import { marlinRaker } from "../../Server";
 import { TVec4 } from "../../util/Utils";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
     live_position: TVec4;
@@ -11,17 +11,19 @@ interface IObject {
 class MotionReportObject extends PrinterObject<IObject> {
 
     public readonly name = "motion_report";
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
+        this.marlinRaker = marlinRaker;
         setInterval(this.emit.bind(this), 250);
     }
 
     protected get(_: string[] | null): IObject {
         return {
-            live_position: marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
-            live_velocity: marlinRaker.printer?.actualSpeed ?? 0,
-            live_extruder_velocity: marlinRaker.printer?.actualExtruderSpeed ?? 0
+            live_position: this.marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
+            live_velocity: this.marlinRaker.printer?.actualSpeed ?? 0,
+            live_extruder_velocity: this.marlinRaker.printer?.actualExtruderSpeed ?? 0
         };
     }
 }

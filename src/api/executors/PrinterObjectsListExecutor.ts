@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IResult {
     objects: string[];
@@ -8,10 +8,15 @@ interface IResult {
 class PrinterObjectsListExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "printer.objects.list";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public invoke(_: TSender, __: undefined): IResult {
         return {
-            objects: Object.keys(marlinRaker.printer?.objectManager.objects ?? {})
+            objects: Object.keys(this.marlinRaker.printer?.objectManager.objects ?? {})
         };
     }
 }

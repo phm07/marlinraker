@@ -7,18 +7,20 @@ import { config, logger } from "../../Server";
 import NamedObjectMap from "../../util/NamedObjectMap";
 import StartPrintMacro from "./StartPrintMacro";
 import SdcardResetFileMacro from "./SdcardResetFileMacro";
+import MarlinRaker from "../../MarlinRaker";
 
 class MacroManager {
 
-    public readonly macros = new NamedObjectMap<IMacro>([
-        new PauseMacro(),
-        new ResumeMacro(),
-        new CancelPrintMacro(),
-        new StartPrintMacro(),
-        new SdcardResetFileMacro()
-    ]);
+    public readonly macros;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.macros = new NamedObjectMap<IMacro>([
+            new PauseMacro(marlinRaker),
+            new ResumeMacro(marlinRaker),
+            new CancelPrintMacro(marlinRaker),
+            new StartPrintMacro(marlinRaker),
+            new SdcardResetFileMacro(marlinRaker)
+        ]);
         this.loadMacros();
     }
 

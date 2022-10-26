@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IResult {
     namespaces: string[];
@@ -8,10 +8,15 @@ interface IResult {
 class ServerDatabaseListExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.database.list";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, __: undefined): Promise<IResult> {
         return {
-            namespaces: await marlinRaker.database.getNamespaces()
+            namespaces: await this.marlinRaker.database.getNamespaces()
         };
     }
 }

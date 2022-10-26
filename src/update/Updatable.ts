@@ -1,7 +1,8 @@
 import crypto from "crypto";
-import { logger, marlinRaker } from "../Server";
+import { logger } from "../Server";
 import { spawn } from "child_process";
 import readline from "readline";
+import MarlinRaker from "../MarlinRaker";
 
 type TLogger = (message: string, error?: boolean, complete?: boolean) => Promise<void>;
 
@@ -9,8 +10,10 @@ abstract class Updatable<TInfo> {
 
     public readonly name: string;
     public info?: TInfo;
+    protected readonly marlinRaker: MarlinRaker;
 
-    protected constructor(name: string) {
+    protected constructor(marlinRaker: MarlinRaker, name: string) {
+        this.marlinRaker = marlinRaker;
         this.name = name;
     }
 
@@ -25,7 +28,7 @@ abstract class Updatable<TInfo> {
         return async (message: string, error = false, complete = false): Promise<void> => {
             if (!complete && !message.trim()) return;
             logger[error ? "error" : "info"](`Updating ${this.name}: ${message}`);
-            await marlinRaker.updateManager.notifyUpdateResponse(this.name, procId, message, complete);
+            await this.marlinRaker.updateManager.notifyUpdateResponse(this.name, procId, message, complete);
         };
     }
 

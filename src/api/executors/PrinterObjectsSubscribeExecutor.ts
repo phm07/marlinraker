@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
 import { WebSocket } from "ws";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     objects: Record<string, string[] | null>;
@@ -14,11 +14,16 @@ interface IResult {
 class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IResult> {
 
     public readonly name = "printer.objects.subscribe";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public invoke(sender: TSender, params: Partial<IParams>): IResult | null {
         if (!params.objects) throw new Error("Invalid objects");
         if (!(sender instanceof WebSocket)) return null;
-        return marlinRaker.printer?.objectManager.subscribe(sender, params.objects) ?? null;
+        return this.marlinRaker.printer?.objectManager.subscribe(sender, params.objects) ?? null;
     }
 }
 

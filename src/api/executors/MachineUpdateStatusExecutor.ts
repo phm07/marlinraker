@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { IUpdateStatus } from "../../update/UpdateManager";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     refresh: boolean;
@@ -10,12 +10,17 @@ class MachineUpdateStatusExecutor implements IMethodExecutor<IParams, IUpdateSta
 
     public readonly name = "machine.update.status";
     public readonly timeout = null;
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IUpdateStatus> {
         if (params.refresh) {
-            await marlinRaker.updateManager.checkForUpdates();
+            await this.marlinRaker.updateManager.checkForUpdates();
         }
-        return marlinRaker.updateManager.getUpdateStatus();
+        return this.marlinRaker.updateManager.getUpdateStatus();
     }
 }
 

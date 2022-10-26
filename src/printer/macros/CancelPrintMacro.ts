@@ -1,12 +1,17 @@
 import { IMacro } from "./IMacro";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 class CancelPrintMacro implements IMacro {
 
     public readonly name = "cancel_print";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async execute(_: Record<string, string>): Promise<void> {
-        await marlinRaker.jobManager.cancel();
+        await this.marlinRaker.jobManager.cancel();
     }
 }
 

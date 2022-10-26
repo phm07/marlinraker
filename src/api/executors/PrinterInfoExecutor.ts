@@ -1,7 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import os from "os";
-import { marlinRaker } from "../../Server";
-import { TPrinterState } from "../../MarlinRaker";
+import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
 
 interface IResult {
     state: TPrinterState;
@@ -14,11 +13,16 @@ interface IResult {
 class PrinterInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "printer.info";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, __: undefined): Promise<IResult> {
         return {
-            state: marlinRaker.state,
-            state_message: marlinRaker.stateMessage,
+            state: this.marlinRaker.state,
+            state_message: this.marlinRaker.stateMessage,
             hostname: os.hostname(),
             software_version: "1.0",
             cpu_info: ""

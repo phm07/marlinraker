@@ -1,9 +1,9 @@
 import SystemInfo from "./SystemInfo";
 import { procfs } from "@stroncium/procfs";
 import os from "os";
-import { marlinRaker } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import VcgenCmd, { IThrottledState } from "./VcgenCmd";
+import MarlinRaker from "../MarlinRaker";
 
 type TNetworkStats = Record<string, {
     rx_bytes: number;
@@ -40,17 +40,19 @@ interface INetStats {
 
 class ProcStats {
 
+    private readonly marlinRaker: MarlinRaker;
     private procStats!: IProcStats;
     private readonly lastCpuStats: Record<string, ICpuStats | undefined>;
     private readonly lastNetStats: Record<string, INetStats | undefined>;
     private readonly moonrakerStats: TMoonrakerStats;
     private readonly vcgenCmd: VcgenCmd;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.lastCpuStats = {};
         this.lastNetStats = {};
         this.moonrakerStats = [];
-        this.vcgenCmd = new VcgenCmd();
+        this.vcgenCmd = new VcgenCmd(marlinRaker);
         this.updateProcStats(true);
         setInterval(this.updateProcStats.bind(this), 1000);
     }
@@ -75,16 +77,16 @@ class ProcStats {
             network,
             system_cpu_usage: cpuUsage,
             system_uptime: os.uptime(),
-            websocket_connections: init ? 0 : marlinRaker.connectionManager.connections.length
+            websocket_connections: init ? 0 : this.marlinRaker.connectionManager.connections.length
         };
-        if (!init) void marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_proc_stat_update", [this.procStats]));
+        if (!init) void this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_proc_stat_update", [this.procStats]));
     }
 
     public getProcStats(): IProcStats {
         return {
             ...this.procStats,
             system_uptime: os.uptime(),
-            websocket_connections: marlinRaker.connectionManager.connections.length
+            websocket_connections: this.marlinRaker.connectionManager.connections.length
         };
     }
 

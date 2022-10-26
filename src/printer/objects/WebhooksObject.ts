@@ -1,7 +1,5 @@
 import PrinterObject from "./PrinterObject";
-import Printer from "../Printer";
-import { marlinRaker } from "../../Server";
-import { TPrinterState } from "../../MarlinRaker";
+import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
 
 interface IObject {
     state: TPrinterState;
@@ -11,18 +9,18 @@ interface IObject {
 class WebhooksObject extends PrinterObject<IObject> {
 
     public readonly name = "webhooks";
-    private readonly printer: Printer;
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor(printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
-        this.printer = printer;
-        marlinRaker.on("stateChange", this.emit.bind(this));
+        this.marlinRaker = marlinRaker;
+        this.marlinRaker.on("stateChange", this.emit.bind(this));
     }
 
     public get(_: string[] | null): IObject {
         return {
-            state: marlinRaker.state,
-            state_message: marlinRaker.stateMessage
+            state: this.marlinRaker.state,
+            state_message: this.marlinRaker.stateMessage
         };
     }
 }

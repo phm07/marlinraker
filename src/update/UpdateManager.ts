@@ -1,4 +1,4 @@
-import { logger, marlinRaker, rootDir } from "../Server";
+import { logger, rootDir } from "../Server";
 import HttpsRequest from "./HttpsRequest";
 import path from "path";
 import NamedObjectMap from "../util/NamedObjectMap";
@@ -7,6 +7,7 @@ import SimpleNotification from "../api/notifications/SimpleNotification";
 import fs from "fs-extra";
 import ScriptUpdatable from "./ScriptUpdatable";
 import { Updatable } from "./Updatable";
+import MarlinRaker from "../MarlinRaker";
 
 interface IUpdateStatus {
     busy: boolean;
@@ -24,17 +25,19 @@ interface IRateLimit {
 
 class UpdateManager {
 
-    private readonly scheduledUpdates: [() => Promise<void>, () => void][];
     public readonly updatables: NamedObjectMap<Updatable<unknown>>;
     public busy: boolean;
+    private readonly marlinRaker: MarlinRaker;
+    private readonly scheduledUpdates: [() => Promise<void>, () => void][];
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.busy = false;
         this.scheduledUpdates = [];
         this.updatables = new NamedObjectMap<Updatable<unknown>>();
 
         if (process.platform === "linux") {
-            this.updatables.system = new SystemUpdatable();
+            this.updatables.system = new SystemUpdatable(marlinRaker);
         }
 
         this.loadScripts();
@@ -46,7 +49,7 @@ class UpdateManager {
         fs.mkdirsSync(scriptsDir);
         for (const file of fs.readdirSync(scriptsDir, { withFileTypes: true })) {
             if (!file.isFile() || file.name.startsWith("_")) continue;
-            const updatable = new ScriptUpdatable(file.name.split(".")[0], path.join(scriptsDir, file.name));
+            const updatable = new ScriptUpdatable(this.marlinRaker, file.name.split(".")[0], path.join(scriptsDir, file.name));
             this.updatables[updatable.name] = updatable;
         }
     }
@@ -67,7 +70,7 @@ class UpdateManager {
 
     public async update(name: string): Promise<void> {
         if (this.busy) throw new Error("Already updating");
-        if (marlinRaker.jobManager.isPrinting()) throw new Error("Cannot update while printing");
+        if (this.marlinRaker.jobManager.isPrinting()) throw new Error("Cannot update while printing");
         const updatable = this.updatables[name];
         if (!updatable) throw new Error(`Unknown client "${name}"`);
         if (!updatable.isUpdatePossible()) throw new Error(`Cannot update ${name}`);
@@ -94,7 +97,7 @@ class UpdateManager {
     }
 
     public async emit(): Promise<void> {
-        await marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_update_refreshed", [
+        await this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_update_refreshed", [
             await this.getUpdateStatus()
         ]));
     }
@@ -123,7 +126,7 @@ class UpdateManager {
     }
 
     public async notifyUpdateResponse(application: string, procId: number, message: string, complete: boolean): Promise<void> {
-        return marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_update_response", [{
+        return this.marlinRaker.socketHandler.broadcast(new SimpleNotification("notify_update_response", [{
             application,
             proc_id: procId,
             message,

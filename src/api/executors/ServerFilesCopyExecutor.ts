@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { IFileChangeNotification } from "../../files/FileManager";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     source: string;
@@ -11,11 +11,16 @@ class ServerFilesCopyExecutor implements IMethodExecutor<IParams, IFileChangeNot
 
     public readonly name = "server.files.copy";
     public readonly httpMethod = "post";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IFileChangeNotification> {
         if (!params.source) throw new Error("Invalid source");
         if (!params.dest) throw new Error("Invalid destination");
-        return await marlinRaker.fileManager.moveOrCopy(params.source, params.dest, true);
+        return await this.marlinRaker.fileManager.moveOrCopy(params.source, params.dest, true);
     }
 }
 

@@ -1,7 +1,8 @@
 import { Updatable } from "./Updatable";
-import { logger, marlinRaker } from "../Server";
+import { logger } from "../Server";
 import { exec } from "child_process";
 import Utils from "../util/Utils";
+import MarlinRaker from "../MarlinRaker";
 
 interface IInfo {
     version?: unknown;
@@ -12,8 +13,8 @@ class ScriptUpdatable extends Updatable<IInfo> {
 
     public readonly scriptFile: string;
 
-    public constructor(name: string, scriptFile: string) {
-        super(name);
+    public constructor(marlinRaker: MarlinRaker, name: string, scriptFile: string) {
+        super(marlinRaker, name);
         this.scriptFile = scriptFile;
     }
 
@@ -32,7 +33,7 @@ class ScriptUpdatable extends Updatable<IInfo> {
                     }
                 });
             });
-            await marlinRaker.updateManager.emit();
+            await MarlinRaker.getInstance().updateManager.emit();
         } catch (e) {
             logger.error(`Error while checking for update for ${this.name}:`);
             logger.error(e);
@@ -50,7 +51,7 @@ class ScriptUpdatable extends Updatable<IInfo> {
         const log = this.createLogger();
         await this.doUpdate(log, this.scriptFile, ["-u"]);
         await this.checkForUpdate();
-        await marlinRaker.updateManager.emit();
+        await this.marlinRaker.updateManager.emit();
     }
 }
 

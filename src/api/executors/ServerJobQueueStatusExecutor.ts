@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { TQueueState } from "../../printer/jobs/JobQueue";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IResult {
     queued_jobs: {
@@ -12,14 +12,19 @@ interface IResult {
     queue_state: TQueueState;
 }
 
-class ServerJobQueueStatus implements IMethodExecutor<undefined, IResult> {
+class ServerJobQueueStatusExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.job_queue.status";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public invoke(_: TSender, __: undefined): IResult {
         return {
-            queue_state: marlinRaker.jobManager.jobQueue.state,
-            queued_jobs: marlinRaker.jobManager.jobQueue.queue.map((job) => ({
+            queue_state: this.marlinRaker.jobManager.jobQueue.state,
+            queued_jobs: this.marlinRaker.jobManager.jobQueue.queue.map((job) => ({
                 filename: job.filename,
                 job_id: job.jobId,
                 time_added: job.timeAdded,
@@ -29,4 +34,4 @@ class ServerJobQueueStatus implements IMethodExecutor<undefined, IResult> {
     }
 }
 
-export default ServerJobQueueStatus;
+export default ServerJobQueueStatusExecutor;

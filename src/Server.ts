@@ -11,7 +11,6 @@ import Logger, { Level } from "./logger/Logger";
 
 sourceMapSupport.install({ handleUncaughtExceptions: false });
 
-let marlinRaker: MarlinRaker;
 let config: Config;
 let rootDir: string;
 let logger: Logger;
@@ -117,9 +116,9 @@ let router: Router;
     httpServer.listen(httpPort);
     logger.info(`App listening on port ${httpPort}`);
 
-    marlinRaker = new MarlinRaker(wss);
+    new MarlinRaker(wss);
 })().catch((e) => {
     throw e;
 });
 
-export { marlinRaker, config, rootDir, logger, router };
+export { config, rootDir, logger, router };

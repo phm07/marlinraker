@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { IFileInfo } from "../../files/FileManager";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
     root: "gcodes" | "config";
@@ -9,9 +9,14 @@ interface IParams {
 class ServerFilesListExecutor implements IMethodExecutor<IParams, IFileInfo[]> {
 
     public readonly name = "server.files.list";
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IFileInfo[]> {
-        return await marlinRaker.fileManager.listFiles(params.root ?? "gcodes");
+        return await this.marlinRaker.fileManager.listFiles(params.root ?? "gcodes");
     }
 
 }

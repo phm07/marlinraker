@@ -2,8 +2,9 @@ import { ReadLine } from "readline";
 import { SerialPort } from "serialport";
 import readline from "readline";
 import EventEmitter from "events";
-import { config, logger, marlinRaker } from "../Server";
+import { config, logger } from "../Server";
 import ParserUtil from "./ParserUtil";
+import MarlinRaker from "../MarlinRaker";
 
 interface ICommand {
     gcode: string;
@@ -28,6 +29,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
 
     public readonly serialPort: SerialPort;
     public hasEmergencyParser: boolean;
+    protected readonly marlinRaker: MarlinRaker;
     protected readline: ReadLine;
     protected commandQueue: ICommand[];
     protected currentCommand?: ICommand;
@@ -36,9 +38,10 @@ abstract class SerialGcodeDevice extends EventEmitter {
     private readonly connectionTimeout: number;
     protected abstract isPrusa: boolean;
 
-    protected constructor(serialPort: string, baudRate: number) {
+    protected constructor(marlinRaker: MarlinRaker, serialPort: string, baudRate: number) {
         super();
 
+        this.marlinRaker = marlinRaker;
         this.commandQueue = [];
         this.ready = false;
         this.hasEmergencyParser = false;
@@ -147,7 +150,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
         }
 
         if (log) {
-            marlinRaker.gcodeStore.push({
+            this.marlinRaker.gcodeStore.push({
                 message: gcodeRaw,
                 time: Date.now() / 1000,
                 type: "command"

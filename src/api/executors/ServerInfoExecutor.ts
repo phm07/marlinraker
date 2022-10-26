@@ -1,6 +1,6 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { config, logger, marlinRaker } from "../../Server";
-import { TPrinterState } from "../../MarlinRaker";
+import { config, logger } from "../../Server";
+import MarlinRaker, { TPrinterState } from "../../MarlinRaker";
 import { Level } from "../../logger/Logger";
 import packageJson from "../../../package.json";
 
@@ -22,8 +22,10 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
 
     public readonly name = "server.info";
     private readonly versionArray: number[];
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
         this.versionArray = packageJson.version
             .replace(/[^0-9.]/g, "")
             .split(".")
@@ -45,18 +47,18 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
             "proc_stats",
             "history"
         ];
-        if (Object.keys(marlinRaker.updateManager.updatables).length) {
+        if (Object.keys(this.marlinRaker.updateManager.updatables).length) {
             components.push("update_manager");
         }
 
         return {
             klippy_connected: true,
-            klippy_state: marlinRaker.state,
+            klippy_state: this.marlinRaker.state,
             components,
             failed_components: [],
             registered_directories: ["gcodes", "config"],
             warnings,
-            websocket_count: marlinRaker.connectionManager.connections.length,
+            websocket_count: this.marlinRaker.connectionManager.connections.length,
             moonraker_version: packageJson.version,
             api_version: this.versionArray,
             api_version_string: packageJson.version,

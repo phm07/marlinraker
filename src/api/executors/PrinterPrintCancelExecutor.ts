@@ -1,13 +1,18 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { marlinRaker } from "../../Server";
+import MarlinRaker from "../../MarlinRaker";
 
 class PrinterPrintCancelExecutor implements IMethodExecutor<undefined, string> {
 
     public readonly name = "printer.print.cancel";
     public readonly timeout = null;
+    private readonly marlinRaker: MarlinRaker;
+
+    public constructor(marlinRaker: MarlinRaker) {
+        this.marlinRaker = marlinRaker;
+    }
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
-        await marlinRaker.dispatchCommand("cancel_print", false);
+        await this.marlinRaker.dispatchCommand("cancel_print", false);
         return "ok";
     }
 }

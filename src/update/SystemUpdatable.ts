@@ -1,7 +1,8 @@
 import { Updatable } from "./Updatable";
 import { spawn, exec } from "child_process";
 import readline from "readline";
-import { logger, marlinRaker } from "../Server";
+import { logger } from "../Server";
+import MarlinRaker from "../MarlinRaker";
 
 interface IInfo {
     package_count: number;
@@ -12,8 +13,8 @@ class SystemUpdatable extends Updatable<IInfo> {
 
     private packages: string[];
 
-    public constructor() {
-        super("system");
+    public constructor(marlinRaker: MarlinRaker) {
+        super(marlinRaker, "system");
         this.packages = [];
     }
 
@@ -40,7 +41,7 @@ class SystemUpdatable extends Updatable<IInfo> {
                 reader.on("close", async () => {
                     this.packages = newPackages;
                     this.updateInfo();
-                    await marlinRaker.updateManager.emit();
+                    await this.marlinRaker.updateManager.emit();
                     logger.info(`${this.packages.length} packages can be upgraded`);
                     resolve();
                 });
@@ -59,7 +60,7 @@ class SystemUpdatable extends Updatable<IInfo> {
         await this.doUpdate(log, "sudo", ["apt", "upgrade", "-y"]);
         this.packages = [];
         this.updateInfo();
-        await marlinRaker.updateManager.emit();
+        await this.marlinRaker.updateManager.emit();
     }
 
     private updateInfo(): void {
