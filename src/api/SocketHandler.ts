@@ -56,6 +56,7 @@ import ServerRestartExecutor from "./executors/ServerRestartExecutor";
 import MachineServicesRestartExecutor from "./executors/MachineServicesRestartExecutor";
 import MachineServicesStartExecutor from "./executors/MachineServicesStartExecutor";
 import MachineServicesStopExecutor from "./executors/MachineServicesStopExecutor";
+import PrinterObjectsQueryExecutor from "./executors/PrinterObjectsQueryExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -89,6 +90,7 @@ class SocketHandler extends MessageHandler {
                 new PrinterGcodeScriptExecutor(marlinRaker),
                 new PrinterInfoExecutor(marlinRaker),
                 new PrinterObjectsListExecutor(marlinRaker),
+                new PrinterObjectsQueryExecutor(marlinRaker),
                 new PrinterObjectsSubscribeExecutor(marlinRaker),
                 new PrinterPrintCancelExecutor(marlinRaker),
                 new PrinterPrintPauseExecutor(marlinRaker),

@@ -17,7 +17,7 @@ class SystemStatsObject extends PrinterObject<IObject> {
         setInterval(this.emit.bind(this), 1000);
     }
 
-    protected get(_: string[] | null): IObject {
+    public get(_: string[] | null): IObject {
         const cpuUsage = process.cpuUsage();
         return {
             sysload: os.loadavg()[0],

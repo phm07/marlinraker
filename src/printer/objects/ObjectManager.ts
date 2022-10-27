@@ -18,6 +18,11 @@ import MotionReportObject from "./MotionReportObject";
 import MarlinRaker from "../../MarlinRaker";
 import IdleTimeoutObject from "./IdleTimeoutObject";
 
+interface IPrinterObjects {
+    eventtime: number;
+    status: Record<string, unknown>;
+}
+
 class ObjectManager {
 
     public readonly objects: NamedObjectMap<PrinterObject<unknown>>;
@@ -40,7 +45,7 @@ class ObjectManager {
         ]);
     }
 
-    public subscribe(socket: WebSocket, objects: Record<string, string[] | null>): { eventtime: number; status: Record<string, unknown> } {
+    public subscribe(socket: WebSocket, objects: Record<string, string[] | null>): IPrinterObjects {
 
         const existing = this.subscriptions.find((subscription) => subscription.socket === socket);
         if (existing) {
@@ -86,6 +91,24 @@ class ObjectManager {
             status
         };
     }
+
+    public query(objects: Record<string, string[] | null>): IPrinterObjects {
+
+        const status: Record<string, unknown> = {};
+
+        for (const objectName in objects) {
+            const topics = objects[objectName];
+            const object = this.objects[objectName];
+            if (!object) continue;
+            status[object.name] = object.get(topics);
+        }
+
+        return {
+            eventtime: process.uptime(),
+            status
+        };
+    }
 }
 
+export { IPrinterObjects };
 export default ObjectManager;

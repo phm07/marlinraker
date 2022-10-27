@@ -36,7 +36,7 @@ abstract class PrinterObject<TResponse> {
         return diff;
     }
 
-    protected abstract get(topics: string[] | null): TResponse;
+    public abstract get(topics: string[] | null): TResponse;
 
     public emit(): void {
         this.subscribers.forEach((s) => s.subscriber());

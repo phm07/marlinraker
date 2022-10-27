@@ -19,7 +19,7 @@ class MotionReportObject extends PrinterObject<IObject> {
         setInterval(this.emit.bind(this), 250);
     }
 
-    protected get(_: string[] | null): IObject {
+    public get(_: string[] | null): IObject {
         return {
             live_position: this.marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
             live_velocity: this.marlinRaker.printer?.actualSpeed ?? 0,

@@ -17,7 +17,7 @@ class FanObject extends PrinterObject<IObject> {
         this.printer.on("fanSpeedChange", this.emit.bind(this));
     }
 
-    protected get(_: string[] | null): IObject {
+    public get(_: string[] | null): IObject {
         return {
             speed: this.printer.fanSpeed
         };

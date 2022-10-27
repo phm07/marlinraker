@@ -1,36 +1,23 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { WebSocket } from "ws";
 import MarlinRaker from "../../MarlinRaker";
 import { IPrinterObjects } from "../../printer/objects/ObjectManager";
 
 interface IParams {
     [key: string]: unknown;
     objects: Record<string, string[] | null>;
-    connection_id: number;
 }
 
-class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IPrinterObjects> {
+class PrinterObjectsQueryExecutor implements IMethodExecutor<IParams, IPrinterObjects> {
 
-    public readonly name = "printer.objects.subscribe";
-    public readonly httpMethod = "post";
+    public readonly name = "printer.objects.query";
     private readonly marlinRaker: MarlinRaker;
 
     public constructor(marlinRaker: MarlinRaker) {
         this.marlinRaker = marlinRaker;
     }
 
-    public invoke(sender: TSender, params: Partial<IParams>): IPrinterObjects {
+    public invoke(_: TSender, params: Partial<IParams>): IPrinterObjects {
         if (!this.marlinRaker.printer) throw new Error("Printer is offline");
-
-        let socket: WebSocket | undefined;
-        if (sender instanceof WebSocket) {
-            socket = sender;
-        } else if (params.connection_id) {
-            socket = this.marlinRaker.connectionManager.findConnectionById(params.connection_id)?.socket;
-        }
-        if (!socket) {
-            throw new Error("Cannot identify socket");
-        }
 
         let objects: Record<string, string[] | null> = {};
         if (params.objects) {
@@ -42,8 +29,9 @@ class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IPrint
             }
         }
 
-        return this.marlinRaker.printer.objectManager.subscribe(socket, objects);
+        if (!Object.keys(objects).length) throw new Error("No objects provided");
+        return this.marlinRaker.printer.objectManager.query(objects);
     }
 }
 
-export default PrinterObjectsSubscribeExecutor;
+export default PrinterObjectsQueryExecutor;

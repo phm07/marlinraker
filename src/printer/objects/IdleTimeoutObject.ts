@@ -21,7 +21,7 @@ class IdleTimeoutObject extends PrinterObject<IObject> {
         this.marlinRaker.jobManager.on("durationUpdate", this.emit.bind(this));
     }
 
-    protected get(_: string[] | null): IObject {
+    public get(_: string[] | null): IObject {
         return {
             state: this.marlinRaker.jobManager.state === "printing" ? "Printing" : "Idle",
             printing_time: this.marlinRaker.jobManager.printDuration

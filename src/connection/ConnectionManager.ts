@@ -1,6 +1,13 @@
-import { IConnection } from "./IConnection";
-import * as crypto from "crypto";
 import WebSocket from "ws";
+
+interface IConnection {
+    connectionId: number;
+    socket: WebSocket;
+    clientName: string;
+    version: string;
+    type: string;
+    url: string;
+}
 
 class ConnectionManager {
 
@@ -13,6 +20,7 @@ class ConnectionManager {
     public registerConnection(socket: WebSocket, clientName: string, version: string, type: string, url: string): IConnection {
         const connection: IConnection = {
             connectionId: this.findConnectionId(),
+            socket,
             clientName,
             version,
             type,
@@ -25,13 +33,18 @@ class ConnectionManager {
         return connection;
     }
 
+    public findConnectionById(connectionId: number): IConnection | null {
+        return this.connections.find((connection) => connection.connectionId === connectionId) ?? null;
+    }
+
     private findConnectionId(): number {
         let connectionId: number;
         do {
-            connectionId = crypto.randomBytes(4).readInt32BE();
+            connectionId = 1e9 + Math.floor(Math.random() * (9e9 - 1));
         } while (this.connections.some((connection) => connection.connectionId === connectionId));
         return connectionId;
     }
 }
 
+export { IConnection };
 export default ConnectionManager;
