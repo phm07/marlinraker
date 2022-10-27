@@ -107,6 +107,10 @@ class Config {
         return this.getGeneric<boolean>(property, defaultValue, (x): x is boolean => typeof x === "boolean");
     }
 
+    public getStringArray(property: string, defaultValue: string[]): string[] {
+        return this.getGeneric<string[]>(property, defaultValue, (x): x is string[] => Array.isArray(x) && x.every((el) => typeof el === "string"));
+    }
+
     public getGeneric<T>(property: string, defaultValue: T, check: (x: unknown) => x is T): T {
         if (this.cache[property] !== undefined) {
             return this.cache[property] as T;

@@ -12,7 +12,7 @@ class MachineProcStatsExecutor implements IMethodExecutor<undefined, IProcStats 
     }
 
     public invoke(_: TSender, __: undefined): IProcStats | {} {
-        return this.marlinRaker.systemInfo.procStats?.getProcStats() ?? {};
+        return this.marlinRaker.systemInfo.procStats.getProcStats();
     }
 }
 

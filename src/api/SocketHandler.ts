@@ -53,6 +53,9 @@ import MachineRebootExecutor from "./executors/MachineRebootExecutor";
 import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
 import MarlinRaker from "../MarlinRaker";
 import ServerRestartExecutor from "./executors/ServerRestartExecutor";
+import MachineServicesRestartExecutor from "./executors/MachineServicesRestartExecutor";
+import MachineServicesStartExecutor from "./executors/MachineServicesStartExecutor";
+import MachineServicesStopExecutor from "./executors/MachineServicesStopExecutor";
 
 interface ISocketResponse {
     id: number;
@@ -71,6 +74,9 @@ class SocketHandler extends MessageHandler {
             [
                 new MachineProcStatsExecutor(marlinRaker),
                 new MachineRebootExecutor(),
+                new MachineServicesRestartExecutor(marlinRaker),
+                new MachineServicesStartExecutor(marlinRaker),
+                new MachineServicesStopExecutor(marlinRaker),
                 new MachineShutdownExecutor(),
                 new MachineSystemInfoExecutor(marlinRaker),
                 new MachineUpdateClientExecutor(marlinRaker),
@@ -127,6 +133,10 @@ class SocketHandler extends MessageHandler {
         this.socketServer.clients.forEach((client) => {
             client.send(message);
         });
+    }
+
+    public shutdown(): void {
+        this.socketServer.close();
     }
 
     public connect(socket: WebSocket): void {

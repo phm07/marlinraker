@@ -48,6 +48,9 @@ import MachineRebootExecutor from "./executors/MachineRebootExecutor";
 import MachineShutdownExecutor from "./executors/MachineShutdownExecutor";
 import MarlinRaker from "../MarlinRaker";
 import ServerRestartExecutor from "./executors/ServerRestartExecutor";
+import MachineServicesRestartExecutor from "./executors/MachineServicesRestartExecutor";
+import MachineServicesStartExecutor from "./executors/MachineServicesStartExecutor";
+import MachineServicesStopExecutor from "./executors/MachineServicesStopExecutor";
 
 class HttpHandler extends MessageHandler {
 
@@ -62,6 +65,9 @@ class HttpHandler extends MessageHandler {
                 new AccessOneshotTokenExecutor(marlinRaker),
                 new MachineProcStatsExecutor(marlinRaker),
                 new MachineRebootExecutor(),
+                new MachineServicesRestartExecutor(marlinRaker),
+                new MachineServicesStartExecutor(marlinRaker),
+                new MachineServicesStopExecutor(marlinRaker),
                 new MachineShutdownExecutor(),
                 new MachineSystemInfoExecutor(marlinRaker),
                 new MachineUpdateClientExecutor(marlinRaker),

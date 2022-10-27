@@ -6,34 +6,33 @@ import Network, { TNetwork } from "./Network";
 import Distribution from "./Distribution";
 import ProcStats from "./ProcStats";
 import MarlinRaker from "../MarlinRaker";
+import ServiceManager from "./ServiceManager";
 
 interface IMachineInfo {
-    system_info: {
-        cpu_info: ICpuInfo;
-        sd_info: ISdInfo | {};
-        distribution: IDistribution;
-        network: TNetwork;
-    };
+    cpu_info: ICpuInfo;
+    sd_info: ISdInfo | {};
+    distribution: IDistribution;
+    network: TNetwork;
 }
 
 class SystemInfo {
 
     public readonly machineInfo: IMachineInfo;
-    public readonly procStats?: ProcStats;
+    public readonly procStats: ProcStats;
+    public readonly serviceManager: ServiceManager;
 
     public constructor(marlinRaker: MarlinRaker) {
         this.machineInfo = SystemInfo.loadMachineInfo();
         this.procStats = new ProcStats(marlinRaker);
+        this.serviceManager = new ServiceManager(marlinRaker);
     }
 
     private static loadMachineInfo(): IMachineInfo {
         return {
-            system_info: {
-                cpu_info: CpuInfo.getCpuInfo(),
-                sd_info: SdInfo.getSdInfo(),
-                distribution: Distribution.getDistribution(),
-                network: Network.getNetwork()
-            }
+            cpu_info: CpuInfo.getCpuInfo(),
+            sd_info: SdInfo.getSdInfo(),
+            distribution: Distribution.getDistribution(),
+            network: Network.getNetwork()
         };
     }
 
