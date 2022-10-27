@@ -101,6 +101,22 @@ let router: Router;
     app.get("/server/files/moonraker.log", logHandler);
     app.get("/server/files/marlinraker.log", logHandler);
 
+    const sendApi404 = (_: unknown, res: Response): void => {
+        res.status(404);
+        res.type("json");
+        res.send({
+            error: {
+                code: 404,
+                message: "Not Found",
+                traceback: ""
+            }
+        });
+    };
+    ["printer", "api", "access", "machine", "server"].forEach((api) => {
+        app.get(`/${api}/*`, sendApi404);
+        app.post(`/${api}/*`, sendApi404);
+    });
+
     app.get("*", (req, res) => {
         if (isServeStatic) {
             res.sendFile(path.join(rootDir, "www/index.html"));
