@@ -141,6 +141,7 @@ class MarlinRaker extends EventEmitter {
     }
 
     public async reconnect(): Promise<void> {
+        logger.info("Firmware restart requested");
         if (this.printer) {
             this.printer.serialPort.write("M997\n");
             await Utils.promisify((cb) => this.printer!.serialPort.flush(cb));
@@ -154,6 +155,7 @@ class MarlinRaker extends EventEmitter {
     }
 
     public async restart(): Promise<void> {
+        logger.info("Full restart requested");
         await this.shutdownGracefully();
     }
 
