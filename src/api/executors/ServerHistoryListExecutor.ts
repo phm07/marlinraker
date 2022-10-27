@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { ICompletedJob } from "../../printer/jobs/JobHistory";
+import { IHistoryJob } from "../../printer/jobs/JobHistory";
 import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
@@ -12,7 +12,7 @@ interface IParams {
 
 interface IResult {
     count: number;
-    jobs: ICompletedJob[];
+    jobs: IHistoryJob[];
 }
 
 class ServerHistoryListExecutor implements IMethodExecutor<IParams, IResult> {
@@ -24,8 +24,8 @@ class ServerHistoryListExecutor implements IMethodExecutor<IParams, IResult> {
         this.marlinRaker = marlinRaker;
     }
 
-    public invoke(_: TSender, params: Partial<IParams>): IResult {
-        const jobs = this.marlinRaker.jobHistory.getPrintHistory(params.limit ?? 50, params.start ?? 0,
+    public async invoke(_: TSender, params: Partial<IParams>): Promise<IResult> {
+        const jobs = await this.marlinRaker.jobHistory.getPrintHistory(params.limit ?? 50, params.start ?? 0,
             params.since ?? -Infinity, params.before ?? Infinity,
             params.order === "asc" ? "asc" : "desc");
         return {

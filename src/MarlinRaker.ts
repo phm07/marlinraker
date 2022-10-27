@@ -202,7 +202,7 @@ class MarlinRaker extends EventEmitter {
 
     public async shutdownGracefully(): Promise<void> {
         logger.info("Gracefully shutting down...");
-        await this.jobHistory.saveCurrentJob("server_exit");
+        await this.jobManager.finishJob("server_exit");
         await logger.shutdownGracefully();
         process.exit(0);
     }

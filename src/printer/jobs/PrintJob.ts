@@ -6,12 +6,14 @@ import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
 import EventEmitter from "events";
 import MarlinRaker from "../../MarlinRaker";
+import { IHistoryJob } from "./JobHistory";
 
 class PrintJob extends EventEmitter {
 
     public readonly filename: string;
     public readonly filepath: string;
     public readonly fileSize: number;
+    public historyJob?: IHistoryJob;
     public filePosition: number;
     public progress: number;
     public metadata?: IGcodeMetadata;
@@ -58,7 +60,7 @@ class PrintJob extends EventEmitter {
         if (!this.printer.isPrusa) {
             await this.printer.queueGcode("M77", false, false);
         }
-        this.marlinRaker.jobManager.setState("complete");
+        await this.marlinRaker.jobManager.setState("complete");
         this.progress = 1;
     }
 

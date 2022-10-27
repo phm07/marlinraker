@@ -1,5 +1,5 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { ICompletedJob } from "../../printer/jobs/JobHistory";
+import { IHistoryJob } from "../../printer/jobs/JobHistory";
 import MarlinRaker from "../../MarlinRaker";
 
 interface IParams {
@@ -7,7 +7,7 @@ interface IParams {
 }
 
 interface IResult {
-    job: ICompletedJob;
+    job: IHistoryJob;
 }
 
 class ServerHistoryGetJobExecutor implements IMethodExecutor<IParams, IResult> {

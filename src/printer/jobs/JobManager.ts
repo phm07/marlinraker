@@ -3,7 +3,7 @@ import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
 import MarlinRaker from "../../MarlinRaker";
 import EventEmitter from "events";
-import { TCompletedJobStatus } from "./JobHistory";
+import { THistoryJobStatus } from "./JobHistory";
 
 type TJobStatus = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
@@ -59,7 +59,7 @@ class JobManager extends EventEmitter {
 
         marlinRaker.on("stateChange", async (state) => {
             if (state === "shutdown" || state === "error") {
-                await this.marlinRaker.jobHistory.saveCurrentJob("klippy_shutdown");
+                await this.finishJob("klippy_shutdown");
                 delete this.currentPrintJob;
                 this.resetStats();
                 this.state = "standby";
@@ -86,8 +86,9 @@ class JobManager extends EventEmitter {
         this.resetStats();
         this.startTime = Date.now() / 1000;
         this.ePosStart = this.marlinRaker.printer!.getExtrudedFilament();
-        this.setState("printing");
         await this.currentPrintJob!.start();
+        await this.setState("printing");
+        await this.marlinRaker.jobHistory.addJob(this.currentPrintJob!);
         return true;
     }
 
@@ -95,7 +96,7 @@ class JobManager extends EventEmitter {
         const printer = this.marlinRaker.printer;
         if (!printer || !this.currentPrintJob || this.state !== "printing") return false;
         await this.currentPrintJob.pause();
-        this.setState("paused");
+        await this.setState("paused");
         printer.pauseState = {
             x: printer.gcodePosition[0],
             y: printer.gcodePosition[1],
@@ -109,7 +110,7 @@ class JobManager extends EventEmitter {
     public async resume(): Promise<boolean> {
         if (!this.marlinRaker.printer || !this.currentPrintJob || this.state !== "paused") return false;
         delete this.marlinRaker.printer.pauseState;
-        this.setState("printing");
+        await this.setState("printing");
         await this.currentPrintJob.resume();
         return true;
     }
@@ -118,7 +119,7 @@ class JobManager extends EventEmitter {
         if (!this.marlinRaker.printer || !this.isPrinting()) return false;
         delete this.marlinRaker.printer.pauseState;
         await this.currentPrintJob!.cancel();
-        this.setState("cancelled");
+        await this.setState("cancelled");
         return true;
     }
 
@@ -134,7 +135,7 @@ class JobManager extends EventEmitter {
         delete printer.pauseState;
         delete this.currentPrintJob;
         this.resetStats();
-        this.setState("standby");
+        await this.setState("standby");
         return true;
     }
 
@@ -160,13 +161,18 @@ class JobManager extends EventEmitter {
         this.ePosStart = 0;
     }
 
-    public setState(state: TJobStatus): void {
+    public async setState(state: TJobStatus): Promise<void> {
         this.state = state;
         this.emit("stateChange", state);
         if (["complete", "error", "cancelled"].includes(state)) {
-            const status = state === "complete" ? "completed" : state as TCompletedJobStatus;
-            void this.marlinRaker.jobHistory.saveCurrentJob(status);
+            const status = state === "complete" ? "completed" : state as THistoryJobStatus;
+            await this.finishJob(status);
         }
+    }
+
+    public async finishJob(status: THistoryJobStatus): Promise<void> {
+        if (!this.currentPrintJob) return;
+        await this.marlinRaker.jobHistory.finishJob(this.currentPrintJob, status);
     }
 }
 
