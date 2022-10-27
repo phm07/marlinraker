@@ -143,11 +143,13 @@ class MarlinRaker extends EventEmitter {
     public async reconnect(): Promise<void> {
         if (this.printer) {
             this.printer.serialPort.write("M997\n");
+            await Utils.promisify((cb) => this.printer!.serialPort.flush(cb));
             if (this.printer.serialPort.isOpen) {
-                this.printer.serialPort.close();
+                await Utils.promisify((cb) => this.printer!.serialPort.close(cb));
             }
             delete this.printer;
         }
+
         await this.connect();
     }
 

@@ -32,6 +32,16 @@ class Utils {
         }
         return withLowercaseKeys;
     }
+
+    public static async promisify<T>(fn: (cb: (t: T) => void) => void): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            try {
+                fn(resolve);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
 }
 
 export { TVec2, TVec3, TVec4 };
