@@ -12,6 +12,14 @@ abstract class MessageHandler {
         let timeout: NodeJS.Timer | undefined;
         return await Promise.race<Response>([
             new Promise((resolve) => {
+                if (executor.timeout === null) return;
+                const ms = executor.timeout ?? 10000;
+                timeout = setTimeout(() => {
+                    logger.error(`${executor.name} timed out after ${ms / 1000}s`);
+                    resolve(new ErrorResponse(408, "Request timeout"));
+                }, ms);
+            }),
+            new Promise((resolve) => {
                 try {
                     Promise.resolve(executor.invoke(sender, (params ?? {}) as Partial<unknown>)).then((response) => {
                         clearTimeout(timeout);
@@ -30,14 +38,6 @@ abstract class MessageHandler {
                     logger.error(`Error in ${executor.name}: ${e}`);
                     resolve(new ErrorResponse(500, `Method error: ${e}`));
                 }
-            }),
-            new Promise((resolve) => {
-                if (executor.timeout === null) return;
-                const ms = executor.timeout ?? 10000;
-                timeout = setTimeout(() => {
-                    logger.error(`${executor.name} timed out after ${ms / 1000}s`);
-                    resolve(new ErrorResponse(408, "Request timeout"));
-                }, ms);
             })
         ]);
     }
