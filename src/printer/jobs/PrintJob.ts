@@ -5,22 +5,13 @@ import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
 import EventEmitter from "events";
-import { TCompletedJobStatus } from "./JobHistory";
 import MarlinRaker from "../../MarlinRaker";
-
-type TJobStatus = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
-
-declare interface PrintJob {
-    on(event: "stateChange", listener: (state: TJobStatus) => void): this;
-    emit(eventName: "stateChange", args: TJobStatus): boolean;
-}
 
 class PrintJob extends EventEmitter {
 
     public readonly filename: string;
     public readonly filepath: string;
     public readonly fileSize: number;
-    public state: TJobStatus;
     public filePosition: number;
     public progress: number;
     public metadata?: IGcodeMetadata;
@@ -39,7 +30,6 @@ class PrintJob extends EventEmitter {
         this.printer = this.marlinRaker.printer;
         this.filename = filename;
         this.filepath = path.join(rootDir, "gcodes", filename);
-        this.state = "standby";
         this.filePosition = 0;
         this.progress = 0;
         this.pauseRequested = false;
@@ -56,12 +46,9 @@ class PrintJob extends EventEmitter {
     }
 
     public async start(): Promise<void> {
-        if (this.state !== "standby") throw new Error("Job already started");
-
         this.metadata = await this.marlinRaker.metadataManager.getOrGenerateMetadata(this.filename) ?? undefined;
         if (!this.fileSize || !this.metadata) throw new Error("Cannot find file");
         this.pauseRequested = false;
-        this.setState("printing");
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
         this.flush().then();
     }
@@ -71,7 +58,7 @@ class PrintJob extends EventEmitter {
         if (!this.printer.isPrusa) {
             await this.printer.queueGcode("M77", false, false);
         }
-        this.setState("complete");
+        this.marlinRaker.jobManager.setState("complete");
         this.progress = 1;
     }
 
@@ -86,7 +73,7 @@ class PrintJob extends EventEmitter {
             return;
         }
 
-        if (this.state !== "printing" || this.printer.hasCommandsInQueue()) return;
+        if (this.marlinRaker.jobManager.state !== "printing" || this.printer.hasCommandsInQueue()) return;
 
         let nextCommand: string | null = null;
         do {
@@ -111,20 +98,17 @@ class PrintJob extends EventEmitter {
     }
 
     public async pause(): Promise<void> {
-        if (this.state !== "printing" || this.pauseRequested) return;
+        if (this.pauseRequested) return;
         const promise = new Promise<void>((resolve) => {
             this.onPausedListener = resolve.bind(this);
         });
         this.pauseRequested = true;
         await promise;
         await this.waitForPrintMoves();
-        this.setState("paused");
     }
 
     public async resume(): Promise<void> {
-        if (this.state !== "paused") return;
         this.pauseRequested = false;
-        this.setState("printing");
         this.flush().then();
     }
 
@@ -137,23 +121,13 @@ class PrintJob extends EventEmitter {
             await promise;
         }
         await this.waitForPrintMoves();
-        this.setState("cancelled");
     }
 
     private async waitForPrintMoves(): Promise<void> {
         await this.latestCommand;
         await this.printer.queueGcode("M400", false, false);
     }
-
-    public setState(state: TJobStatus): void {
-        this.state = state;
-        this.emit("stateChange", state);
-        if (["complete", "error", "cancelled"].includes(state)) {
-            const status = state === "complete" ? "completed" : state as TCompletedJobStatus;
-            void this.marlinRaker.jobHistory.saveCurrentJob(status);
-        }
-    }
 }
 
-export { TJobStatus, PrintJob };
+export { PrintJob };
 export default PrintJob;

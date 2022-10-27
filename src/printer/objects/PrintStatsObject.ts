@@ -20,6 +20,9 @@ class PrintStatsObject extends PrinterObject<IObject> {
     public constructor(marlinRaker: MarlinRaker) {
         super();
         this.marlinRaker = marlinRaker;
+
+        this.marlinRaker.jobManager.on("stateChange", this.emit.bind(this));
+        this.marlinRaker.jobManager.on("durationUpdate", this.emit.bind(this));
     }
 
     public get(_: string[] | null): IObject {
@@ -28,7 +31,7 @@ class PrintStatsObject extends PrinterObject<IObject> {
             total_duration: this.marlinRaker.jobManager.totalDuration,
             print_duration: this.marlinRaker.jobManager.printDuration,
             filament_used: this.marlinRaker.jobManager.getFilamentUsed(),
-            state: this.marlinRaker.jobManager.currentPrintJob?.state ?? "standby",
+            state: this.marlinRaker.jobManager.state,
             message: ""
         };
     }

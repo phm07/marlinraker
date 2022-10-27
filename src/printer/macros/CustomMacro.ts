@@ -24,7 +24,7 @@ class CustomMacro implements IMacro {
 
         const printJob = marlinRaker.jobManager.currentPrintJob;
         const printJobObj = printJob && {
-            state: printJob.state,
+            state: marlinRaker.jobManager.state,
             filepath: printJob.filename,
             filename: path.basename(printJob.filename),
             filePosition: printJob.filePosition,

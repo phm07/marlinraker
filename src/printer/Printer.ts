@@ -160,13 +160,13 @@ class Printer extends SerialGcodeDevice {
             }
 
         } else if (action === "pause") {
-            if (marlinRaker.jobManager.currentPrintJob?.state === "printing") {
+            if (marlinRaker.jobManager.state === "printing") {
                 logger.info("Pausing print");
                 void marlinRaker.dispatchCommand("pause", false);
             }
 
         } else if (action === "resume") {
-            if (marlinRaker.jobManager.currentPrintJob?.state === "paused") {
+            if (marlinRaker.jobManager.state === "paused") {
                 logger.info("Resuming print");
                 void marlinRaker.dispatchCommand("resume", false);
             }

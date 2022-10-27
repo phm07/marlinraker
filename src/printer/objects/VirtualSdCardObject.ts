@@ -17,11 +17,14 @@ class VirtualSdCardObject extends PrinterObject<IObject> {
     public constructor(marlinRaker: MarlinRaker) {
         super();
         this.marlinRaker = marlinRaker;
+
+        this.marlinRaker.jobManager.on("stateChange", this.emit.bind(this));
+        this.marlinRaker.jobManager.on("progressUpdate", this.emit.bind(this));
     }
 
     protected get(_: string[] | null): IObject {
         return {
-            is_active: this.marlinRaker.jobManager.currentPrintJob?.state === "printing",
+            is_active: this.marlinRaker.jobManager.state === "printing",
             progress: this.marlinRaker.jobManager.currentPrintJob?.progress ?? 0,
             file_path: this.marlinRaker.jobManager.currentPrintJob?.filepath ?? "",
             file_position: this.marlinRaker.jobManager.currentPrintJob?.filePosition ?? 0,

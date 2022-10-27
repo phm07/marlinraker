@@ -16,6 +16,7 @@ import FanObject from "./FanObject";
 import SystemStatsObject from "./SystemStatsObject";
 import MotionReportObject from "./MotionReportObject";
 import MarlinRaker from "../../MarlinRaker";
+import IdleTimeoutObject from "./IdleTimeoutObject";
 
 class ObjectManager {
 
@@ -34,6 +35,7 @@ class ObjectManager {
             new ConfigFileObject(),
             new PrintStatsObject(marlinRaker),
             new VirtualSdCardObject(marlinRaker),
+            new IdleTimeoutObject(marlinRaker),
             config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(printer)
         ]);
     }
