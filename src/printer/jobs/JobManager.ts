@@ -58,10 +58,11 @@ class JobManager extends EventEmitter {
         }
 
         marlinRaker.on("stateChange", async (state) => {
-            if (state !== "ready") {
+            if (state === "shutdown" || state === "error") {
                 await this.marlinRaker.jobHistory.saveCurrentJob("klippy_shutdown");
                 delete this.currentPrintJob;
                 this.resetStats();
+                this.state = "standby";
             }
         });
     }

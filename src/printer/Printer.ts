@@ -258,10 +258,8 @@ class Printer extends SerialGcodeDevice {
             this.emit("homedAxesChange");
 
         } else if (/^M112(\s|$)/.test(line)) {
-            this.emit("error", new Error("Emergency stop triggered"));
-            if (this.serialPort.isOpen) {
-                this.serialPort.close();
-            }
+            logger.warn("Emergency stop triggered");
+            this.marlinRaker.disconnect("error", "Emergency stop triggered");
 
         } else if (/^M118(\s|$)/.test(line) && this.isPrusa) {
             const parts = line.split(" ").slice(1);
