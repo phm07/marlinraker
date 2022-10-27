@@ -4,7 +4,7 @@ import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
 import PrintJob from "../printer/jobs/PrintJob";
 import ErrnoException = NodeJS.ErrnoException;
-import { rootDir } from "../Server";
+import { logger, rootDir } from "../Server";
 
 class FileDirectory implements IDirectory {
 
@@ -29,7 +29,7 @@ class FileDirectory implements IDirectory {
             this.size = stat.size;
             this.modified = stat.mtimeMs / 1000;
             fullyLoaded?.();
-        });
+        }).catch((e) => logger.error(e));
     }
 
     public async getFiles(): Promise<IFile[]> {

@@ -80,7 +80,7 @@ abstract class SerialGcodeDevice extends EventEmitter {
         this.serialPort.open(async (err) => {
             if (err) {
                 this.emit("error", err);
-                this.listPossibleSerialPorts();
+                await this.listPossibleSerialPorts();
                 return;
             }
 
@@ -205,11 +205,10 @@ abstract class SerialGcodeDevice extends EventEmitter {
         }
     }
 
-    private listPossibleSerialPorts(): void {
-        SerialPort.list().then(async (ports) => {
-            logger.error(`Could not connect to serial port. Is the specified port "${this.serialPort.path}" correct?`);
-            logger.error(`Possible ports: ${ports.map((port) => port.path).join(", ")}`);
-        });
+    private async listPossibleSerialPorts(): Promise<void> {
+        const ports = await SerialPort.list();
+        logger.error(`Could not connect to serial port. Is the specified port "${this.serialPort.path}" correct?`);
+        logger.error(`Possible ports: ${ports.map((port) => port.path).join(", ")}`);
     }
 
     public hasCommandsInQueue(): boolean {

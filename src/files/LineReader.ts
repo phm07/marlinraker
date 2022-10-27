@@ -39,8 +39,8 @@ class LineReader {
             return line;
         } else {
             return new Promise<string | null>((resolve) => {
-                const onLine = (): void => {
-                    this.readLine().then(resolve);
+                const onLine = async (): Promise<void> => {
+                    resolve(await this.readLine());
                     this.reader.removeListener("close", onClose);
                 };
                 const onClose = (): void => {

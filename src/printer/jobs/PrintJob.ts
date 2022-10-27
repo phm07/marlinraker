@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { rootDir } from "../../Server";
+import { logger, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
@@ -52,7 +52,7 @@ class PrintJob extends EventEmitter {
         if (!this.fileSize || !this.metadata) throw new Error("Cannot find file");
         this.pauseRequested = false;
         this.lineReader = new LineReader(fs.createReadStream(this.filepath));
-        this.flush().then();
+        setTimeout(this.flush.bind(this));
     }
 
     public async finish(): Promise<void> {
@@ -96,7 +96,7 @@ class PrintJob extends EventEmitter {
             const start = (await this.metadata)?.gcode_start_byte ?? 0;
             const end = (await this.metadata)?.gcode_end_byte ?? this.fileSize;
             this.progress = Math.min(1, Math.max(0, (position - start) / (end - start)));
-        });
+        }).catch((e) => logger.error(e));
     }
 
     public async pause(): Promise<void> {
@@ -111,7 +111,7 @@ class PrintJob extends EventEmitter {
 
     public async resume(): Promise<void> {
         this.pauseRequested = false;
-        this.flush().then();
+        setTimeout(this.flush.bind(this));
     }
 
     public async cancel(): Promise<void> {
