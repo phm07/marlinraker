@@ -159,7 +159,14 @@ class Config {
             },
             virtual_sdcard: {},
             pause_resume: {},
-            display_status: {}
+            display_status: {},
+            printer: {
+                kinematics: "cartesian",
+                max_velocity: this.getNumber("printer.kinematics.max_velocity", 200),
+                max_accel: this.getNumber("printer.kinematics.max_accel", 3000),
+                max_z_velocity: this.getNumber("printer.kinematics.max_z_velocity", 10),
+                max_z_accel: this.getNumber("printer.kinematics.max_z_accel", 300)
+            }
         };
         const override = (this.config as Record<string, unknown>).klipper_pseudo_config;
         if (override === Object(override)) { // check if is object
