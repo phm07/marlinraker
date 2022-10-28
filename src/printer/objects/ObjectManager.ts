@@ -17,6 +17,7 @@ import SystemStatsObject from "./SystemStatsObject";
 import MotionReportObject from "./MotionReportObject";
 import MarlinRaker from "../../MarlinRaker";
 import IdleTimeoutObject from "./IdleTimeoutObject";
+import PauseResumeObject from "./PauseResumeObject";
 
 interface IPrinterObjects {
     eventtime: number;
@@ -41,6 +42,7 @@ class ObjectManager {
             new PrintStatsObject(marlinRaker),
             new VirtualSdCardObject(marlinRaker),
             new IdleTimeoutObject(marlinRaker),
+            new PauseResumeObject(marlinRaker),
             config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(printer)
         ]);
     }
