@@ -13,6 +13,7 @@ class PrinterQueryEndstopsStatusExecutor implements IMethodExecutor<undefined, T
     }
 
     public async invoke(_: TSender, __: Partial<undefined>): Promise<TResult> {
+        if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
         return await this.marlinRaker.printer?.queryEndstops() ?? {};
     }
 }

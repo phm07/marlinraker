@@ -12,6 +12,7 @@ class ServerTemperatureStoreExecutor implements IMethodExecutor<undefined, TTemp
     }
 
     public invoke(_: TSender, __: undefined): TTempRecords {
+        if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
         return this.marlinRaker.printer?.heaterManager.records ?? {};
     }
 }

@@ -12,6 +12,7 @@ class PrinterEmergencyStopExecutor implements IMethodExecutor<undefined, string>
     }
 
     public invoke(_: TSender, __: undefined): string {
+        if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
         this.marlinRaker.printer?.emergencyStop();
         return "ok";
     }

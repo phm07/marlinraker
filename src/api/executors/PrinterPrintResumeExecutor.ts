@@ -13,6 +13,7 @@ class PrinterPrintResumeExecutor implements IMethodExecutor<undefined, string> {
     }
 
     public async invoke(_: TSender, __: undefined): Promise<string> {
+        if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
         await this.marlinRaker.dispatchCommand("resume", false);
         return "ok";
     }

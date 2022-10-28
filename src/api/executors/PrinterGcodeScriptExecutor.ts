@@ -17,6 +17,7 @@ class PrinterGcodeScriptExecutor implements IMethodExecutor<IParams, string> {
     }
 
     public async invoke(_: TSender, params: Partial<IParams>): Promise<string> {
+        if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
         await this.marlinRaker.dispatchCommand(params.script ?? "");
         return "ok";
     }
