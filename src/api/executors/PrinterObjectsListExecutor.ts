@@ -16,7 +16,7 @@ class PrinterObjectsListExecutor implements IMethodExecutor<undefined, IResult> 
 
     public invoke(_: TSender, __: undefined): IResult {
         return {
-            objects: Object.keys(this.marlinRaker.printer?.objectManager.objects ?? {})
+            objects: Array.from(this.marlinRaker.objectManager.objects.keys())
         };
     }
 }

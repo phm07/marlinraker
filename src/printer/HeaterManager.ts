@@ -1,38 +1,56 @@
 import Printer from "./Printer";
 import { THeaters } from "./ParserUtil";
-import HeaterObject from "./objects/TemperatureObject";
-import HeatersObject from "./objects/HeatersObject";
+import TemperatureObject from "./objects/TemperatureObject";
+import EventEmitter from "events";
+import MarlinRaker from "../MarlinRaker";
 
-interface ITempObject {
+interface ITempRecord {
     temperatures?: number[];
     targets?: number[];
     powers?: number[];
 }
 
-type TTempRecords = Record<string, ITempObject | undefined>;
+declare interface HeaterManager {
+    on(event: "availableSensorsUpdate", listener: () => void): this;
+    emit(event: "availableSensorsUpdate"): boolean;
+}
 
-class HeaterManager {
+class HeaterManager extends EventEmitter {
 
-    public readonly records: TTempRecords;
-    public readonly klipperHeaterNames: Record<string, string | undefined>;
+    private static readonly RECORD_CAP = 1200;
+
+    public readonly records: Map<string, ITempRecord>;
+    public readonly klipperHeaterNames: Map<string, string>;
+    public readonly availableHeaters: string[];
+    public readonly availableSensors: string[];
+    private readonly timer: NodeJS.Timer;
+    private readonly tempObjects: Map<string, TemperatureObject>;
+    private readonly marlinRaker: MarlinRaker;
     private readonly printer: Printer;
-    private readonly heatersObject: HeatersObject;
-    private readonly heaterObjects: Record<string, HeaterObject | undefined>;
 
-    public constructor(printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker, printer: Printer) {
+        super();
+        this.marlinRaker = marlinRaker;
         this.printer = printer;
-        this.records = {};
-        this.klipperHeaterNames = {};
-        this.heaterObjects = {};
-        this.heatersObject = new HeatersObject();
-        this.printer.objectManager.objects[this.heatersObject.name] = this.heatersObject;
+        this.availableHeaters = [];
+        this.availableSensors = [];
+        this.records = new Map();
+        this.klipperHeaterNames = new Map();
+        this.tempObjects = new Map();
+
+        this.timer = setInterval(() => {
+            for (const [_, tempObject] of this.tempObjects) {
+                tempObject.emit();
+            }
+            this.updateTempRecords();
+        }, 1000);
     }
 
     public updateTemps(heaters: THeaters): void {
         for (const heaterName in heaters) {
             const heater = heaters[heaterName];
 
-            let klipperName = this.klipperHeaterNames[heaterName];
+            let klipperName = this.klipperHeaterNames.get(heaterName);
             if (!klipperName) {
                 klipperName = heaterName;
                 if (heaterName.startsWith("T")) {
@@ -45,47 +63,62 @@ class HeaterManager {
                 } else if (heaterName === "P") {
                     klipperName = "temperature_sensor pinda";
                 }
-                this.klipperHeaterNames[heaterName] = klipperName;
+                this.klipperHeaterNames.set(heaterName, klipperName);
             }
 
-            let heaterObject = this.heaterObjects[heaterName];
-            if (!heaterObject) {
-                heaterObject = new HeaterObject(klipperName);
-                this.heatersObject.available_sensors.push(klipperName);
+            let tempObject = this.tempObjects.get(heaterName);
+            if (!tempObject) {
+                tempObject = new TemperatureObject(klipperName);
+                this.tempObjects.set(heaterName, tempObject);
+                this.marlinRaker.objectManager.objects.add(tempObject);
+
+                this.availableSensors.push(klipperName);
                 if (heater.power !== undefined) {
-                    this.heatersObject.available_heaters.push(klipperName);
+                    this.availableHeaters.push(klipperName);
                 }
-                this.heatersObject.emit();
-                this.heaterObjects[heaterName] = heaterObject;
-                this.heaterObjects[heaterName]!.emit();
 
-                this.printer.objectManager.objects[klipperName] = heaterObject;
-                this.records[klipperName] = {
-                    temperatures: heater.temp !== undefined ? [] : undefined,
-                    targets: heater.target !== undefined ? [] : undefined,
-                    powers: heater.power !== undefined ? [] : undefined
-                };
+                const tempRecord: ITempRecord = {};
+                if (heater.temp !== undefined) tempRecord.temperatures = new Array(HeaterManager.RECORD_CAP).fill(0);
+                if (heater.target !== undefined) tempRecord.targets = new Array(HeaterManager.RECORD_CAP).fill(0);
+                if (heater.power !== undefined) tempRecord.powers = new Array(HeaterManager.RECORD_CAP).fill(0);
+                this.records.set(klipperName, tempRecord);
+
+                this.emit("availableSensorsUpdate");
             }
 
-            HeaterManager.addTempRecord(this.records[klipperName], "temperatures", heater.temp, 1200);
-            HeaterManager.addTempRecord(this.records[klipperName], "targets", heater.target, 1200);
-            HeaterManager.addTempRecord(this.records[klipperName], "powers", heater.power, 1200);
-
-            heaterObject.temp = heater.temp;
-            heaterObject.target = heater.target;
-            heaterObject.power = heater.power;
-            heaterObject.emit();
+            tempObject.temp = heater.temp ?? 0;
+            tempObject.target = heater.target;
+            tempObject.power = heater.power;
+            tempObject.minTemp = Math.min(tempObject.minTemp ?? Infinity, tempObject.temp);
+            tempObject.maxTemp = Math.max(tempObject.maxTemp ?? -Infinity, tempObject.temp);
         }
     }
 
-    private static addTempRecord(heaterObject: ITempObject | undefined, property: keyof ITempObject, record: number | undefined, cap: number): number[] | undefined {
-        if (!heaterObject) return;
-        const arr = heaterObject[property];
+    public cleanup(): void {
+        clearInterval(this.timer);
+        for (const [klipperName] of this.tempObjects) {
+            this.marlinRaker.objectManager.objects.delete(klipperName);
+        }
+        this.removeAllListeners();
+    }
+
+    private updateTempRecords(): void {
+        for (const [klipperName, record] of this.records) {
+            const tempObject = this.tempObjects.get(klipperName);
+            if (!tempObject) continue;
+            this.updateTempRecord(record, "temperatures", tempObject.temp);
+            this.updateTempRecord(record, "targets", tempObject.target);
+            this.updateTempRecord(record, "powers", tempObject.power);
+        }
+    }
+
+    private updateTempRecord(record: ITempRecord, recordKey: keyof ITempRecord, value?: number): void {
+        const arr = record[recordKey];
         if (!arr) return;
-        arr.push(record ?? 0);
-        heaterObject[property] = new Array(Math.max(0, cap - arr.length)).fill(0).concat(arr.slice(-cap));
+        arr.push(value ?? 0);
+        arr.shift();
     }
 }
 
-export { TTempRecords };
+export { ITempRecord };
 export default HeaterManager;

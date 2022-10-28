@@ -37,7 +37,7 @@ class UpdateManager {
         this.updatables = new NamedObjectMap<Updatable<unknown>>();
 
         if (process.platform === "linux") {
-            this.updatables.system = new SystemUpdatable(marlinRaker);
+            this.updatables.add(new SystemUpdatable(marlinRaker));
         }
 
         this.loadScripts();
@@ -50,20 +50,20 @@ class UpdateManager {
         for (const file of fs.readdirSync(scriptsDir, { withFileTypes: true })) {
             if (!file.isFile() || file.name.startsWith("_")) continue;
             const updatable = new ScriptUpdatable(this.marlinRaker, file.name.split(".")[0], path.join(scriptsDir, file.name));
-            this.updatables[updatable.name] = updatable;
+            this.updatables.set(updatable.name, updatable);
         }
     }
 
     public async fullUpdate(): Promise<void> {
-        if (this.updatables.system?.isUpdatePossible()) {
+        if (this.updatables.get("system")?.isUpdatePossible()) {
             await this.update("system");
         }
-        await Promise.all(Object.values(this.updatables)
+        await Promise.all(Array.from(this.updatables.values())
             .filter((updatable) => updatable!.name !== "marlinraker" && updatable!.isUpdatePossible())
             .map(async (updatable) => {
                 await this.update(updatable!.name);
             }));
-        if (this.updatables.marlinraker?.isUpdatePossible()) {
+        if (this.updatables.get("marlinraker")?.isUpdatePossible()) {
             await this.update("marlinraker");
         }
     }
@@ -71,7 +71,7 @@ class UpdateManager {
     public async update(name: string): Promise<void> {
         if (this.busy) throw new Error("Already updating");
         if (this.marlinRaker.jobManager.isPrinting()) throw new Error("Cannot update while printing");
-        const updatable = this.updatables[name];
+        const updatable = this.updatables.get(name);
         if (!updatable) throw new Error(`Unknown client "${name}"`);
         if (!updatable.isUpdatePossible()) throw new Error(`Cannot update ${name}`);
         return new Promise<void>((resolve) => {
@@ -103,15 +103,15 @@ class UpdateManager {
     }
 
     public async checkForUpdates(): Promise<void> {
-        await Promise.all(Object.values(this.updatables)
-            .map(async (updatable) => await updatable!.checkForUpdate()));
+        await Promise.all(Array.from(this.updatables.values())
+            .map(async (updatable) => await updatable.checkForUpdate()));
     }
 
     public async getUpdateStatus(): Promise<IUpdateStatus> {
         const rateLimit = await UpdateManager.getRateLimit();
         const versionInfo: Record<string, unknown> = {};
         for (const name in this.updatables) {
-            const info = this.updatables[name]?.info;
+            const info = this.updatables.get(name)?.info;
             if (info) {
                 versionInfo[name] = info;
             }

@@ -25,7 +25,7 @@ class PrintStatsObject extends PrinterObject<IObject> {
         this.marlinRaker.jobManager.on("durationUpdate", this.emit.bind(this));
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             filename: this.marlinRaker.jobManager.currentPrintJob?.filename ?? "",
             total_duration: this.marlinRaker.jobManager.totalDuration,
@@ -34,6 +34,10 @@ class PrintStatsObject extends PrinterObject<IObject> {
             state: this.marlinRaker.jobManager.state,
             message: ""
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.marlinRaker.state === "ready";
     }
 }
 

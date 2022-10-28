@@ -14,10 +14,10 @@ class PauseResumeObject extends PrinterObject<IObject> {
         super();
         this.marlinRaker = marlinRaker;
 
-        this.marlinRaker.on("stateChange", this.emit.bind(this));
+        this.marlinRaker.jobManager.on("stateChange", this.emit.bind(this));
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             is_paused: this.marlinRaker.jobManager.state === "paused"
         };

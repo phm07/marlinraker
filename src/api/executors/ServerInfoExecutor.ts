@@ -47,7 +47,7 @@ class ServerInfoExecutor implements IMethodExecutor<undefined, IResult> {
             "proc_stats",
             "history"
         ];
-        if (Object.keys(this.marlinRaker.updateManager.updatables).length) {
+        if (this.marlinRaker.updateManager.updatables.size) {
             components.push("update_manager");
         }
 

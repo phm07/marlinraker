@@ -16,7 +16,7 @@ class ConfigFileObject extends PrinterObject<IObject> {
         super();
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             config: config.klipperPseudoConfig,
             settings: Utils.toLowerCaseKeys(config.klipperPseudoConfig),

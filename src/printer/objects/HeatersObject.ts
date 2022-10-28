@@ -1,4 +1,5 @@
 import PrinterObject from "./PrinterObject";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
     available_sensors: string[];
@@ -8,20 +9,28 @@ interface IObject {
 class HeatersObject extends PrinterObject<IObject> {
 
     public readonly name = "heaters";
-    public available_sensors: string[];
-    public available_heaters: string[];
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor() {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
-        this.available_sensors = [];
-        this.available_heaters = [];
+        this.marlinRaker = marlinRaker;
+
+        this.marlinRaker.on("stateChange", (state) => {
+            if (state === "ready") {
+                this.marlinRaker.printer?.heaterManager.on("availableSensorsUpdate", this.emit.bind(this));
+            }
+        });
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
-            available_sensors: this.available_sensors,
-            available_heaters: this.available_heaters
+            available_sensors: this.marlinRaker.printer?.heaterManager.availableSensors ?? [],
+            available_heaters: this.marlinRaker.printer?.heaterManager.availableHeaters ?? []
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.marlinRaker.state === "ready";
     }
 }
 

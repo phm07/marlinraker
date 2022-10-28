@@ -170,7 +170,7 @@ class SocketHandler extends MessageHandler {
                 jsonrpc: "2.0"
             };
         }
-        const executor = this.methodExecutors[message.method];
+        const executor = this.methodExecutors.get(message.method);
         const response = await this.handleMessage(socket, executor, message.params);
         return {
             ...response,

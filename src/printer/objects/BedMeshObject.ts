@@ -1,6 +1,7 @@
 import PrinterObject from "./PrinterObject";
-import Printer from "../Printer";
 import { TVec2 } from "../../util/Utils";
+import MarlinRaker from "../../MarlinRaker";
+import { config } from "../../Server";
 
 interface IObject {
     profile_name: string;
@@ -13,25 +14,35 @@ interface IObject {
 class BedMeshObject extends PrinterObject<IObject> {
 
     public readonly name = "bed_mesh";
+    private readonly marlinRaker: MarlinRaker;
+    private readonly isBedMesh: boolean;
     private readonly profile?: string;
     private readonly min: TVec2;
     private readonly max: TVec2;
     private readonly grid: number[][];
 
-    public constructor(printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
 
+        this.marlinRaker = marlinRaker;
+        this.isBedMesh = config.getBoolean("printer.bed_mesh", false);
         this.min = [0, 0];
         this.max = [0, 0];
         this.grid = [[]];
 
-        printer.on("updateBedMesh", (bedMesh) => {
-            Object.assign(this, bedMesh);
-            this.emit();
-        });
+        if (this.isBedMesh) {
+            this.marlinRaker.on("stateChange", (state) => {
+                if (state === "ready") {
+                    this.marlinRaker.printer?.on("updateBedMesh", (bedMesh) => {
+                        Object.assign(this, bedMesh);
+                        this.emit();
+                    });
+                }
+            });
+        }
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             profile_name: this.profile ?? "",
             mesh_min: this.min,
@@ -39,6 +50,10 @@ class BedMeshObject extends PrinterObject<IObject> {
             mesh_matrix: this.grid,
             probed_matrix: this.grid
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.isBedMesh;
     }
 }
 

@@ -19,6 +19,7 @@ import { config, logger } from "./Server";
 import ParserUtil from "./printer/ParserUtil";
 import KlipperCompat from "./compat/KlipperCompat";
 import Utils from "./util/Utils";
+import ObjectManager from "./printer/objects/ObjectManager";
 
 interface IGcodeLog {
     message: string;
@@ -52,6 +53,7 @@ class MarlinRaker extends EventEmitter {
     public readonly macroManager: MacroManager;
     public readonly systemInfo: SystemInfo;
     public readonly klipperCompat: KlipperCompat;
+    public readonly objectManager: ObjectManager;
     public printer?: Printer;
 
     private static instance: MarlinRaker;
@@ -77,6 +79,7 @@ class MarlinRaker extends EventEmitter {
         this.jobHistory = new JobHistory(this);
         this.systemInfo = new SystemInfo(this);
         this.klipperCompat = new KlipperCompat(this);
+        this.objectManager = new ObjectManager(this);
 
         process.removeAllListeners("uncaughtException");
         process.on("uncaughtException", async (e) => {
@@ -136,6 +139,7 @@ class MarlinRaker extends EventEmitter {
             if (this.printer.serialPort.isOpen) {
                 this.printer.serialPort.close();
             }
+            this.printer.cleanup();
             delete this.printer;
         }
     }
@@ -148,6 +152,7 @@ class MarlinRaker extends EventEmitter {
             if (this.printer.serialPort.isOpen) {
                 await Utils.promisify((cb) => this.printer!.serialPort.close(cb));
             }
+            this.printer.cleanup();
             delete this.printer;
         }
 

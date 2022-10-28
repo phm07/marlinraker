@@ -19,7 +19,7 @@ class KlipperCompat {
             if (!heaterName) {
                 throw new Error("missing HEATER");
             }
-            const marlinHeater = Object.entries(this.marlinRaker.printer.heaterManager.klipperHeaterNames)
+            const marlinHeater = Array.from(this.marlinRaker.printer.heaterManager.klipperHeaterNames.entries())
                 .find(([_, value]) => value === heaterName)?.[0];
             if (!marlinHeater) {
                 throw new Error(`The value '${heaterName}' is not valid for HEATER`);

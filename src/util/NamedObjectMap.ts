@@ -2,12 +2,20 @@ interface INamedObject {
     name: string;
 }
 
-class NamedObjectMap<T extends INamedObject> implements Record<string, T | undefined> {
+class NamedObjectMap<T extends INamedObject> extends Map<T["name"], T> {
 
-    [key: string]: T | undefined;
+    public constructor(objects: T[] = []) {
+        super();
+        objects.forEach((o) => this.set(o.name, o));
+    }
 
-    public constructor(objects: (T | false)[] = []) {
-        objects.filter((o): o is T => Boolean(o)).forEach((o) => this[o.name] = o);
+    public add(object: T): this {
+        this.set(object.name, object);
+        return this;
+    }
+
+    public remove(object: T): boolean {
+        return this.delete(object.name);
     }
 }
 

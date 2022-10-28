@@ -1,4 +1,3 @@
-import ObjectManager from "./objects/ObjectManager";
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
 import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo } from "./ParserUtil";
@@ -40,7 +39,6 @@ declare interface Printer {
 
 class Printer extends SerialGcodeDevice {
 
-    public objectManager: ObjectManager;
     public heaterManager: HeaterManager;
     public info?: IPrinterInfo;
     public capabilities: TPrinterCapabilities;
@@ -64,8 +62,7 @@ class Printer extends SerialGcodeDevice {
     public constructor(marlinRaker: MarlinRaker, serialPort: string, baudRate: number) {
         super(marlinRaker, serialPort, baudRate);
 
-        this.objectManager = new ObjectManager(marlinRaker, this);
-        this.heaterManager = new HeaterManager(this);
+        this.heaterManager = new HeaterManager(marlinRaker, this);
         this.capabilities = {};
         this.watchers = [];
         this.resetValues();
@@ -336,6 +333,11 @@ class Printer extends SerialGcodeDevice {
 
     public getExtrudedFilament(): number {
         return this.extrudedFilamentOffset + this.gcodePosition[3];
+    }
+
+    public cleanup(): void {
+        this.heaterManager.cleanup();
+        this.removeAllListeners();
     }
 }
 

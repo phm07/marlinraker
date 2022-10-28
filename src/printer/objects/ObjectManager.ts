@@ -2,12 +2,10 @@ import { WebSocket } from "ws";
 import PrinterObject from "./PrinterObject";
 import SimpleNotification from "../../api/notifications/SimpleNotification";
 import WebhooksObject from "./WebhooksObject";
-import Printer from "../Printer";
 import ToolheadObject from "./ToolheadObject";
 import HeatersObject from "./HeatersObject";
 import ConfigFileObject from "./ConfigFileObject";
 import BedMeshObject from "./BedMeshObject";
-import { config } from "../../Server";
 import GcodeMoveObject from "./GcodeMoveObject";
 import PrintStatsObject from "./PrintStatsObject";
 import VirtualSdCardObject from "./VirtualSdCardObject";
@@ -29,21 +27,21 @@ class ObjectManager {
     public readonly objects: NamedObjectMap<PrinterObject<unknown>>;
     private subscriptions: { socket: WebSocket; unsubscribeAll: () => void }[] = [];
 
-    public constructor(marlinRaker: MarlinRaker, printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker) {
         this.objects = new NamedObjectMap<PrinterObject<unknown>>([
             new WebhooksObject(marlinRaker),
-            new ToolheadObject(printer),
-            new FanObject(printer),
-            new GcodeMoveObject(printer),
+            new ToolheadObject(marlinRaker),
+            new FanObject(marlinRaker),
+            new GcodeMoveObject(marlinRaker),
             new MotionReportObject(marlinRaker),
             new SystemStatsObject(),
-            new HeatersObject(),
+            new HeatersObject(marlinRaker),
             new ConfigFileObject(),
             new PrintStatsObject(marlinRaker),
             new VirtualSdCardObject(marlinRaker),
             new IdleTimeoutObject(marlinRaker),
             new PauseResumeObject(marlinRaker),
-            config.getBoolean("printer.bed_mesh", false) && new BedMeshObject(printer)
+            new BedMeshObject(marlinRaker)
         ]);
     }
 
@@ -60,8 +58,8 @@ class ObjectManager {
 
         for (const objectName in objects) {
             const topics = objects[objectName];
-            const object = this.objects[objectName];
-            if (!object) continue;
+            const object = this.objects.get(objectName);
+            if (!object || !object.isAvailable()) continue;
             const subscriber = async (): Promise<void> => {
                 const diff = object.getDifference(subscriber, topics);
                 if (!Object.keys(diff).length) return;
@@ -100,9 +98,9 @@ class ObjectManager {
 
         for (const objectName in objects) {
             const topics = objects[objectName];
-            const object = this.objects[objectName];
-            if (!object) continue;
-            status[object.name] = object.get(topics);
+            const object = this.objects.get(objectName);
+            if (!object || !object.isAvailable()) continue;
+            status[object.name] = object.query(topics);
         }
 
         return {

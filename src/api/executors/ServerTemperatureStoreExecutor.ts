@@ -1,8 +1,10 @@
 import { IMethodExecutor, TSender } from "./IMethodExecutor";
-import { TTempRecords } from "../../printer/HeaterManager";
 import MarlinRaker from "../../MarlinRaker";
+import { ITempRecord } from "../../printer/HeaterManager";
 
-class ServerTemperatureStoreExecutor implements IMethodExecutor<undefined, TTempRecords> {
+type TResult = Record<string, ITempRecord>;
+
+class ServerTemperatureStoreExecutor implements IMethodExecutor<undefined, TResult> {
 
     public readonly name = "server.temperature_store";
     private readonly marlinRaker: MarlinRaker;
@@ -11,9 +13,9 @@ class ServerTemperatureStoreExecutor implements IMethodExecutor<undefined, TTemp
         this.marlinRaker = marlinRaker;
     }
 
-    public invoke(_: TSender, __: undefined): TTempRecords {
+    public invoke(_: TSender, __: undefined): TResult {
         if (this.marlinRaker.state !== "ready") throw new Error("Printer not ready");
-        return this.marlinRaker.printer?.heaterManager.records ?? {};
+        return Object.fromEntries(this.marlinRaker.printer?.heaterManager.records ?? []);
     }
 }
 

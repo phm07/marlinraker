@@ -121,8 +121,7 @@ class HttpHandler extends MessageHandler {
         }
 
         router.use(express.json());
-        for (const name in this.methodExecutors) {
-            const executor = this.methodExecutors[name]!;
+        for (const [name, executor] of this.methodExecutors) {
 
             if (executor.httpMethod === null) continue;
             const method = executor.httpMethod ?? "get";

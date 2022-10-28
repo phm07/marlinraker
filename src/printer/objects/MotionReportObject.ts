@@ -16,15 +16,22 @@ class MotionReportObject extends PrinterObject<IObject> {
     public constructor(marlinRaker: MarlinRaker) {
         super();
         this.marlinRaker = marlinRaker;
-        setInterval(this.emit.bind(this), 250);
+
+        setInterval(() => {
+            if (this.isAvailable()) this.emit();
+        }, 250);
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             live_position: this.marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
             live_velocity: this.marlinRaker.printer?.actualSpeed ?? 0,
             live_extruder_velocity: this.marlinRaker.printer?.actualExtruderSpeed ?? 0
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.marlinRaker.state === "ready";
     }
 }
 

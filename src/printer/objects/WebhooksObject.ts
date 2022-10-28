@@ -17,7 +17,7 @@ class WebhooksObject extends PrinterObject<IObject> {
         this.marlinRaker.on("stateChange", this.emit.bind(this));
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
             state: this.marlinRaker.state,
             state_message: this.marlinRaker.stateMessage

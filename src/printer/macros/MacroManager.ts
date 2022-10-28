@@ -26,8 +26,7 @@ class MacroManager {
 
     public async execute(command: string): Promise<boolean> {
         const calledMacro = command.trim().split(" ")[0].toLowerCase();
-        for (const macroName in this.macros) {
-            const macro = this.macros[macroName];
+        for (const [macroName, macro] of this.macros) {
             if (macroName.toLowerCase() === calledMacro) {
                 const params = Object.fromEntries(
                     command.substring(macroName.length).trim()
@@ -36,7 +35,7 @@ class MacroManager {
                         .map((s) => s.split("="))
                         .map((arr) => [arr[0].toLowerCase(), arr[1] ?? true])
                 );
-                await macro?.execute(params);
+                await macro.execute(params);
                 return true;
             }
         }
@@ -67,7 +66,7 @@ class MacroManager {
 
             const renameExisting = config.getStringIfExists(`macros.${configName}.rename_existing`, null)?.toLowerCase()
                 ?? `${macroName}_base`;
-            if (this.macros[macroName] && this.macros[renameExisting]) {
+            if (this.macros.has(macroName) && this.macros.has(renameExisting)) {
                 logger.error(`Cannot rename "${macroName}" to "${renameExisting}": Macro already exists`);
             }
 
@@ -79,11 +78,11 @@ class MacroManager {
 
             try {
                 const evaluate = new Function("f", "args", "printer", `"use strict";return f\`${gcode}\`;`);
-                const existing = this.macros[macroName];
+                const existing = this.macros.get(macroName);
                 if (existing) {
-                    this.macros[renameExisting] = existing;
+                    this.macros.set(renameExisting, existing);
                 }
-                this.macros[macroName] = new CustomMacro(macroName, (args, printer) => evaluate(f, args, printer));
+                this.macros.set(macroName, new CustomMacro(macroName, (args, printer) => evaluate(f, args, printer)));
 
                 logger.info(`Registered macro "${macroName}"`);
             } catch (e) {
@@ -92,8 +91,8 @@ class MacroManager {
             }
         }
 
-        for (const macroName in this.macros) {
-            if (macroName === this.macros[macroName]?.name) {
+        for (const [macroName, macro] of this.macros) {
+            if (macroName === macro.name) {
                 (config.klipperPseudoConfig as Record<string, unknown>)[`gcode_macro ${macroName.toUpperCase()}`] = {};
             }
         }

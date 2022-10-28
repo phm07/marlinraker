@@ -1,5 +1,5 @@
 import PrinterObject from "./PrinterObject";
-import Printer from "../Printer";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
     speed: number;
@@ -9,18 +9,27 @@ interface IObject {
 class FanObject extends PrinterObject<IObject> {
 
     public readonly name = "fan";
-    private readonly printer: Printer;
+    private readonly marlinRaker: MarlinRaker;
 
-    public constructor(printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
-        this.printer = printer;
-        this.printer.on("fanSpeedChange", this.emit.bind(this));
+        this.marlinRaker = marlinRaker;
+
+        this.marlinRaker.on("stateChange", (state) => {
+            if (state === "ready") {
+                this.marlinRaker.printer?.on("fanSpeedChange", this.emit.bind(this));
+            }
+        });
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
-            speed: this.printer.fanSpeed
+            speed: this.marlinRaker.printer?.fanSpeed ?? 0
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.marlinRaker.state === "ready";
     }
 }
 

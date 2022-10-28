@@ -1,16 +1,21 @@
 import assert from "assert";
 
+interface ISubscriber<T> {
+    subscriber: () => void;
+    previous: Partial<T>;
+}
+
 abstract class PrinterObject<TResponse> {
 
     public abstract readonly name: string;
-    protected subscribers: { subscriber: () => void; previous: Partial<TResponse> }[];
+    protected subscribers: ISubscriber<TResponse>[];
 
     protected constructor() {
         this.subscribers = [];
     }
 
-    public getFull(subscriber: () => void, topics: string[] | null): TResponse {
-        const response = this.get(topics);
+    public getFull(subscriber: () => void, topics: string[] | null): Partial<TResponse> {
+        const response = this.query(topics);
         const subscriberObject = this.subscribers.find((s) => s.subscriber === subscriber);
         if (subscriberObject) {
             subscriberObject.previous = response;
@@ -21,7 +26,7 @@ abstract class PrinterObject<TResponse> {
     public getDifference(subscriber: () => void, topics: string[] | null): Partial<TResponse> {
         const subscriberObject = this.subscribers.find((s) => s.subscriber === subscriber);
         const previous: Partial<TResponse> = subscriberObject?.previous ?? {};
-        const now = Object.freeze(this.get(topics));
+        const now = Object.freeze(this.query(topics));
         const diff: Partial<TResponse> = {};
         for (const key in now) {
             try {
@@ -36,7 +41,18 @@ abstract class PrinterObject<TResponse> {
         return diff;
     }
 
-    public abstract get(topics: string[] | null): TResponse;
+    public query(topics: string[] | null): Partial<TResponse> {
+        const response = this.get();
+        let withTopics: Partial<TResponse> = {};
+        if (topics) {
+            topics.forEach((topic) => withTopics[topic as keyof TResponse] = response[topic as keyof TResponse]);
+        } else {
+            withTopics = response;
+        }
+        return withTopics;
+    }
+
+    protected abstract get(): TResponse;
 
     public emit(): void {
         this.subscribers.forEach((s) => s.subscriber());
@@ -48,6 +64,10 @@ abstract class PrinterObject<TResponse> {
 
     public unsubscribe(subscriber: () => void): void {
         this.subscribers = this.subscribers.filter((s) => s.subscriber !== subscriber);
+    }
+
+    public isAvailable(): boolean {
+        return true;
     }
 }
 

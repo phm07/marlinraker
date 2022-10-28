@@ -1,7 +1,7 @@
 import PrinterObject from "./PrinterObject";
-import Printer from "../Printer";
 import { config } from "../../Server";
 import { TVec3 } from "../../util/Utils";
+import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
     homed_axes: string;
@@ -20,15 +20,22 @@ interface IObject {
 class ToolheadObject extends PrinterObject<IObject> {
 
     public readonly name = "toolhead";
-    private readonly printer: Printer;
+    private readonly marlinRaker: MarlinRaker;
     private readonly printVolume: TVec3;
 
-    public constructor(printer: Printer) {
+    public constructor(marlinRaker: MarlinRaker) {
         super();
-        this.printer = printer;
+        this.marlinRaker = marlinRaker;
 
-        setInterval(this.emit.bind(this), 250);
-        printer.on("homedAxesChange", this.emit.bind(this));
+        setInterval(() => {
+            if (this.isAvailable()) this.emit();
+        }, 250);
+
+        this.marlinRaker.on("stateChange", (state) => {
+            if (state === "ready") {
+                this.marlinRaker.printer?.on("homedAxesChange", this.emit.bind(this));
+            }
+        });
 
         this.printVolume = config.getGeneric<TVec3>("printer.print_volume",
             [220, 220, 240], (x): x is TVec3 =>
@@ -36,16 +43,20 @@ class ToolheadObject extends PrinterObject<IObject> {
         );
     }
 
-    public get(_: string[] | null): IObject {
+    protected get(): IObject {
         return {
-            homed_axes: this.printer.getHomedAxesString(),
+            homed_axes: this.marlinRaker.printer?.getHomedAxesString() ?? "",
             print_time: 0,
             estimated_print_time: 0,
             extruder: "extruder",
-            position: this.printer.actualPosition,
+            position: this.marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
             axis_minimum: [0, 0, 0, 0],
             axis_maximum: [...this.printVolume, 0]
         };
+    }
+
+    public isAvailable(): boolean {
+        return this.marlinRaker.state === "ready";
     }
 }
 

@@ -17,20 +17,18 @@ class PrinterObjectsQueryExecutor implements IMethodExecutor<IParams, IPrinterOb
     }
 
     public invoke(_: TSender, params: Partial<IParams>): IPrinterObjects {
-        if (!this.marlinRaker.printer) throw new Error("Printer is offline");
 
         let objects: Record<string, string[] | null> = {};
         if (params.objects) {
             objects = params.objects;
         } else {
             for (const key in params) {
-                const topics = String(params[key]).split(",");
-                objects[key] = topics.length > 0 ? topics : null;
+                objects[key] = params[key] ? String(params[key]).split(",") : null;
             }
         }
 
         if (!Object.keys(objects).length) throw new Error("No objects provided");
-        return this.marlinRaker.printer.objectManager.query(objects);
+        return this.marlinRaker.objectManager.query(objects);
     }
 }
 

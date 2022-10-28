@@ -20,7 +20,6 @@ class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IPrint
     }
 
     public invoke(sender: TSender, params: Partial<IParams>): IPrinterObjects {
-        if (!this.marlinRaker.printer) throw new Error("Printer is offline");
 
         let socket: WebSocket | undefined;
         if (sender instanceof WebSocket) {
@@ -42,7 +41,7 @@ class PrinterObjectsSubscribeExecutor implements IMethodExecutor<IParams, IPrint
             }
         }
 
-        return this.marlinRaker.printer.objectManager.subscribe(socket, objects);
+        return this.marlinRaker.objectManager.subscribe(socket, objects);
     }
 }
 
