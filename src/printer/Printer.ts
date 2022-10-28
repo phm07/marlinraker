@@ -24,17 +24,18 @@ interface IBedMesh {
     profile: string;
 }
 
-declare interface Printer {
-    on(event: "ready" | "startup" | "commandOk" | "positioningChange" | "gcodePositionChange" |
-        "fanSpeedChange" | "factorChange" | "homedAxesChange", listener: () => void): this;
-    on(event: "actualPositionChange", listener: (oldPos: TVec4, newPos: TVec4) => void): this;
-    on(event: "error", listener: (err: Error) => void): this;
-    on(event: "updateBedMesh", listener: (bedMesh: IBedMesh) => void): this;
-    emit(event: "ready" | "startup" | "commandOk" | "positioningChange" | "gcodePositionChange" |
-        "fanSpeedChange" | "factorChange" | "homedAxesChange"): boolean;
-    emit(event: "actualPositionChange", oldPos: TVec4, newPos: TVec4): boolean;
-    emit(event: "error", err: Error): boolean;
-    emit(event: "updateBedMesh", bedMesh: IBedMesh): boolean;
+interface IPrinterEvents {
+    ready: () => void;
+    startup: () => void;
+    commandOk: () => void;
+    positioningChange: () => void;
+    gcodePositionChange: () => void;
+    fanSpeedChange: () => void;
+    factorChange: () => void;
+    homedAxesChange: () => void;
+    actualPositionChange: (oldPos: TVec4, newPos: TVec4) => void;
+    error: (err: Error) => void;
+    updateBedMesh: (bedMesh: IBedMesh) => void;
 }
 
 class Printer extends SerialGcodeDevice {
@@ -341,5 +342,5 @@ class Printer extends SerialGcodeDevice {
     }
 }
 
-export { IPauseState, IBedMesh };
+export { IPauseState, IBedMesh, IPrinterEvents };
 export default Printer;

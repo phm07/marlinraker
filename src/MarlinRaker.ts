@@ -12,7 +12,6 @@ import MetadataManager from "./files/MetadataManager";
 import UpdateManager from "./update/UpdateManager";
 import SystemInfo from "./system/SystemInfo";
 import JobHistory from "./printer/jobs/JobHistory";
-import EventEmitter from "events";
 import SimpleNotification from "./api/notifications/SimpleNotification";
 import SerialPortSearch from "./util/SerialPortSearch";
 import { config, logger } from "./Server";
@@ -20,6 +19,7 @@ import ParserUtil from "./printer/ParserUtil";
 import KlipperCompat from "./compat/KlipperCompat";
 import Utils from "./util/Utils";
 import ObjectManager from "./printer/objects/ObjectManager";
+import TypedEventEmitter from "./util/TypedEventEmitter";
 
 interface IGcodeLog {
     message: string;
@@ -29,12 +29,11 @@ interface IGcodeLog {
 
 type TPrinterState = "ready" | "error" | "shutdown" | "startup";
 
-declare interface MarlinRaker {
-    on(event: "stateChange", listener: (state: TPrinterState) => void): this;
-    emit(eventName: "stateChange", args: TPrinterState): boolean;
+interface IMarlinRakerEvents {
+    stateChange: (state: TPrinterState) => void;
 }
 
-class MarlinRaker extends EventEmitter {
+class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
 
     public state: TPrinterState;
     public stateMessage: string;

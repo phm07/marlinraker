@@ -1,10 +1,11 @@
 import { ReadLine } from "readline";
 import { SerialPort } from "serialport";
 import readline from "readline";
-import EventEmitter from "events";
 import { config, logger } from "../Server";
 import ParserUtil from "./ParserUtil";
 import MarlinRaker from "../MarlinRaker";
+import TypedEventEmitter from "../util/TypedEventEmitter";
+import { IPrinterEvents } from "./Printer";
 
 interface ICommand {
     gcode: string;
@@ -18,14 +19,13 @@ interface ICommand {
     timeInQueue?: number;
 }
 
-declare interface SerialGcodeDevice {
-    on(event: "startup" | "commandOk", listener: () => void): this;
-    on(event: "error", listener: (err: Error) => void): this;
-    emit(event: "startup" | "commandOk"): boolean;
-    emit(event: "error", err: Error): boolean;
+interface ISerialGcodeDeviceEvents {
+    startup: () => void;
+    commandOk: () => void;
+    error: (err: Error) => void;
 }
 
-abstract class SerialGcodeDevice extends EventEmitter {
+abstract class SerialGcodeDevice extends TypedEventEmitter<ISerialGcodeDeviceEvents & IPrinterEvents> {
 
     public readonly serialPort: SerialPort;
     public hasEmergencyParser: boolean;

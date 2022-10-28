@@ -1,8 +1,8 @@
 import Printer from "./Printer";
 import { THeaters } from "./ParserUtil";
 import TemperatureObject from "./objects/TemperatureObject";
-import EventEmitter from "events";
 import MarlinRaker from "../MarlinRaker";
+import TypedEventEmitter from "../util/TypedEventEmitter";
 
 interface ITempRecord {
     temperatures?: number[];
@@ -10,12 +10,11 @@ interface ITempRecord {
     powers?: number[];
 }
 
-declare interface HeaterManager {
-    on(event: "availableSensorsUpdate", listener: () => void): this;
-    emit(event: "availableSensorsUpdate"): boolean;
+interface IHeaterManagerEvents {
+    availableSensorsUpdate: () => void;
 }
 
-class HeaterManager extends EventEmitter {
+class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
 
     private static readonly RECORD_CAP = 1200;
 

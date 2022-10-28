@@ -2,19 +2,18 @@ import { config } from "../../Server";
 import JobQueue from "./JobQueue";
 import PrintJob from "./PrintJob";
 import MarlinRaker from "../../MarlinRaker";
-import EventEmitter from "events";
 import { THistoryJobStatus } from "./JobHistory";
+import TypedEventEmitter from "../../util/TypedEventEmitter";
 
 type TJobStatus = "standby" | "printing" | "paused" | "complete" | "cancelled" | "error";
 
-declare interface JobManager {
-    on(event: "stateChange", listener: (state: TJobStatus) => void): this;
-    on(event: "durationUpdate" | "progressUpdate", listener: () => void): this;
-    emit(eventName: "stateChange", state: TJobStatus): boolean;
-    emit(eventName: "durationUpdate" | "progressUpdate"): boolean;
+interface IJobManagerEvents {
+    stateChange: (state: TJobStatus) => void;
+    durationUpdate: () => void;
+    progressUpdate: () => void;
 }
 
-class JobManager extends EventEmitter {
+class JobManager extends TypedEventEmitter<IJobManagerEvents> {
 
     public state: TJobStatus;
     public readonly jobQueue: JobQueue;

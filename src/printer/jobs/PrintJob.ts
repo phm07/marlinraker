@@ -4,11 +4,10 @@ import { logger, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";
 import Printer from "../Printer";
-import EventEmitter from "events";
 import MarlinRaker from "../../MarlinRaker";
 import { IHistoryJob } from "./JobHistory";
 
-class PrintJob extends EventEmitter {
+class PrintJob {
 
     public readonly filename: string;
     public readonly filepath: string;
@@ -25,7 +24,6 @@ class PrintJob extends EventEmitter {
     private pauseRequested: boolean;
 
     public constructor(filename: string) {
-        super();
         this.marlinRaker = MarlinRaker.getInstance();
         if (!this.marlinRaker.printer) throw new Error();
 
