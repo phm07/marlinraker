@@ -97,7 +97,7 @@ class FileManager {
         const root = await this.getDirectory(rootPath);
         if (!root) return [];
 
-        const files: IFileInfo[] = [];
+        let files: IFileInfo[] = [];
         const dirs: [IDirectory, string][] = [[root, ""]];
         while (dirs.length) {
             const [dir, pathSoFar] = dirs.pop()!;
@@ -112,6 +112,13 @@ class FileManager {
                 path.join(pathSoFar, d.dirname)
             ] as [IDirectory, string])));
         }
+
+        let parent = root;
+        while (parent.root !== parent) parent = parent.root;
+        if (parent.dirname === "gcodes") {
+            files = files.filter((file) => /\.gcode/i.test(file.path));
+        }
+
         return files;
     }
 

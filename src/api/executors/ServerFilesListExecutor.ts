@@ -18,7 +18,6 @@ class ServerFilesListExecutor implements IMethodExecutor<IParams, IFileInfo[]> {
     public async invoke(_: TSender, params: Partial<IParams>): Promise<IFileInfo[]> {
         return await this.marlinRaker.fileManager.listFiles(params.root ?? "gcodes");
     }
-
 }
 
 export default ServerFilesListExecutor;

@@ -69,13 +69,16 @@ class FileHandler {
             }
 
             if (print) {
-                await this.marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
-                    .replaceAll("\\", "/"));
-                await this.marlinRaker.dispatchCommand("start_print", false);
+                let printStarted = false;
+                if (await this.marlinRaker.jobManager.selectFile(path.join("gcodes", filepath, filename)
+                    .replaceAll("\\", "/"))) {
+                    await this.marlinRaker.dispatchCommand("start_print", false);
+                    printStarted = true;
+                }
 
                 res.send({
                     ...response,
-                    print_started: this.marlinRaker.jobManager.isPrinting()
+                    print_started: printStarted
                 });
             } else {
                 res.send(response);

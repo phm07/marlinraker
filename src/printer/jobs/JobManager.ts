@@ -69,6 +69,7 @@ class JobManager extends EventEmitter {
 
     public async selectFile(filename: string): Promise<boolean> {
         const printer = this.marlinRaker.printer;
+        if (!/\.gcode$/i.test(filename)) return false;
         if (!printer || this.isPrinting()) return false;
 
         const file = await this.marlinRaker.fileManager.getFile(filename);
