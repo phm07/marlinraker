@@ -4,7 +4,7 @@
  Marlinraker allows you to use your favorite Klipper-based frontends
  with your Marlin 3D printer.
 
-[Installation](/installation){ .md-button .md-button--primary }
+[Installation](installation.md){ .md-button .md-button--primary }
 [GitHub](https://github.com/pauhull/marlinraker){ .md-button }
 
 Marlinraker can connect to 3D printers running Marlin firmware, for

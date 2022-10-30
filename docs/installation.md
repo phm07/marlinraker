@@ -37,7 +37,10 @@ Now you should see the default Mainsail interface Marlinraker ships with.
 ![](assets/mainsail.png)
 
 From here you can make all adjustments you need, you don't have to SSH into your
-Raspberry Pi. After [configuring](/configuration) Marlinraker and connecting your
+Raspberry Pi. **Make sure to update Marlinraker, your web interface and system
+packages to the latest version under the "Machine" tab.**
+
+After [configuring](configuration.md) Marlinraker and connecting your
 printer to the Raspberry Pi with USB you are good to go. 
 Happy printing!
 
@@ -62,7 +65,7 @@ for an example.
 the API endpoints to the port that Marlinraker runs on (`7125` by default). See
 [here](https://github.com/pauhull/MarlinrakerOS/blob/master/src/modules/nginx/filesystem/etc/nginx/nginx.conf)
 for an example using Nginx.
-5. Create [update scripts](advanced/update_manager) to make use of Marlinraker's 
+5. Create [update scripts](advanced/update_manager.md) to make use of Marlinraker's 
 integrated update manager. See [here](https://github.com/pauhull/MarlinrakerOS/tree/master/src/modules/marlinraker/filesystem/home/pi/marlinraker_files/update_scripts)
 for examples. If Marlinraker is running on linux, make sure your user has sudo
 rights and is not password prompted for when using sudo.
