@@ -18,6 +18,7 @@ nav:
     - advanced/macro_scripting.md
     - advanced/update_manager.md
     - advanced/cli_arguments.md
+    - advanced/developing.md
 theme:
   name: material
   palette:
