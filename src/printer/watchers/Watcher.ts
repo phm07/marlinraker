@@ -22,7 +22,7 @@ abstract class Watcher {
 
     public abstract handle(line: string): boolean;
 
-    public abstract delete(): void;
+    public abstract cleanup(): void;
 }
 
 export default Watcher;

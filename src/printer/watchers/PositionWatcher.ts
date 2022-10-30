@@ -45,8 +45,8 @@ class PositionWatcher extends Watcher {
         super.onLoaded();
     }
 
-    public delete(): void {
-        this.timer && clearInterval(this.timer);
+    public cleanup(): void {
+        clearInterval(this.timer);
     }
 
     public handle(_: string): boolean {

@@ -337,6 +337,7 @@ class Printer extends SerialGcodeDevice {
     }
 
     public cleanup(): void {
+        this.watchers.forEach((watcher) => watcher.cleanup());
         this.heaterManager.cleanup();
         this.removeAllListeners();
     }

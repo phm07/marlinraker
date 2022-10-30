@@ -42,8 +42,8 @@ class TemperatureWatcher extends Watcher {
         return true;
     }
 
-    public delete(): void {
-        this.timer && clearInterval(this.timer);
+    public cleanup(): void {
+        clearInterval(this.timer);
     }
 }
 
