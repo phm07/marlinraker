@@ -11,8 +11,8 @@ class PrinterFirmwareRestartExecutor implements IMethodExecutor<undefined, strin
         this.marlinRaker = marlinRaker;
     }
 
-    public async invoke(_: TSender, __: undefined): Promise<string> {
-        await this.marlinRaker.reconnect();
+    public invoke(_: TSender, __: undefined): string {
+        setTimeout(async () => await this.marlinRaker.reconnect());
         return "ok";
     }
 }

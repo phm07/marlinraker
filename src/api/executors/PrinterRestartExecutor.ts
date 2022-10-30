@@ -11,8 +11,8 @@ class PrinterRestartExecutor implements IMethodExecutor<undefined, string> {
         this.marlinRaker = marlinRaker;
     }
 
-    public async invoke(_: TSender, __: undefined): Promise<string> {
-        await this.marlinRaker.restart();
+    public invoke(_: TSender, __: undefined): string {
+        setTimeout(async () => await this.marlinRaker.restart());
         return "ok";
     }
 }
