@@ -12,7 +12,7 @@ Do not print log to console
 Do not log output to files (`marlinraker_files/logs/marlinraker.txt`)
 - `--extended-logs`<br>
 Include debugging information in console and logs (See `extended_logs`
-option in [Configuration](/configuration))
+option in [Configuration](../configuration.md))
 - `--serve-static`<br>
 Serve `marlinraker_files/www` directory with express
 

@@ -20,7 +20,7 @@ Log files will be rotated after they reach a size of 1 megabyte. If there are mo
 5 files, old logs will be deleted.
 
 ``update_scripts/``<br>
-Update scripts are located here. See [Update scripts](/advanced/update_manager) for more info.
+Update scripts are located here. See [Update scripts](advanced/update-manager.md) for more info.
 
 ``www/``<br>
 This is where the web interface will be located. The contents of this folder will be
@@ -144,4 +144,4 @@ you can redefine include:
 - `sdcard_reset_file`
 - `start_print`
 
-Advanced users might want to have a look at [Macro scripting](/advanced/macro_scripting).
+Advanced users might want to have a look at [Macro scripting](advanced/macro-scripting.md).
