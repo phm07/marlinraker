@@ -1,4 +1,5 @@
 site_name: Marlinraker Documentation
+site_url: https://marlinraker.readthedocs.io
 repo_url: https://github.com/pauhull/marlinraker
 markdown_extensions:
   - attr_list
@@ -15,9 +16,9 @@ nav:
   - configuration.md
   - security.md
   - Advanced:
-    - advanced/macro_scripting.md
-    - advanced/update_manager.md
-    - advanced/cli_arguments.md
+    - advanced/macro-scripting.md
+    - advanced/update-manager.md
+    - advanced/cli-arguments.md
     - advanced/developing.md
 theme:
   name: material

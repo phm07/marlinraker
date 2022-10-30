@@ -65,7 +65,7 @@ for an example.
 the API endpoints to the port that Marlinraker runs on (`7125` by default). See
 [here](https://github.com/pauhull/MarlinrakerOS/blob/master/src/modules/nginx/filesystem/etc/nginx/nginx.conf)
 for an example using Nginx.
-5. Create [update scripts](advanced/update_manager.md) to make use of Marlinraker's 
+5. Create [update scripts](advanced/update-manager.md) to make use of Marlinraker's 
 integrated update manager. See [here](https://github.com/pauhull/MarlinrakerOS/tree/master/src/modules/marlinraker/filesystem/home/pi/marlinraker_files/update_scripts)
 for examples. If Marlinraker is running on linux, make sure your user has sudo
 rights and is not password prompted for when using sudo.
