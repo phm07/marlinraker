@@ -52,6 +52,10 @@ const zip = () => {
 
     const tasks = new Listr([
         {
+            title: "Linting",
+            task: () => execa("eslint", ["src", "--fix", "--max-warnings=0"])
+        },
+        {
             title: "Clearing dist directory",
             task: () => fs.emptyDir("dist/")
         },
