@@ -38,7 +38,7 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
         this.tempObjects = new Map();
 
         this.timer = setInterval(() => {
-            for (const [_, tempObject] of this.tempObjects) {
+            for (const tempObject of this.tempObjects.values()) {
                 tempObject.emit();
             }
             this.updateTempRecords();
@@ -65,10 +65,10 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
                 this.klipperHeaterNames.set(heaterName, klipperName);
             }
 
-            let tempObject = this.tempObjects.get(heaterName);
+            let tempObject = this.tempObjects.get(klipperName);
             if (!tempObject) {
                 tempObject = new TemperatureObject(klipperName);
-                this.tempObjects.set(heaterName, tempObject);
+                this.tempObjects.set(klipperName, tempObject);
                 this.marlinRaker.objectManager.objects.add(tempObject);
 
                 this.availableSensors.push(klipperName);
@@ -105,13 +105,13 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
         for (const [klipperName, record] of this.records) {
             const tempObject = this.tempObjects.get(klipperName);
             if (!tempObject) continue;
-            this.updateTempRecord(record, "temperatures", tempObject.temp);
-            this.updateTempRecord(record, "targets", tempObject.target);
-            this.updateTempRecord(record, "powers", tempObject.power);
+            HeaterManager.updateTempRecord(record, "temperatures", tempObject.temp);
+            HeaterManager.updateTempRecord(record, "targets", tempObject.target);
+            HeaterManager.updateTempRecord(record, "powers", tempObject.power);
         }
     }
 
-    private updateTempRecord(record: ITempRecord, recordKey: keyof ITempRecord, value?: number): void {
+    private static updateTempRecord(record: ITempRecord, recordKey: keyof ITempRecord, value?: number): void {
         const arr = record[recordKey];
         if (!arr) return;
         arr.push(value ?? 0);
