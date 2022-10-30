@@ -1,6 +1,6 @@
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
-import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo } from "./ParserUtil";
+import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo, IPrinterLimits } from "./ParserUtil";
 import { logger } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
@@ -59,6 +59,7 @@ class Printer extends SerialGcodeDevice {
     public actualSpeed!: number;
     public actualExtruderSpeed!: number;
     public extrudedFilamentOffset!: number;
+    public limits!: IPrinterLimits;
 
     public constructor(marlinRaker: MarlinRaker, serialPort: string, baudRate: number) {
         super(marlinRaker, serialPort, baudRate);
@@ -105,6 +106,7 @@ class Printer extends SerialGcodeDevice {
         this.actualSpeed = 0;
         this.actualExtruderSpeed = 0;
         this.extrudedFilamentOffset = 0;
+        this.limits = { maxFeedrate: [300, 300, 5], maxAccel: [3000, 3000, 100] };
     }
 
     public emergencyStop(): void {
@@ -314,6 +316,9 @@ class Printer extends SerialGcodeDevice {
         }
 
         await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
+
+        const response = await this.queueGcode("M503", false, false);
+        this.limits = ParserUtil.parseM503Response(response);
 
         this.emit("ready");
         clearTimeout(timeout);

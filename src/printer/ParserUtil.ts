@@ -1,4 +1,4 @@
-import { TVec4 } from "../util/Utils";
+import { TVec3, TVec4 } from "../util/Utils";
 
 interface IHeater {
     temp?: number;
@@ -19,6 +19,11 @@ interface IFileInfo {
     filename: string;
     fullName?: string;
     size?: number;
+}
+
+interface IPrinterLimits {
+    maxFeedrate: TVec3;
+    maxAccel: TVec3;
 }
 
 interface IHomedAxes {
@@ -124,6 +129,32 @@ class ParserUtil {
             ));
     }
 
+    public static parseM503Response(response: string): IPrinterLimits {
+        const maxFeedrate: TVec3 = [300, 300, 5];
+        const maxAccel: TVec3 = [3000, 3000, 100];
+        const m201Match = /^echo: +M201 (.*)$/.exec(response);
+        if (m201Match) {
+            m201Match[0].split(" ")
+                .forEach((s) => {
+                    const value = Number.parseFloat(s.substring(1));
+                    if (s.startsWith("X")) maxFeedrate[0] = value;
+                    if (s.startsWith("Y")) maxFeedrate[1] = value;
+                    if (s.startsWith("Z")) maxFeedrate[2] = value;
+                });
+        }
+        const m203Match = /^echo: +M203 (.*)$/.exec(response);
+        if (m203Match) {
+            m203Match[0].split(" ")
+                .forEach((s) => {
+                    const value = Number.parseFloat(s.substring(1));
+                    if (s.startsWith("X")) maxAccel[0] = value;
+                    if (s.startsWith("Y")) maxAccel[1] = value;
+                    if (s.startsWith("Z")) maxAccel[2] = value;
+                });
+        }
+        return { maxFeedrate, maxAccel };
+    }
+
     public static parseM106Request(line: string): number {
         const result = Number.parseInt(line
             .split(" ")
@@ -167,5 +198,5 @@ class ParserUtil {
     }
 }
 
-export { IHeater, THeaters, IPrinterInfo, TPrinterCapabilities, IFileInfo, IHomedAxes };
+export { IHeater, THeaters, IPrinterInfo, TPrinterCapabilities, IFileInfo, IHomedAxes, IPrinterLimits };
 export default ParserUtil;

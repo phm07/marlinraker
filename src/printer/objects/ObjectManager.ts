@@ -36,7 +36,7 @@ class ObjectManager {
             new MotionReportObject(marlinRaker),
             new SystemStatsObject(),
             new HeatersObject(marlinRaker),
-            new ConfigFileObject(),
+            new ConfigFileObject(marlinRaker),
             new PrintStatsObject(marlinRaker),
             new VirtualSdCardObject(marlinRaker),
             new IdleTimeoutObject(marlinRaker),

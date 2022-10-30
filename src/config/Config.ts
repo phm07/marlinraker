@@ -11,7 +11,7 @@ interface IFileInfo {
 
 class Config {
 
-    public klipperPseudoConfig: unknown;
+    public klipperPseudoConfig: object;
     public readonly config: unknown;
     public readonly files: IFileInfo[];
     public readonly warnings: string[];
@@ -138,7 +138,7 @@ class Config {
         return value as T;
     }
 
-    private generateKlipperConfig(): unknown {
+    private generateKlipperConfig(): object {
         const printVolume = this.getGeneric<TVec3>("printer.print_volume",
             [220, 220, 240], (x): x is TVec3 =>
                 typeof x === "object" && Array.isArray(x) && x.length === 3
@@ -159,14 +159,7 @@ class Config {
             },
             virtual_sdcard: {},
             pause_resume: {},
-            display_status: {},
-            printer: {
-                kinematics: "cartesian",
-                max_velocity: this.getNumber("printer.kinematics.max_velocity", 200),
-                max_accel: this.getNumber("printer.kinematics.max_accel", 3000),
-                max_z_velocity: this.getNumber("printer.kinematics.max_z_velocity", 10),
-                max_z_accel: this.getNumber("printer.kinematics.max_z_accel", 300)
-            }
+            display_status: {}
         };
         const override = (this.config as Record<string, unknown>).klipper_pseudo_config;
         if (override === Object(override)) { // check if is object
