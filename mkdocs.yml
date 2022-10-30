@@ -1,0 +1,28 @@
+site_name: Marlinraker Documentation
+repo_url: https://github.com/pauhull/marlinraker
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+nav:
+  - index.md
+  - installation.md
+  - configuration.md
+  - security.md
+  - Advanced:
+    - advanced/macro_scripting.md
+    - advanced/update_manager.md
+    - advanced/cli_arguments.md
+    - advanced/developing.md
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: green
+  icon:
+    repo: fontawesome/brands/github
