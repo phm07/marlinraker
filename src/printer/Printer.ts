@@ -70,6 +70,7 @@ class Printer extends SerialGcodeDevice {
         this.resetValues();
 
         this.serialPort.on("close", () => {
+            this.cleanup();
             if (marlinRaker.state === "ready") {
                 marlinRaker.disconnect("shutdown", "Disconnected from serial port");
             }

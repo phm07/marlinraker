@@ -138,7 +138,6 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
             if (this.printer.serialPort.isOpen) {
                 this.printer.serialPort.close();
             }
-            this.printer.cleanup();
             delete this.printer;
         }
     }
@@ -151,7 +150,6 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
             if (this.printer.serialPort.isOpen) {
                 await Utils.promisify((cb) => this.printer!.serialPort.close(cb));
             }
-            this.printer.cleanup();
             delete this.printer;
         }
 
