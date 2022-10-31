@@ -1,5 +1,5 @@
 import path from "path";
-import { rootDir } from "../Server";
+import { logger, rootDir } from "../Server";
 import fs from "fs-extra";
 import crypto from "crypto";
 import LineReader from "./LineReader";
@@ -49,17 +49,51 @@ class MetadataManager {
 
     public constructor(marlinRakerInstance: MarlinRaker) {
         this.database = marlinRakerInstance.database;
-        void this.cleanup();
+        void this.init();
     }
 
-    public async cleanup(): Promise<void> {
+    public async init(): Promise<void> {
+
+        const usedThumbnails: string[] = [];
         const allMetadata = await this.database.getItem("gcode_metadata") as Record<string, IGcodeMetadata>;
         for (const id in allMetadata) {
             const metadata = allMetadata[id];
             const filepath = path.join(rootDir, "gcodes", metadata.filename);
             if (!await fs.pathExists(filepath)) {
                 await this.deleteMetadata(id);
+            } else {
+                metadata.thumbnails?.forEach((thumbnail) => {
+                    usedThumbnails.push(path.join(rootDir, "gcodes",
+                        path.dirname(metadata.filename), thumbnail.relative_path));
+                });
             }
+        }
+
+        let deleted = 0, deletedSize = 0;
+        const pathsToCheck = [path.join(rootDir, "gcodes")];
+        while (pathsToCheck.length) {
+            const currentPath = pathsToCheck.pop()!;
+            const files = await fs.readdir(currentPath);
+            for (const fileName of files) {
+                const filePath = path.join(currentPath, fileName);
+                const stat = await fs.stat(filePath);
+                if (stat.isDirectory()) {
+                    pathsToCheck.push(filePath);
+                } else if (stat.isFile()) {
+                    if (/.*\.thumbs[\\/].*\.png$/.test(filePath) && !usedThumbnails.includes(filePath)) {
+                        deleted++;
+                        deletedSize += stat.size;
+                        logger.warn(filePath);
+                        await fs.remove(filePath);
+                    } else if (/.*\.gcode$/i.test(fileName)) {
+                        await this.getOrGenerateMetadata(path.relative(path.join(rootDir, "gcodes"), filePath));
+                    }
+                }
+            }
+        }
+
+        if (deleted) {
+            logger.warn(`Deleted ${deleted} unused thumbnail files (${Math.round(deletedSize / 10000) / 10} MB)`);
         }
     }
 
