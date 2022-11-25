@@ -254,7 +254,9 @@ class FileManager {
         }
 
         await fs.remove(diskPath);
-        await this.marlinRaker.metadataManager.cleanup();
+        for (const toDelete of await this.marlinRaker.metadataManager.listDir(path.relative("gcodes", dirpath))) {
+            await this.marlinRaker.metadataManager.delete(toDelete);
+        }
         const notification: IFileChangeNotification = {
             item: {
                 path: dirpath.split("/").filter((s) => s).slice(1).join("/"),
@@ -296,7 +298,9 @@ class FileManager {
             await fs.copy(sourceOnDisk, destOnDisk);
         } else {
             await fs.move(sourceOnDisk, destOnDisk);
-            await this.marlinRaker.metadataManager.cleanup();
+            if (sourceRoot === "gcodes") {
+                await this.marlinRaker.metadataManager.cleanupFiles(false);
+            }
         }
         const stat = await fs.stat(destOnDisk);
         const action = stat.isFile() ? "move_file" : "move_dir";

@@ -49,10 +49,10 @@ class MetadataManager {
 
     public constructor(marlinRakerInstance: MarlinRaker) {
         this.database = marlinRakerInstance.database;
-        void this.init();
+        void this.cleanupFiles(true);
     }
 
-    public async init(): Promise<void> {
+    public async cleanupFiles(verbose: boolean): Promise<void> {
 
         const usedThumbnails: string[] = [];
         const allMetadata = await this.database.getItem("gcode_metadata") as Record<string, IGcodeMetadata>;
@@ -60,7 +60,7 @@ class MetadataManager {
             const metadata = allMetadata[id];
             const filepath = path.join(rootDir, "gcodes", metadata.filename);
             if (!await fs.pathExists(filepath)) {
-                await this.deleteMetadata(id);
+                await this.deleteById(id);
             } else {
                 metadata.thumbnails?.forEach((thumbnail) => {
                     usedThumbnails.push(path.join(rootDir, "gcodes",
@@ -83,7 +83,6 @@ class MetadataManager {
                     if (/.*\.thumbs[\\/].*\.png$/.test(filePath) && !usedThumbnails.includes(filePath)) {
                         deleted++;
                         deletedSize += stat.size;
-                        logger.warn(filePath);
                         await fs.remove(filePath);
                     } else if (/.*\.gcode$/i.test(fileName)) {
                         await this.getOrGenerateMetadata(path.relative(path.join(rootDir, "gcodes"), filePath));
@@ -92,9 +91,21 @@ class MetadataManager {
             }
         }
 
-        if (deleted) {
+        if (deleted && verbose) {
             logger.warn(`Deleted ${deleted} unused thumbnail files (${Math.round(deletedSize / 10000) / 10} MB)`);
         }
+    }
+
+    public async listDir(dirpath: string): Promise<IGcodeMetadata[]> {
+        const allMetadata = (await this.database.getItem("gcode_metadata") ?? {}) as Record<string, IGcodeMetadata>;
+        const content: IGcodeMetadata[] = [];
+        for (const id in allMetadata) {
+            const metadata = allMetadata[id];
+            if (!path.relative(dirpath, metadata.filename).startsWith(".")) {
+                content.push(metadata);
+            }
+        }
+        return content;
     }
 
     public async getOrGenerateMetadata(filename: string): Promise<IGcodeMetadata | null> {
@@ -110,7 +121,7 @@ class MetadataManager {
         let metadata = await this.database.getItem("gcode_metadata", id) as IGcodeMetadata | null;
         if (metadata) {
             if (metadata.mtimeMs !== stat.mtimeMs) {
-                await this.deleteMetadata(id);
+                await this.deleteById(id);
             } else {
                 return metadata;
             }
@@ -141,7 +152,11 @@ class MetadataManager {
         return HashUtils.hashStringMd5(filename.toLowerCase());
     }
 
-    public async deleteMetadata(id: string): Promise<void> {
+    public async delete(metadata: IGcodeMetadata): Promise<void> {
+        return this.deleteById(this.getId(metadata.filename));
+    }
+
+    public async deleteById(id: string): Promise<void> {
         const metadata = await this.database.getItem("gcode_metadata", id) as IGcodeMetadata | null;
         if (!metadata) return;
         for (const thumbnail of metadata.thumbnails ?? []) {
