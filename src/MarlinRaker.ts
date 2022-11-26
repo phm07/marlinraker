@@ -208,7 +208,9 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
 
     public async shutdownGracefully(): Promise<void> {
         logger.info("Gracefully shutting down...");
-        await this.jobManager.finishJob("server_exit");
+        if (this.jobManager.isPrinting()) {
+            await this.jobManager.finishJob("server_exit");
+        }
         await this.socketHandler.shutdown();
         await logger.shutdownGracefully();
         process.exit(0);
