@@ -58,7 +58,9 @@ class JobManager extends TypedEventEmitter<IJobManagerEvents> {
 
         marlinRaker.on("stateChange", async (state) => {
             if (state === "shutdown" || state === "error") {
-                await this.finishJob("klippy_shutdown");
+                if (this.isPrinting()) {
+                    await this.finishJob("klippy_shutdown");
+                }
                 delete this.currentPrintJob;
                 this.resetStats();
                 this.state = "standby";
