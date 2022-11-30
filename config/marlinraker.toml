@@ -12,4 +12,4 @@ connection_timeout = 5000
 [misc]
 octoprint_compat = true
 extended_logs = false
-m114_poll_rate = 0.2
+report_velocity = false

@@ -1,7 +1,7 @@
 import HeaterManager from "./HeaterManager";
 import SerialGcodeDevice from "./SerialGcodeDevice";
 import ParserUtil, { IHomedAxes, TPrinterCapabilities, IPrinterInfo, IPrinterLimits } from "./ParserUtil";
-import { logger } from "../Server";
+import { config, logger } from "../Server";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import TemperatureWatcher from "./watchers/TemperatureWatcher";
 import PositionWatcher from "./watchers/PositionWatcher";
@@ -56,8 +56,8 @@ class Printer extends SerialGcodeDevice {
     public isM73Supported!: boolean;
     public isPrusa!: boolean;
     public pauseState?: IPauseState;
-    public actualSpeed!: number;
-    public actualExtruderSpeed!: number;
+    public actualVelocity!: number;
+    public actualExtruderVelocity!: number;
     public extrudedFilamentOffset!: number;
     public limits!: IPrinterLimits;
 
@@ -104,8 +104,8 @@ class Printer extends SerialGcodeDevice {
         this.homedAxes = { x: false, y: false, z: false };
         this.isM73Supported = true;
         this.isPrusa = false;
-        this.actualSpeed = 0;
-        this.actualExtruderSpeed = 0;
+        this.actualVelocity = 0;
+        this.actualExtruderVelocity = 0;
         this.extrudedFilamentOffset = 0;
         this.limits = { maxFeedrate: [300, 300, 5], maxAccel: [3000, 3000, 100] };
     }
@@ -306,14 +306,17 @@ class Printer extends SerialGcodeDevice {
         }
 
         this.hasEmergencyParser = this.capabilities.EMERGENCY_PARSER || this.isPrusa;
+        const reportVelocity = config.getBoolean("misc.report_velocity", false);
 
         this.watchers = [
             new TemperatureWatcher(this),
-            new PositionWatcher(this)
+            new PositionWatcher(this, reportVelocity)
         ];
 
         if (this.isPrusa) {
-            await this.queueGcode(`M155 S1 C${1 << 0}`, false, false);
+            let c = 1 << 0;
+            if (reportVelocity) c |= 1 << 2;
+            await this.queueGcode(`M155 S1 C${c}`, false, false);
         }
 
         await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));

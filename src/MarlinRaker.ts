@@ -133,6 +133,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
     }
 
     public disconnect(state: TPrinterState, stateMessage: string): void {
+        logger.error(stateMessage);
         if (this.printer) {
             this.setState(state, stateMessage);
             if (this.printer.serialPort.isOpen) {

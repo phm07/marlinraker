@@ -77,11 +77,10 @@ octoprint_compat = true
 extended_logs = false
 # Output debug information to logs. Only recommended for developers
 # and advanced users, can negatively impact performance.
-m114_poll_rate = 0.2
-# Interval between M114 queries in seconds. A short interval means
-# more accurate speed estimations. On slower boards or unoptimized 
-# firmwares this can lead to print stuttering. If you notice stuttering,
-# try increasing this interval.
+report_velocity = false
+# Poll position in very short intervals to approximately compute
+# current toolhead velocity. This can cause stuttering on older
+# versions of Marlin or slow MCUs.
 ```
 
 ### Printer-specific settings
