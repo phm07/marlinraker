@@ -310,7 +310,7 @@ class Printer extends SerialGcodeDevice {
 
         this.watchers = [
             new TemperatureWatcher(this),
-            new PositionWatcher(this, reportVelocity)
+            new PositionWatcher(this, this.marlinRaker, reportVelocity)
         ];
 
         if (this.isPrusa) {

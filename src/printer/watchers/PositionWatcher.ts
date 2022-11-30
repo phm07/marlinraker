@@ -1,6 +1,7 @@
 import Printer from "../Printer";
 import ParserUtil from "../ParserUtil";
 import Watcher from "./Watcher";
+import MarlinRaker from "../../MarlinRaker";
 
 class PositionWatcher extends Watcher {
 
@@ -8,7 +9,7 @@ class PositionWatcher extends Watcher {
     private readonly autoReport: boolean;
     private readonly timer?: NodeJS.Timer;
 
-    public constructor(printer: Printer, reportVelocity: boolean) {
+    public constructor(printer: Printer, marlinRaker: MarlinRaker, reportVelocity: boolean) {
         super();
         this.printer = printer;
         this.autoReport = !reportVelocity && (printer.capabilities.AUTOREPORT_POS ?? printer.capabilities.AUTOREPORT_POSITION ?? false);
@@ -20,7 +21,8 @@ class PositionWatcher extends Watcher {
         } else {
             let requested = false;
             this.timer = setInterval(async () => {
-                if (requested) return;
+                if (!reportVelocity && marlinRaker.jobManager.isPrinting()) return;
+                if (requested || marlinRaker.jobManager.isPrinting()) return;
                 requested = true;
                 const response = await this.printer.queueGcode("M114 R", true, false);
                 requested = false;
@@ -44,7 +46,7 @@ class PositionWatcher extends Watcher {
     }
 
     public handle(line: string): boolean {
-        if (!this.autoReport || !line.startsWith("X:")) return false;
+        if (!line.startsWith("X:")) return false;
         this.readPosition(line);
         return true;
     }

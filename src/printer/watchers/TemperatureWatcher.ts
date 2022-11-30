@@ -37,7 +37,7 @@ class TemperatureWatcher extends Watcher {
     }
 
     public handle(line: string): boolean {
-        if (!this.autoReport || !line.trim().startsWith("T")) return false;
+        if (!line.trim().startsWith("T")) return false;
         this.readTemps(line);
         return true;
     }
