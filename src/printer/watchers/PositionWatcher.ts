@@ -22,7 +22,7 @@ class PositionWatcher extends Watcher {
             this.timer = setInterval(async () => {
                 if (requested) return;
                 requested = true;
-                const response = await this.printer.queueGcode("M114", true, false);
+                const response = await this.printer.queueGcode("M114 R", true, false);
                 requested = false;
                 this.readPosition(response);
             }, reportVelocity ? 200 : 1000);
