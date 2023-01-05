@@ -59,8 +59,8 @@ class ServiceManager {
                     }
                 ]));
         } catch (e) {
-            logger.error("Cannot get active system services");
-            logger.error(e);
+            logger.warn("Cannot get active system services, service manager disabled");
+            logger.debug(e);
             return {};
         }
     }

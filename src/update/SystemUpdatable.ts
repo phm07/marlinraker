@@ -1,5 +1,5 @@
 import { Updatable } from "./Updatable";
-import { spawn, exec } from "child_process";
+import { spawn } from "child_process";
 import readline from "readline";
 import { logger } from "../Server";
 import MarlinRaker from "../MarlinRaker";
@@ -20,11 +20,21 @@ class SystemUpdatable extends Updatable<IInfo> {
 
     public async checkForUpdate(): Promise<void> {
         if (process.platform !== "linux") return;
+        return new Promise<void>((resolve) => {
+            let process;
+            try {
+                process = spawn("sudo", ["apt", "update"]);
+            } catch (e) {
+                logger.warn("Could not execute 'sudo apt update'");
+                logger.debug(e);
+                resolve();
+                return;
+            }
 
-        return new Promise<void>((resolve, reject) => {
-            exec("sudo apt update", (err) => {
-                if (err) {
-                    reject(err);
+            process.on("exit", (code: number) => {
+                if (code !== 0) {
+                    logger.warn(`'sudo apt update' exited with error code ${code}`);
+                    resolve();
                     return;
                 }
 
