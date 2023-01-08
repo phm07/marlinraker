@@ -8,6 +8,7 @@ import fs from "fs-extra";
 import { SerialPort } from "serialport";
 import sourceMapSupport from "source-map-support";
 import Logger, { Level } from "./logger/Logger";
+import cors from "cors";
 
 sourceMapSupport.install({ handleUncaughtExceptions: false });
 
@@ -72,6 +73,16 @@ let router: Router;
     }
 
     const app = express();
+
+    const corsDomains = config.getStringArray("web.cors_domains", []);
+    if (corsDomains.length) {
+        app.use(cors({
+            origin: corsDomains
+        }));
+    } else {
+        app.use(cors());
+        logger.warn("No CORS domains found. Disabling CORS.");
+    }
 
     if (isDebug) {
         app.use((req, _, next) => {

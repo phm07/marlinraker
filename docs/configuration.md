@@ -51,6 +51,11 @@ you can copy its contents into `printer.toml`.
 port = 7125
 # The port Marlinraker will run on. Note that this is
 # not necessarily the port your web interface will run on.
+cors_domains = []
+# Domains that have acess to the Marlinraker API. If there are
+# no domains specified, CORS is disabled. Ideally you should
+# enter all the domains you want to access Marlinraker from, e.g.:
+# ["http://my-printer.local", "http://1.2.3.4"]
 
 [serial]
 port = "auto"
