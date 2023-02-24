@@ -14,3 +14,5 @@ connection_timeout = 5000
 octoprint_compat = true
 extended_logs = false
 report_velocity = false
+allowed_services = ["marlinraker", "crowsnest", "MoonCord",
+    "moonraker-telegram-bot", "KlipperScreen", "sonar", "webcamd"]

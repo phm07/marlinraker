@@ -86,6 +86,9 @@ report_velocity = false
 # Poll position in very short intervals to approximately compute
 # current toolhead velocity. This can cause stuttering on older
 # versions of Marlin or slow MCUs.
+allowed_services = ["marlinraker", "crowsnest", "MoonCord",
+    "moonraker-telegram-bot", "KlipperScreen", "sonar", "webcamd"]
+# List of services that can be (re-)started or stopped from the API.
 ```
 
 ### Printer-specific settings
