@@ -12,7 +12,7 @@ RUN apk add --update python3 make gcc g++ linux-headers udev
 
 WORKDIR /marlinraker
 COPY --from=build /marlinraker_build/dist .
-RUN npm install --unsafe-perm --build-from-source=serialport
+RUN npm install --unsafe-perm --build-from-source
 
 # Copy files, create user and start program
 FROM node:16-alpine
