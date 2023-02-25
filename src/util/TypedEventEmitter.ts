@@ -20,7 +20,6 @@ declare interface TypedEventEmitter<E extends TEvents<E>> {
     setMaxListeners: (n: number) => this;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-extra-parens
 class TypedEventEmitter<E extends TEvents<E>> extends (EventEmitter as new() => {}) {}
 
 export default TypedEventEmitter;

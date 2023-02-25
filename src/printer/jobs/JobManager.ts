@@ -46,7 +46,7 @@ class JobManager extends TypedEventEmitter<IJobManagerEvents> {
         if (config.getBoolean("printer.gcode.send_m73", true)) {
             let lastReportedProgress = 0;
             setInterval(async () => {
-                if (!marlinRaker.printer || !marlinRaker.printer.isM73Supported) return;
+                if (!marlinRaker.printer?.isM73Supported) return;
                 const progress = this.currentPrintJob?.progress;
                 if (progress && lastReportedProgress !== progress) {
                     lastReportedProgress = progress;

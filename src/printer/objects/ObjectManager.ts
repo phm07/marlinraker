@@ -59,7 +59,7 @@ class ObjectManager {
         for (const objectName in objects) {
             const topics = objects[objectName];
             const object = this.objects.get(objectName);
-            if (!object || !object.isAvailable()) continue;
+            if (!object?.isAvailable()) continue;
             const subscriber = async (): Promise<void> => {
                 const diff = object.getDifference(subscriber, topics);
                 if (!Object.keys(diff).length) return;
@@ -99,7 +99,7 @@ class ObjectManager {
         for (const objectName in objects) {
             const topics = objects[objectName];
             const object = this.objects.get(objectName);
-            if (!object || !object.isAvailable()) continue;
+            if (!object?.isAvailable()) continue;
             status[object.name] = object.query(topics);
         }
 
