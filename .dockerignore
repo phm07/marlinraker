@@ -1,0 +1,17 @@
+node_modules/
+
+.idea/
+*.iml
+
+.git/
+.gitignore
+
+dist/
+marlinraker_files/
+docs/
+
+mkdocs.yml
+Dockerfile
+cliff.toml
+README.md
+LICENSE

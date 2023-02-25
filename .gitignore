@@ -4,4 +4,3 @@ marlinraker_files/
 build/
 dist/
 *.iml
-config.json
