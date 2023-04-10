@@ -315,11 +315,15 @@ class Printer extends SerialGcodeDevice {
 
         if (this.isPrusa) {
             let c = 1 << 0;
-            if (reportVelocity) c |= 1 << 2;
+            if (!reportVelocity) c |= 1 << 2;
             await this.queueGcode(`M155 S1 C${c}`, false, false);
         }
 
-        await Promise.all(this.watchers.map(async (watcher) => watcher.waitForLoad()));
+        await Promise.all(this.watchers.map(async (watcher) => {
+            logger.debug(`Loading ${watcher.constructor.name}...`);
+            await watcher.waitForLoad();
+            logger.debug(`Finished loading ${watcher.constructor.name}`);
+        }));
 
         const response = await this.queueGcode("M503", false, false);
         this.limits = ParserUtil.parseM503Response(response);

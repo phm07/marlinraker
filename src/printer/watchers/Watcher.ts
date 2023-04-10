@@ -1,23 +1,20 @@
 abstract class Watcher {
 
-    private loaded: boolean;
-    private readonly awaiters: (() => void)[];
+    private resolveLoadingPromise!: () => void;
+    private readonly loadingPromise: Promise<void>;
 
     protected constructor() {
-        this.loaded = false;
-        this.awaiters = [];
-    }
-
-    public async waitForLoad(): Promise<void> {
-        if (this.loaded) return;
-        return new Promise<void>((resolve) => {
-            this.awaiters.push(resolve);
+        this.loadingPromise = new Promise((resolve) => {
+            this.resolveLoadingPromise = resolve;
         });
     }
 
+    public async waitForLoad(): Promise<void> {
+        return this.loadingPromise;
+    }
+
     protected onLoaded(): void {
-        this.loaded = true;
-        this.awaiters.forEach((a) => a());
+        this.resolveLoadingPromise();
     }
 
     public abstract handle(line: string): boolean;
