@@ -8,6 +8,7 @@ print_volume = [180, 180, 180]
 min_temp = 0
 max_temp = 280
 min_extrude_temp = 180
+filament_diameter = 1.75
 
 [printer.heater_bed]
 min_temp = 0

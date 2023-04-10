@@ -147,7 +147,8 @@ class Config {
             extruder: {
                 min_temp: this.getNumber("printer.extruder.min_temp", 0),
                 max_temp: this.getNumber("printer.extruder.max_temp", 250),
-                min_extrude_temp: this.getNumber("printer.extruder.min_extrude_temp", 180)
+                min_extrude_temp: this.getNumber("printer.extruder.min_extrude_temp", 180),
+                filament_diameter: this.getNumber("printer.extruder.filament_diameter", 1.75)
             },
             heater_bed: {
                 min_temp: this.getNumber("printer.heater_bed.min_temp", 0),

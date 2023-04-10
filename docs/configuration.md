@@ -109,6 +109,8 @@ max_temp = 250
 min_extrude_temp = 180
 # Minimum extrude temperature in C. As with min_temp and max_temp,
 # this will not actually limit your machine.
+filament_diameter = 1.75
+# Filament diameter in mm (For display purposes only).
 
 [printer.heater_bed]
 min_temp = 0
