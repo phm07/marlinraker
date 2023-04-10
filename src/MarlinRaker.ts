@@ -57,6 +57,8 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
 
     private static instance: MarlinRaker;
 
+    private shutdownRequested = false;
+
     public constructor(wss: WebSocketServer) {
         super();
 
@@ -208,7 +210,13 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
     }
 
     public async shutdownGracefully(): Promise<void> {
+        if (this.shutdownRequested) {
+            process.exit(0);
+            return;
+        }
+
         logger.info("Gracefully shutting down...");
+        this.shutdownRequested = true;
         if (this.jobManager.isPrinting()) {
             await this.jobManager.finishJob("server_exit");
         }
