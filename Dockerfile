@@ -17,8 +17,10 @@ RUN npm install --unsafe-perm --build-from-source
 # Copy files, create user and start program
 FROM node:16-alpine
 
-RUN apk add --update sudo eudev
-RUN adduser -h /marlinraker -G dialout -u 1001 -D marlinraker
+RUN apk add --update sudo eudev \
+    && adduser -h /marlinraker -G dialout -u 1001 -D marlinraker \
+    && mkdir /marlinraker_files  \
+    && chown marlinraker /marlinraker_files
 
 WORKDIR /marlinraker
 USER marlinraker
