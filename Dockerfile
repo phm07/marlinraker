@@ -4,7 +4,7 @@ RUN apk add --update python3 make g++
 
 WORKDIR /marlinraker_build
 COPY ./ /marlinraker_build
-RUN npm install && npm run build
+RUN npm ci && npm run build -- --fast
 
 # Copy build output and install dependencies
 FROM node:16-alpine AS prepare

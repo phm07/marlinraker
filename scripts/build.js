@@ -53,6 +53,7 @@ const zip = () => {
     const tasks = new Listr([
         {
             title: "Linting",
+            enabled: _ => !process.argv.includes("--fast"),
             task: () => execa("eslint", ["src", "--fix", "--max-warnings=0"])
         },
         {
@@ -61,6 +62,7 @@ const zip = () => {
         },
         {
             title: "Static type checking",
+            enabled: _ => !process.argv.includes("--fast"),
             task: () => execa("tsc", ["--noEmit"])
         },
         {
