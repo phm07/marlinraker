@@ -22,7 +22,7 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
     public readonly klipperHeaterNames: Map<string, string>;
     public readonly availableHeaters: string[];
     public readonly availableSensors: string[];
-    private readonly timer: NodeJS.Timer;
+    private readonly timer: NodeJS.Timeout;
     private readonly tempObjects: Map<string, TemperatureObject>;
     private readonly marlinRaker: MarlinRaker;
     private readonly printer: Printer;

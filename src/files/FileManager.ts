@@ -6,7 +6,7 @@ import { rootDir } from "../Server";
 import fs from "fs-extra";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
-import diskUsage from "diskusage";
+import { statfs } from "fs/promises";
 import { isInRoot, resolveInRoot } from "./RootPath";
 
 interface IDiskUsage {
@@ -368,11 +368,13 @@ class FileManager {
     }
 
     public async getDiskUsage(dirpath: string): Promise<IDiskUsage> {
-        const usage = await diskUsage.check(dirpath);
+        const stats = await statfs(dirpath);
+        const total = stats.blocks * stats.bsize;
+        const free = stats.bavail * stats.bsize;
         return {
-            free: usage.available,
-            total: usage.total,
-            used: usage.total - usage.available
+            free,
+            total,
+            used: total - free
         };
     }
 }
