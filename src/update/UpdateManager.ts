@@ -1,5 +1,4 @@
 import { logger, rootDir } from "../Server";
-import HttpsRequest from "./HttpsRequest";
 import path from "path";
 import NamedObjectMap from "../util/NamedObjectMap";
 import SystemUpdatable from "./SystemUpdatable";
@@ -8,6 +7,7 @@ import fs from "fs";
 import ScriptUpdatable from "./ScriptUpdatable";
 import { Updatable } from "./Updatable";
 import MarlinRaker from "../MarlinRaker";
+import Utils from "../util/Utils";
 
 interface IUpdateStatus {
     busy: boolean;
@@ -24,6 +24,9 @@ interface IRateLimit {
 }
 
 class UpdateManager {
+
+    private static readonly GITHUB_RATE_LIMIT_URL = "https://api.github.com/rate_limit";
+    private static readonly GITHUB_TIMEOUT_MS = 5000;
 
     public readonly updatables: NamedObjectMap<Updatable<unknown>>;
     public busy: boolean;
@@ -135,22 +138,24 @@ class UpdateManager {
 
     private static async getRateLimit(): Promise<IRateLimit> {
         try {
-            const response = await new HttpsRequest("https://api.github.com/rate_limit").getString();
-            const data = JSON.parse(response);
+            const response = await fetch(UpdateManager.GITHUB_RATE_LIMIT_URL, {
+                headers: { "User-Agent": "marlinraker" },
+                signal: AbortSignal.timeout(UpdateManager.GITHUB_TIMEOUT_MS)
+            });
+            const { rate } = await response.json() as { rate?: Partial<IRateLimit> };
 
-            if ("rate" in data && typeof data.rate === "object"
-                && "limit" in data.rate && typeof data.rate.limit === "number"
-                && "remaining" in data.rate && typeof data.rate.remaining === "number"
-                && "reset" in data.rate && typeof data.rate.reset === "number") {
+            if (typeof rate?.limit === "number"
+                && typeof rate.remaining === "number"
+                && typeof rate.reset === "number") {
 
                 return {
-                    limit: data.rate.limit,
-                    remaining: data.rate.remaining,
-                    reset: data.rate.reset
+                    limit: rate.limit,
+                    remaining: rate.remaining,
+                    reset: rate.reset
                 };
             }
         } catch (e) {
-            logger.error(e);
+            logger.warn(`Could not fetch GitHub rate limit: ${Utils.errorToString(e)}`);
         }
 
         return {
