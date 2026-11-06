@@ -8,8 +8,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --serve-static --extended-logs",
     "dev.api": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --extended-logs",
-    "build": "node scripts/build.js",
-    "build.zip": "node scripts/build.js --zip",
+    "build": "node scripts/build.mjs",
+    "build.zip": "node scripts/build.mjs --zip",
     "lint": "eslint src --max-warnings=0 --fix",
     "test": "eslint src --max-warnings=0",
     "test.unit": "node -r ts-node/register --test test/*/*.test.ts",
@@ -48,14 +48,12 @@
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.15.18",
-    "esbuild-node-externals": "^1.6.0",
+    "esbuild": "^0.28.2",
+    "esbuild-node-externals": "^2.0.0",
     "eslint": "^8.34.0",
-    "execa": "^6.1.0",
-    "listr2": "^5.0.7",
+    "fflate": "^0.8.3",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.5",
-    "zip-local": "^0.3.5"
+    "typescript": "^4.9.5"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.7",
