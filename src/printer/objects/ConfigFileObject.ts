@@ -40,9 +40,25 @@ class ConfigFileObject extends PrinterObject<IObject> {
 
         return {
             config: klipperPseudoConfig,
-            settings: Utils.toLowerCaseKeys(klipperPseudoConfig),
+            settings: ConfigFileObject.toSettings(klipperPseudoConfig),
             save_config_pending: false
         };
+    }
+
+    private static toSettings(klipperPseudoConfig: object): object {
+        const settings = Utils.toLowerCaseKeys(klipperPseudoConfig) as Record<string, Record<string, unknown> | undefined>;
+        const bedMesh = settings.bed_mesh;
+        if (bedMesh) {
+            bedMesh.mesh_min = ConfigFileObject.parseCoordinates(bedMesh.mesh_min);
+            bedMesh.mesh_max = ConfigFileObject.parseCoordinates(bedMesh.mesh_max);
+        }
+        return settings;
+    }
+
+    private static parseCoordinates(value: unknown): unknown {
+        return typeof value === "string"
+            ? value.split(",").map((coordinate) => Number.parseFloat(coordinate))
+            : value;
     }
 }
 
