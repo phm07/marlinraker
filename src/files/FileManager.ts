@@ -3,10 +3,10 @@ import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
 import path from "path";
 import { rootDir } from "../Server";
-import fs from "fs-extra";
+import fs from "fs/promises";
+import { move, pathExists } from "../util/FsUtils";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
-import { statfs } from "fs/promises";
 import { isInRoot, resolveInRoot } from "./RootPath";
 
 interface IDiskUsage {
@@ -159,9 +159,9 @@ class FileManager {
         const targetDir = path.join(root, filepath).replaceAll("\\", "/");
         await this.checkWriteProtected(targetDir);
 
-        await fs.mkdirs(path.dirname(destination));
-        await fs.copy(source, destination);
-        await fs.remove(source);
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        await fs.cp(source, destination, { recursive: true });
+        await fs.rm(source, { recursive: true, force: true });
 
         let size = 0;
         let modified = 0;
@@ -216,7 +216,7 @@ class FileManager {
         const dir = await this.checkWriteProtected(dirpath);
 
         const root = dirpath.split("/").filter((s) => s)[0];
-        if (dir || await fs.pathExists(diskPath)) {
+        if (dir || await pathExists(diskPath)) {
             throw new Error("Directory already exists");
         }
 
@@ -259,7 +259,7 @@ class FileManager {
             throw new Error("Directory contains files");
         }
 
-        await fs.remove(diskPath);
+        await fs.rm(diskPath, { recursive: true, force: true });
         for (const toDelete of await this.marlinRaker.metadataManager.listDir(path.relative("gcodes", dirpath))) {
             await this.marlinRaker.metadataManager.delete(toDelete);
         }
@@ -295,15 +295,15 @@ class FileManager {
         const sourceRoot = source.split("/").filter((s) => s)[0];
         const destRoot = dest.split("/").filter((s) => s)[0];
 
-        if (!await fs.pathExists(sourceOnDisk)) {
+        if (!await pathExists(sourceOnDisk)) {
             throw new Error("Source doesn't exist");
         }
 
-        await fs.mkdirs(path.dirname(destOnDisk));
+        await fs.mkdir(path.dirname(destOnDisk), { recursive: true });
         if (copy) {
-            await fs.copy(sourceOnDisk, destOnDisk);
+            await fs.cp(sourceOnDisk, destOnDisk, { recursive: true });
         } else {
-            await fs.move(sourceOnDisk, destOnDisk);
+            await move(sourceOnDisk, destOnDisk);
             if (sourceRoot === "gcodes") {
                 await this.marlinRaker.metadataManager.cleanupFiles(false);
             }
@@ -351,7 +351,7 @@ class FileManager {
         if (!stat.isFile()) throw new Error("Not a file");
 
         await this.checkWriteProtected(path.dirname(filepath));
-        await fs.remove(diskPath);
+        await fs.rm(diskPath, { recursive: true, force: true });
 
         const notification: IFileChangeNotification = {
             item: {
@@ -368,7 +368,7 @@ class FileManager {
     }
 
     public async getDiskUsage(dirpath: string): Promise<IDiskUsage> {
-        const stats = await statfs(dirpath);
+        const stats = await fs.statfs(dirpath);
         const total = stats.blocks * stats.bsize;
         const free = stats.bavail * stats.bsize;
         return {

@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs-extra";
+import fs from "fs";
 import { logger, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";

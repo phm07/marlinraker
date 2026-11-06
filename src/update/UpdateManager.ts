@@ -4,7 +4,7 @@ import path from "path";
 import NamedObjectMap from "../util/NamedObjectMap";
 import SystemUpdatable from "./SystemUpdatable";
 import SimpleNotification from "../api/notifications/SimpleNotification";
-import fs from "fs-extra";
+import fs from "fs";
 import ScriptUpdatable from "./ScriptUpdatable";
 import { Updatable } from "./Updatable";
 import MarlinRaker from "../MarlinRaker";
@@ -46,7 +46,7 @@ class UpdateManager {
 
     private loadScripts(): void {
         const scriptsDir = path.join(rootDir, "update_scripts");
-        fs.mkdirsSync(scriptsDir);
+        fs.mkdirSync(scriptsDir, { recursive: true });
         for (const file of fs.readdirSync(scriptsDir, { withFileTypes: true })) {
             if (!file.isFile() || file.name.startsWith("_")) continue;
             const updatable = new ScriptUpdatable(this.marlinRaker, file.name.split(".")[0], path.join(scriptsDir, file.name));

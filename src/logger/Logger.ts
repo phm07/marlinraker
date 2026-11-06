@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import chalk from "chalk";
 import logrotateStream from "logrotate-stream";
-import fs, { WriteStream } from "fs-extra";
+import fs, { WriteStream } from "fs";
 import path from "path";
 import { Writable } from "stream";
 
@@ -32,7 +32,7 @@ class Logger {
         this.level = Level.info;
 
         if (isLog) {
-            fs.mkdirsSync(path.dirname(logFile)); // has to be sync because of constructor
+            fs.mkdirSync(path.dirname(logFile), { recursive: true });
             this.outStream = logrotateStream({
                 file: logFile,
                 size: "1M",

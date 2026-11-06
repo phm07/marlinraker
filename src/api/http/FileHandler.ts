@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
-import fs from "fs-extra";
+import fs from "fs/promises";
+import { createReadStream } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { rootDir, router } from "../../Server";
@@ -59,7 +60,7 @@ class FileHandler {
                 const computedChecksum = await FileHandler.sha256(source);
                 if (checksum !== computedChecksum) {
                     res.status(422).send();
-                    await fs.remove(source);
+                    await fs.rm(source, { recursive: true, force: true });
                     return;
                 }
             }
@@ -95,7 +96,7 @@ class FileHandler {
             const hash = crypto.createHash("sha256");
             hash.setEncoding("hex");
 
-            const stream = fs.createReadStream(filepath);
+            const stream = createReadStream(filepath);
 
             stream.on("end", () => {
                 hash.end();

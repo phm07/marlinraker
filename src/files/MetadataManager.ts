@@ -1,6 +1,8 @@
 import path from "path";
 import { logger, rootDir } from "../Server";
-import fs from "fs-extra";
+import fs from "fs/promises";
+import { createReadStream } from "fs";
+import { pathExists } from "../util/FsUtils";
 import crypto from "crypto";
 import LineReader from "./LineReader";
 import Database from "../database/Database";
@@ -60,7 +62,7 @@ class MetadataManager {
         for (const id in allMetadata) {
             const metadata = allMetadata[id];
             const filepath = path.join(rootDir, "gcodes", metadata.filename);
-            if (!await fs.pathExists(filepath)) {
+            if (!await pathExists(filepath)) {
                 await this.deleteById(id);
             } else {
                 metadata.thumbnails?.forEach((thumbnail) => {
@@ -84,7 +86,7 @@ class MetadataManager {
                     if (/.*\.thumbs[\\/].*\.png$/.test(filePath) && !usedThumbnails.includes(filePath)) {
                         deleted++;
                         deletedSize += stat.size;
-                        await fs.remove(filePath);
+                        await fs.rm(filePath, { recursive: true, force: true });
                     } else if (/.*\.gcode$/i.test(fileName)) {
                         await this.getOrGenerateMetadata(path.relative(path.join(rootDir, "gcodes"), filePath));
                     }
@@ -112,7 +114,7 @@ class MetadataManager {
     public async getOrGenerateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
-        if (!isInRoot(rootDir, "gcodes", filename) || !await fs.pathExists(filepath)) {
+        if (!isInRoot(rootDir, "gcodes", filename) || !await pathExists(filepath)) {
             return null;
         }
 
@@ -162,7 +164,7 @@ class MetadataManager {
         if (!metadata) return;
         for (const thumbnail of metadata.thumbnails ?? []) {
             const thumbnailPath = path.join(rootDir, "gcodes", path.dirname(metadata.filename), thumbnail.relative_path);
-            await fs.remove(thumbnailPath);
+            await fs.rm(thumbnailPath, { recursive: true, force: true });
         }
         await this.database.deleteItem("gcode_metadata", id);
     }
@@ -170,7 +172,7 @@ class MetadataManager {
     public async generateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
-        if (!isInRoot(rootDir, "gcodes", filename) || !await fs.pathExists(filepath)) {
+        if (!isInRoot(rootDir, "gcodes", filename) || !await pathExists(filepath)) {
             return null;
         }
 
@@ -184,7 +186,7 @@ class MetadataManager {
             mtimeMs: stat.mtimeMs
         };
 
-        const firstLineReader = new LineReader(fs.createReadStream(filepath));
+        const firstLineReader = new LineReader(createReadStream(filepath));
         for (; ;) {
             const line = await firstLineReader.readLine();
             if (line === null) break;
@@ -230,7 +232,7 @@ class MetadataManager {
         firstLineReader.close();
 
         const start = Math.max(stat.size - 50000, 0);
-        const last50kReader = new LineReader(fs.createReadStream(filepath, {
+        const last50kReader = new LineReader(createReadStream(filepath, {
             start,
             end: stat.size
         }));
@@ -318,7 +320,7 @@ class MetadataManager {
         const thumbnailName = crypto.randomUUID() + ".png";
         const relativeLocation = `.thumbs/${thumbnailName}`;
         const pathOnDisk = path.join(rootDir, "gcodes", path.dirname(filename), relativeLocation);
-        await fs.mkdirs(path.dirname(pathOnDisk));
+        await fs.mkdir(path.dirname(pathOnDisk), { recursive: true });
         await fs.writeFile(pathOnDisk, buf);
         return relativeLocation;
     }

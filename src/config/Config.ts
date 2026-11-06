@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "fs";
 import path from "path";
 import { logger } from "../Server";
 import TOML from "@iarna/toml";
@@ -33,7 +33,7 @@ class Config {
 
     private resolve(filepath: string, resolvedSoFar: string[] = []): [object, IFileInfo[]] {
 
-        if (!fs.pathExistsSync(filepath)) {
+        if (!fs.existsSync(filepath)) {
             throw new Error(`${filepath} does not exist`);
         }
 

@@ -1,6 +1,6 @@
 import { Updatable } from "./Updatable";
 import { spawn } from "child_process";
-import fs from "fs-extra";
+import fs from "fs";
 import readline from "readline";
 import { logger } from "../Server";
 import MarlinRaker from "../MarlinRaker";

@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "fs";
 import CpuInfo, { ICpuInfo } from "./CpuInfo";
 import SdInfo, { ISdInfo } from "./SdInfo";
 import { IDistribution } from "./Distribution";
