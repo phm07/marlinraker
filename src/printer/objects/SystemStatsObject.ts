@@ -1,6 +1,6 @@
 import PrinterObject from "./PrinterObject";
 import os from "os";
-import { procfs } from "@stroncium/procfs";
+import { readMemAvailable } from "../../system/ProcFs";
 
 interface IObject {
     sysload: number;
@@ -28,7 +28,7 @@ class SystemStatsObject extends PrinterObject<IObject> {
 
     private static getMemAvail(): number {
         try {
-            return procfs.meminfo().available;
+            return readMemAvailable() ?? os.freemem();
         } catch {
             return os.freemem();
         }
