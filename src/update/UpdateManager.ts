@@ -36,7 +36,7 @@ class UpdateManager {
         this.scheduledUpdates = [];
         this.updatables = new NamedObjectMap<Updatable<unknown>>();
 
-        if (process.platform === "linux") {
+        if (SystemUpdatable.isSupported()) {
             this.updatables.add(new SystemUpdatable(marlinRaker));
         }
 
