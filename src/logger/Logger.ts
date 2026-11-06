@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
-import chalk from "chalk";
-import logrotateStream from "logrotate-stream";
-import fs, { WriteStream } from "fs";
+import fs from "fs";
 import path from "path";
-import { Writable } from "stream";
+import { styleText } from "util";
+import { createStream, RotatingFileStream } from "rotating-file-stream";
 
 enum Level {
     error,
@@ -13,9 +12,7 @@ enum Level {
     debug
 }
 
-type TOutStream = Writable & {
-    writer?: WriteStream;
-};
+type TConsoleColor = "white" | "red" | "yellow";
 
 class Logger {
 
@@ -23,7 +20,7 @@ class Logger {
     public readonly isConsole: boolean;
     public readonly isLog: boolean;
     public level: Level;
-    private readonly outStream?: TOutStream;
+    private readonly outStream?: RotatingFileStream;
 
     public constructor(logFile: string, isConsole: boolean, isLog: boolean) {
         this.logFile = logFile;
@@ -33,20 +30,20 @@ class Logger {
 
         if (isLog) {
             fs.mkdirSync(path.dirname(logFile), { recursive: true });
-            this.outStream = logrotateStream({
-                file: logFile,
+            this.outStream = createStream(path.basename(logFile), {
+                path: path.dirname(logFile),
                 size: "1M",
-                compress: true,
-                keep: 5
-            }) as TOutStream;
+                compress: "gzip",
+                rotate: 5
+            });
         }
     }
 
     public async shutdownGracefully(): Promise<void> {
         if (!this.outStream) return;
-        this.outStream.end("\n");
+        const outStream = this.outStream;
         return new Promise<void>((resolve) => {
-            (this.outStream!.writer ?? this.outStream!).on("finish", resolve);
+            outStream.end("\n", resolve);
         });
     }
 
@@ -65,17 +62,17 @@ class Logger {
         }
 
         if (this.isConsole) {
-            let color = chalk.white, func = console.log;
+            let color: TConsoleColor = "white", func = console.log;
             switch (level) {
             case Level.error:
-                color = chalk.red;
+                color = "red";
                 func = console.error;
                 break;
             case Level.warn:
-                color = chalk.yellow;
+                color = "yellow";
                 break;
             }
-            func(color(formatted));
+            func(styleText(color, formatted));
         }
     }
 
