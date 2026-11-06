@@ -36,8 +36,7 @@ const writeDistPackageJson = async () => {
         scripts: {
             start: "node --enable-source-maps index.js"
         },
-        dependencies: packageJson.dependencies,
-        optionalDependencies: packageJson.optionalDependencies
+        dependencies: packageJson.dependencies
     }, null, 2));
 };
 
