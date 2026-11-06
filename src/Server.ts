@@ -6,12 +6,9 @@ import Config from "./config/Config";
 import path from "path";
 import fs from "fs/promises";
 import { SerialPort } from "serialport";
-import sourceMapSupport from "source-map-support";
 import Logger, { Level } from "./logger/Logger";
 import cors from "cors";
 import { pathExists } from "./util/FsUtils";
-
-sourceMapSupport.install({ handleUncaughtExceptions: false });
 
 let config: Config;
 let rootDir: string;
