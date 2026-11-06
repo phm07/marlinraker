@@ -110,10 +110,9 @@ class UpdateManager {
     public async getUpdateStatus(): Promise<IUpdateStatus> {
         const rateLimit = await UpdateManager.getRateLimit();
         const versionInfo: Record<string, unknown> = {};
-        for (const name in this.updatables) {
-            const info = this.updatables.get(name)?.info;
-            if (info) {
-                versionInfo[name] = info;
+        for (const [name, updatable] of this.updatables) {
+            if (updatable.info) {
+                versionInfo[name] = updatable.info;
             }
         }
         return {
