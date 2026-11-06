@@ -29,10 +29,8 @@ class KlipperCompat {
             if (!targetStr) {
                 throw new Error("missing TARGET");
             }
-            let target: number;
-            try {
-                target = Number.parseFloat(targetStr);
-            } catch (e) {
+            const target = Number.parseFloat(targetStr);
+            if (Number.isNaN(target)) {
                 throw new Error(`unable to parse ${targetStr}`);
             }
 
