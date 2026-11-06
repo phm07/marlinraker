@@ -49,7 +49,10 @@ class FileDirectory implements IDirectory {
 
         return new Promise<IFile | null>((resolve) => {
             fs.stat(path.join(this.path, name), (err, stat) => {
-                if (err as ErrnoException | undefined) resolve(null);
+                if (err as ErrnoException | undefined) {
+                    resolve(null);
+                    return;
+                }
                 resolve({
                     filename: name,
                     modified: stat.mtimeMs / 1000,
