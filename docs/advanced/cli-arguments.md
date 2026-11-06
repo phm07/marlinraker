@@ -14,7 +14,8 @@ Do not log output to files (`marlinraker_files/logs/marlinraker.txt`)
 Include debugging information in console and logs (See `extended_logs`
 option in [Configuration](../configuration.md))
 - `--serve-static`<br>
-Serve `marlinraker_files/www` directory with express
+Serve `marlinraker_files/www` directory with express. Set the
+`MARLINRAKER_WWW_DIR` environment variable to serve another directory.
 
 You can pass CLI arguments to the program like follows:
 

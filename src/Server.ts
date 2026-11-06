@@ -92,7 +92,7 @@ let router: Router;
     router = express.Router();
     app.use(router);
 
-    const wwwDir = path.join(rootDir, "www/");
+    const wwwDir = path.resolve(process.env.MARLINRAKER_WWW_DIR ?? path.join(rootDir, "www/"));
     await fs.mkdir(wwwDir, { recursive: true });
     const isServeStatic = process.argv.some((s) => s.toLowerCase() === "--serve-static");
     if (isServeStatic) {
@@ -128,7 +128,7 @@ let router: Router;
 
     app.get("/{*splat}", (_, res) => {
         if (isServeStatic) {
-            res.sendFile(path.join(rootDir, "www/index.html"));
+            res.sendFile(path.join(wwwDir, "index.html"));
         } else {
             res.status(404).send();
         }
