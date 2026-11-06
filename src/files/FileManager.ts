@@ -122,6 +122,10 @@ class FileManager {
         return files;
     }
 
+    public isRoot(name: string): boolean {
+        return this.directories.some((dir) => dir.dirname === name);
+    }
+
     public async getDirectoryInfo(dirname: string): Promise<IDirInfo | null> {
         const dir = await this.getDirectory(dirname);
         if (!dir) return null;
