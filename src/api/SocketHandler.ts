@@ -61,11 +61,14 @@ import MachineServicesRestartExecutor from "./executors/MachineServicesRestartEx
 import MachineServicesStartExecutor from "./executors/MachineServicesStartExecutor";
 import MachineServicesStopExecutor from "./executors/MachineServicesStopExecutor";
 import PrinterObjectsQueryExecutor from "./executors/PrinterObjectsQueryExecutor";
+import { handleJsonRpcPayload } from "./JsonRpcBatch";
 
 interface ISocketResponse {
     id: number;
     jsonrpc: "2.0";
 }
+
+type TJsonRpcRequest = { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown };
 
 class SocketHandler extends MessageHandler {
 
@@ -165,12 +168,12 @@ class SocketHandler extends MessageHandler {
             logger.error(`Error while parsing message: ${Utils.errorToString(e)}`);
             return;
         }
-        const response = await this.handle(socket, json);
+        const response = await handleJsonRpcPayload(json, async (request) => this.handle(socket, request as TJsonRpcRequest));
         logger.debug(`Response: ${JSON.stringify(response)}`);
         socket.send(JSON.stringify(response));
     }
 
-    private async handle(socket: WebSocket, message: { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown }): Promise<ISocketResponse | string> {
+    private async handle(socket: WebSocket, message: TJsonRpcRequest): Promise<ISocketResponse | string> {
         if (message.jsonrpc !== "2.0" || typeof message.id !== "number" || typeof message.method !== "string") {
             return {
                 ...new ErrorResponse(400, "Bad Request"),
