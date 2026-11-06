@@ -21,6 +21,7 @@ import Utils from "./util/Utils";
 import ObjectManager from "./printer/objects/ObjectManager";
 import TypedEventEmitter from "./util/TypedEventEmitter";
 import WebcamManager from "./webcams/WebcamManager";
+import { RESTART_EXIT_CODE } from "./system/PowerControl";
 
 interface IGcodeLog {
     message: string;
@@ -166,7 +167,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
 
     public async restart(): Promise<void> {
         logger.info("Full restart requested");
-        await this.shutdownGracefully();
+        await this.shutdownGracefully(RESTART_EXIT_CODE);
     }
 
     public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
@@ -214,9 +215,9 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
         await this.printer?.queueGcode(command, false, log);
     }
 
-    public async shutdownGracefully(): Promise<void> {
+    public async shutdownGracefully(exitCode = 0): Promise<void> {
         if (this.shutdownRequested) {
-            process.exit(0);
+            process.exit(exitCode);
             return;
         }
 
@@ -227,7 +228,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
         }
         await this.socketHandler.shutdown();
         await logger.shutdownGracefully();
-        process.exit(0);
+        process.exit(exitCode);
     }
 }
 

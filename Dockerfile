@@ -36,6 +36,7 @@ COPY --from=mainsail /mainsail ./www
 USER marlinraker
 ENV MARLINRAKER_DIR=/marlinraker_files
 ENV MARLINRAKER_WWW_DIR=/marlinraker/www
+ENV MARLINRAKER_CONTAINER=true
 EXPOSE 7125
 VOLUME ["/marlinraker_files"]
 CMD ["node", "--enable-source-maps", "index.js", "--serve-static"]

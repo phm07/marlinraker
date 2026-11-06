@@ -70,11 +70,11 @@ class HttpHandler extends MessageHandler {
             [
                 new AccessOneshotTokenExecutor(marlinRaker),
                 new MachineProcStatsExecutor(marlinRaker),
-                new MachineRebootExecutor(),
+                new MachineRebootExecutor(marlinRaker),
                 new MachineServicesRestartExecutor(marlinRaker),
                 new MachineServicesStartExecutor(marlinRaker),
                 new MachineServicesStopExecutor(marlinRaker),
-                new MachineShutdownExecutor(),
+                new MachineShutdownExecutor(marlinRaker),
                 new MachineSystemInfoExecutor(marlinRaker),
                 new MachineUpdateClientExecutor(marlinRaker),
                 new MachineUpdateFullExecutor(marlinRaker),

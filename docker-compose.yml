@@ -4,6 +4,7 @@ services:
       context: .
       target: runtime
     image: marlinraker:local
+    restart: on-failure
     ports:
       - "7125:7125"
     volumes:

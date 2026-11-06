@@ -81,11 +81,11 @@ class SocketHandler extends MessageHandler {
         this.methodExecutors = new NamedObjectMap<IMethodExecutor<unknown, unknown>>(
             [
                 new MachineProcStatsExecutor(marlinRaker),
-                new MachineRebootExecutor(),
+                new MachineRebootExecutor(marlinRaker),
                 new MachineServicesRestartExecutor(marlinRaker),
                 new MachineServicesStartExecutor(marlinRaker),
                 new MachineServicesStopExecutor(marlinRaker),
-                new MachineShutdownExecutor(),
+                new MachineShutdownExecutor(marlinRaker),
                 new MachineSystemInfoExecutor(marlinRaker),
                 new MachineUpdateClientExecutor(marlinRaker),
                 new MachineUpdateFullExecutor(marlinRaker),
