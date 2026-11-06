@@ -3,6 +3,7 @@ import path from "path";
 import { logger } from "../Server";
 import { parse as parseToml } from "smol-toml";
 import Utils, { TVec3 } from "../util/Utils";
+import { bedMeshSection, IMachineGeometry, parseKinematics } from "../printer/Kinematics";
 
 interface IFileInfo {
     filename: string;
@@ -12,6 +13,7 @@ interface IFileInfo {
 class Config {
 
     public klipperPseudoConfig: object;
+    public readonly geometry: IMachineGeometry;
     public readonly config: unknown;
     public readonly files: IFileInfo[];
     public readonly warnings: string[];
@@ -25,6 +27,7 @@ class Config {
         this.configFile = path.resolve(configFile);
         this.isConfigMalformed = false;
         [this.config, this.files] = this.load();
+        this.geometry = this.loadGeometry();
         this.klipperPseudoConfig = this.generateKlipperConfig();
         logger.info("Config loaded");
         logger.debug(`Config:\n${JSON.stringify(this.config, null, 2)}`);
@@ -138,12 +141,31 @@ class Config {
         return value as T;
     }
 
-    private generateKlipperConfig(): object {
+    private loadGeometry(): IMachineGeometry {
         const printVolume = this.getGeneric<TVec3>("printer.print_volume",
             [220, 220, 240], (x): x is TVec3 =>
                 typeof x === "object" && Array.isArray(x) && x.length === 3
         );
+        const kinematicsSetting = this.getStringIfExists("printer.kinematics", null) ?? "cartesian";
+        const kinematics = parseKinematics(kinematicsSetting);
+        if (!kinematics) {
+            logger.warn(`Unsupported kinematics "${kinematicsSetting}", using cartesian`);
+            this.warnings.push(`Unsupported kinematics "${kinematicsSetting}". Using cartesian instead.`);
+        }
+        return {
+            kinematics: kinematics ?? "cartesian",
+            printVolume,
+            printRadius: this.getNumberIfExists("printer.print_radius", null) ?? printVolume[0] / 2
+        };
+    }
+
+    private generateKlipperConfig(): object {
+        const isDelta = this.geometry.kinematics === "delta";
         const klipperConfig = {
+            printer: {
+                kinematics: this.geometry.kinematics,
+                ...isDelta ? { print_radius: this.geometry.printRadius } : {}
+            },
             extruder: {
                 min_temp: this.getNumber("printer.extruder.min_temp", 0),
                 max_temp: this.getNumber("printer.extruder.max_temp", 250),
@@ -154,10 +176,7 @@ class Config {
                 min_temp: this.getNumber("printer.heater_bed.min_temp", 0),
                 max_temp: this.getNumber("printer.heater_bed.max_temp", 60)
             },
-            bed_mesh: {
-                mesh_min: "0, 0",
-                mesh_max: `${printVolume[0]}, ${printVolume[1]}`
-            },
+            bed_mesh: bedMeshSection(this.geometry),
             virtual_sdcard: {},
             pause_resume: {},
             display_status: {}

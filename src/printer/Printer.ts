@@ -8,6 +8,7 @@ import PositionWatcher from "./watchers/PositionWatcher";
 import Watcher from "./watchers/Watcher";
 import { TVec2, TVec4 } from "../util/Utils";
 import MarlinRaker from "../MarlinRaker";
+import { homesAllAxes } from "./Kinematics";
 
 interface IPauseState {
     x: number;
@@ -251,7 +252,8 @@ class Printer extends SerialGcodeDevice {
             this.emit("factorChange");
 
         } else if (/^G28(\s|$)/.test(line)) {
-            this.homedAxes = ParserUtil.parseG28Request(line, this.homedAxes);
+            const homingRequest = homesAllAxes(config.geometry.kinematics) ? "G28" : line;
+            this.homedAxes = ParserUtil.parseG28Request(homingRequest, this.homedAxes);
             this.emit("homedAxesChange");
 
         } else if (/^M(18|84|410)(\s|$)/.test(line)) {

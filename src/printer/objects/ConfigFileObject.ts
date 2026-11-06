@@ -26,10 +26,11 @@ class ConfigFileObject extends PrinterObject<IObject> {
 
         if (this.marlinRaker.printer) {
             const limits = this.marlinRaker.printer.limits;
+            const printerSection = (klipperPseudoConfig as { printer?: object }).printer;
             klipperPseudoConfig = {
                 ...klipperPseudoConfig,
                 printer: {
-                    kinematics: "cartesian",
+                    ...printerSection,
                     max_velocity: Math.min(limits.maxFeedrate[0], limits.maxFeedrate[1]),
                     max_accel: Math.min(limits.maxAccel[0], limits.maxAccel[1]),
                     max_z_velocity: limits.maxFeedrate[2],
@@ -51,6 +52,7 @@ class ConfigFileObject extends PrinterObject<IObject> {
         if (bedMesh) {
             bedMesh.mesh_min = ConfigFileObject.parseCoordinates(bedMesh.mesh_min);
             bedMesh.mesh_max = ConfigFileObject.parseCoordinates(bedMesh.mesh_max);
+            bedMesh.mesh_origin = ConfigFileObject.parseCoordinates(bedMesh.mesh_origin);
         }
         return settings;
     }
