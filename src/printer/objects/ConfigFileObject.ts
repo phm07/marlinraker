@@ -31,7 +31,7 @@ class ConfigFileObject extends PrinterObject<IObject> {
                 printer: {
                     kinematics: "cartesian",
                     max_velocity: Math.min(limits.maxFeedrate[0], limits.maxFeedrate[1]),
-                    max_accel: Math.min(limits.maxAccel[1], limits.maxAccel[1]),
+                    max_accel: Math.min(limits.maxAccel[0], limits.maxAccel[1]),
                     max_z_velocity: limits.maxFeedrate[2],
                     max_z_accel: limits.maxAccel[2]
                 }
