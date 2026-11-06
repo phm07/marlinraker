@@ -122,11 +122,11 @@ let router: Router;
         });
     };
     ["printer", "api", "access", "machine", "server"].forEach((api) => {
-        app.get(`/${api}/*`, sendApi404);
-        app.post(`/${api}/*`, sendApi404);
+        app.get(`/${api}/*splat`, sendApi404);
+        app.post(`/${api}/*splat`, sendApi404);
     });
 
-    app.get("*", (req, res) => {
+    app.get("/{*splat}", (_, res) => {
         if (isServeStatic) {
             res.sendFile(path.join(rootDir, "www/index.html"));
         } else {

@@ -128,8 +128,7 @@ class HttpHandler extends MessageHandler {
             const route = `/${(executor.httpName ?? name).replaceAll(".", "/")}`;
 
             router[method](route, async (req, res) => {
-                const requestBody = req.query;
-                Object.assign(requestBody, req.body);
+                const requestBody = { ...req.query, ...req.body };
                 const response = await this.handleMessage(req.socket, executor, requestBody);
                 res.type("json");
                 res.send(response.toString());
