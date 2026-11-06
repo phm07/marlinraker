@@ -311,7 +311,7 @@ class MetadataManager {
         let buf: Buffer;
         try {
             buf = Buffer.from(base64, "base64");
-        } catch (e) {
+        } catch {
             return null;
         }
 

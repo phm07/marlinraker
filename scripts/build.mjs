@@ -61,7 +61,7 @@ const zipDist = async () => {
 
 try {
     if (!isFast) {
-        await step("Linting", () => runBin("eslint", ["src", "--max-warnings=0"]));
+        await step("Linting", () => runBin("eslint", ["src", "test", "--max-warnings=0"]));
     }
     await step("Clearing dist directory", async () => {
         await rm(distDir, { recursive: true, force: true });

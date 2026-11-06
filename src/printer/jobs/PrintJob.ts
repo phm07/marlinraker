@@ -75,9 +75,9 @@ class PrintJob {
 
         if (this.marlinRaker.jobManager.state !== "printing" || this.printer.hasCommandsInQueue()) return;
 
-        let nextCommand: string | null = null;
+        let nextCommand: string | null;
         do {
-            nextCommand = (await this.lineReader.readLine())?.split(";")?.[0] ?? null;
+            nextCommand = (await this.lineReader.readLine())?.split(";")[0] ?? null;
         } while (nextCommand !== null && !nextCommand.trim());
 
         if (!nextCommand) {

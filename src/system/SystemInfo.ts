@@ -10,7 +10,7 @@ import ServiceManager from "./ServiceManager";
 
 interface IMachineInfo {
     cpu_info: ICpuInfo;
-    sd_info: ISdInfo | {};
+    sd_info: ISdInfo | Record<string, never>;
     distribution: IDistribution;
     network: TNetwork;
 }

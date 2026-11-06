@@ -29,7 +29,7 @@ class SystemStatsObject extends PrinterObject<IObject> {
     private static getMemAvail(): number {
         try {
             return procfs.meminfo().available;
-        } catch (e) {
+        } catch {
             return os.freemem();
         }
     }

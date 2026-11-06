@@ -6,13 +6,14 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --serve-static --extended-logs",
-    "dev.api": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ ts-node --files src/Server.ts --extended-logs",
+    "dev": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ tsx src/Server.ts --serve-static --extended-logs",
+    "dev.api": "cross-env NODE_ENV=development MARLINRAKER_DIR=./marlinraker_files/ tsx src/Server.ts --extended-logs",
     "build": "node scripts/build.mjs",
     "build.zip": "node scripts/build.mjs --zip",
-    "lint": "eslint src --max-warnings=0 --fix",
-    "test": "eslint src --max-warnings=0",
-    "test.unit": "node -r ts-node/register --test test/*/*.test.ts",
+    "lint": "eslint src test --max-warnings=0 --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "eslint src test --max-warnings=0 && tsc --noEmit && npm run test.unit",
+    "test.unit": "node --import tsx --test \"test/**/*.test.ts\"",
     "docs.serve": "mkdocs serve"
   },
   "author": "pauhull",
@@ -35,6 +36,8 @@
     "ws": "^8.12.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
     "@types/fs-extra": "^9.0.13",
@@ -45,15 +48,15 @@
     "@types/stroncium__procfs": "^1.2.0",
     "@types/unzipper": "^0.10.5",
     "@types/ws": "^8.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.28.2",
     "esbuild-node-externals": "^2.0.0",
-    "eslint": "^8.34.0",
+    "eslint": "^10.14.0",
     "fflate": "^0.8.3",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "globals": "^17.14.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.7",
