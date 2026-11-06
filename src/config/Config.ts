@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { logger } from "../Server";
-import TOML from "@iarna/toml";
+import { parse as parseToml } from "smol-toml";
 import Utils, { TVec3 } from "../util/Utils";
 
 interface IFileInfo {
@@ -38,7 +38,7 @@ class Config {
         }
 
         const originalContent = fs.readFileSync(filepath).toString("utf-8");
-        const resolvedContent = TOML.parse(originalContent.replace("\\", "\\\\"));
+        const resolvedContent = parseToml(originalContent.replace("\\", "\\\\"));
         resolvedSoFar.push(filepath);
 
         const fileInfo = [{
