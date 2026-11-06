@@ -4,6 +4,7 @@ import * as https from "https";
 class HttpsRequest {
 
     private static readonly USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0";
+    private static readonly TIMEOUT_MS = 10000;
     private readonly url: string;
 
     public constructor(url: string) {
@@ -12,7 +13,7 @@ class HttpsRequest {
 
     public async getString(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            https.get(this.url, { headers: { "User-Agent": HttpsRequest.USER_AGENT } }, (res) => {
+            const request = https.get(this.url, { headers: { "User-Agent": HttpsRequest.USER_AGENT } }, (res) => {
                 const chunks: Buffer[] = [];
                 res.on("error", reject);
                 res.on("data", (buf) => chunks.push(buf));
@@ -20,6 +21,10 @@ class HttpsRequest {
                     const result = Buffer.concat(chunks).toString("utf-8");
                     resolve(result);
                 });
+            });
+            request.on("error", reject);
+            request.setTimeout(HttpsRequest.TIMEOUT_MS, () => {
+                request.destroy(new Error(`Request to ${this.url} timed out`));
             });
         });
     }

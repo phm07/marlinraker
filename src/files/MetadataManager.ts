@@ -6,6 +6,7 @@ import LineReader from "./LineReader";
 import Database from "../database/Database";
 import HashUtils from "./HashUtils";
 import MarlinRaker from "../MarlinRaker";
+import { isInRoot } from "./RootPath";
 
 interface IThumbnail {
     width: number;
@@ -111,7 +112,7 @@ class MetadataManager {
     public async getOrGenerateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
-        if (!await fs.pathExists(filepath)) {
+        if (!isInRoot(rootDir, "gcodes", filename) || !await fs.pathExists(filepath)) {
             return null;
         }
 
@@ -169,7 +170,7 @@ class MetadataManager {
     public async generateMetadata(filename: string): Promise<IGcodeMetadata | null> {
 
         const filepath = path.join(rootDir, "gcodes", filename);
-        if (!await fs.pathExists(filepath)) {
+        if (!isInRoot(rootDir, "gcodes", filename) || !await fs.pathExists(filepath)) {
             return null;
         }
 

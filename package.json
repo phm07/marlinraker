@@ -9,6 +9,7 @@
     "build.zip": "node scripts/build.js --zip",
     "lint": "eslint src --max-warnings=0 --fix",
     "test": "eslint src --max-warnings=0",
+    "test.unit": "node -r ts-node/register --test test/*/*.test.ts",
     "docs.serve": "mkdocs serve"
   },
   "author": "pauhull",

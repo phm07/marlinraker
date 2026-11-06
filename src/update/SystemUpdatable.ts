@@ -1,5 +1,6 @@
 import { Updatable } from "./Updatable";
 import { spawn } from "child_process";
+import fs from "fs-extra";
 import readline from "readline";
 import { logger } from "../Server";
 import MarlinRaker from "../MarlinRaker";
@@ -11,7 +12,12 @@ interface IInfo {
 
 class SystemUpdatable extends Updatable<IInfo> {
 
+    private static readonly APT_PATH = "/usr/bin/apt";
     private packages: string[];
+
+    public static isSupported(): boolean {
+        return process.platform === "linux" && fs.existsSync(SystemUpdatable.APT_PATH);
+    }
 
     public constructor(marlinRaker: MarlinRaker) {
         super(marlinRaker, "system");
@@ -30,6 +36,12 @@ class SystemUpdatable extends Updatable<IInfo> {
                 resolve();
                 return;
             }
+
+            process.on("error", (e) => {
+                logger.warn("Could not execute 'sudo apt update'");
+                logger.debug(e);
+                resolve();
+            });
 
             process.on("exit", (code: number) => {
                 if (code !== 0) {

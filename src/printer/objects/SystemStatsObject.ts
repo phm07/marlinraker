@@ -21,7 +21,7 @@ class SystemStatsObject extends PrinterObject<IObject> {
         const cpuUsage = process.cpuUsage();
         return {
             sysload: os.loadavg()[0],
-            cputime: (cpuUsage.system + cpuUsage.system) / 1e6,
+            cputime: (cpuUsage.user + cpuUsage.system) / 1e6,
             memavail: SystemStatsObject.getMemAvail() / 1000
         };
     }

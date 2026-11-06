@@ -23,8 +23,12 @@ class FileHandler {
     }
 
     private handleDelete(): void {
-        router.delete("/server/files/:filepath(*)", async (req, res) => {
+        router.delete("/server/files/:filepath(*)", async (req, res, next) => {
             const filepath = req.params.filepath;
+            if (!this.marlinRaker.fileManager.isRoot(filepath.split("/")[0])) {
+                next();
+                return;
+            }
             try {
                 const response = await this.marlinRaker.fileManager.deleteFile(filepath);
                 res.send(response);

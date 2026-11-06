@@ -2,7 +2,6 @@ import { IMethodExecutor, TSender } from "./IMethodExecutor";
 import { IDirInfo } from "../../files/FileManager";
 import MarlinRaker from "../../MarlinRaker";
 import { rootDir } from "../../Server";
-import path from "path";
 
 interface IParams {
     path: string;
@@ -23,7 +22,7 @@ class ServerFilesGetDirectoryExecutor implements IMethodExecutor<IParams, IDirIn
         return await this.marlinRaker.fileManager.getDirectoryInfo(dirname) ?? {
             dirs: [],
             files: [],
-            disk_usage: await this.marlinRaker.fileManager.getDiskUsage(path.join(rootDir, dirname)),
+            disk_usage: await this.marlinRaker.fileManager.getDiskUsage(rootDir),
             root_info: {
                 name: dirname,
                 permissions: "r"
