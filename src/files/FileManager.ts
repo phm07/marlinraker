@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
 import diskUsage from "diskusage";
+import { isInRoot, resolveInRoot } from "./RootPath";
 
 interface IDiskUsage {
     total: number;
@@ -72,6 +73,7 @@ class FileManager {
     }
 
     public async getFile(filepath: string): Promise<IFile | null> {
+        if (!isInRoot(rootDir, filepath)) return null;
         const parts = filepath.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const filename = parts.pop();
         if (!filename) return null;
@@ -81,6 +83,7 @@ class FileManager {
     }
 
     public async getDirectory(dirname: string): Promise<IDirectory | null> {
+        if (!isInRoot(rootDir, dirname)) return null;
         const pathArr = dirname.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const root = this.directories.find((dir) => dir.dirname === pathArr[0]);
         let currentDir = root;
@@ -152,10 +155,9 @@ class FileManager {
 
     public async uploadFile(root: string, filepath: string, filename: string, source: string): Promise<IFileChangeNotification> {
 
+        const destination = resolveInRoot(rootDir, root, filepath, filename);
         const targetDir = path.join(root, filepath).replaceAll("\\", "/");
         await this.checkWriteProtected(targetDir);
-
-        const destination = path.resolve(rootDir, root, filepath, filename);
 
         await fs.mkdirs(path.dirname(destination));
         await fs.copy(source, destination);
@@ -210,10 +212,10 @@ class FileManager {
 
     public async createDirectory(dirpath: string): Promise<IFileChangeNotification> {
 
+        const diskPath = resolveInRoot(rootDir, dirpath);
         const dir = await this.checkWriteProtected(dirpath);
 
         const root = dirpath.split("/").filter((s) => s)[0];
-        const diskPath = path.join(rootDir, dirpath);
         if (dir || await fs.pathExists(diskPath)) {
             throw new Error("Directory already exists");
         }
@@ -242,7 +244,7 @@ class FileManager {
 
         const root = dirpath.split("/").filter((s) => s)[0];
 
-        const diskPath = path.join(rootDir, dirpath);
+        const diskPath = resolveInRoot(rootDir, dirpath);
         const stat = await fs.stat(diskPath);
 
         if (!stat.isDirectory()) throw new Error("Not a directory");
@@ -285,13 +287,13 @@ class FileManager {
     }
 
     public async moveOrCopy(source: string, dest: string, copy: boolean): Promise<IFileChangeNotification> {
+        const sourceOnDisk = resolveInRoot(rootDir, source);
+        const destOnDisk = resolveInRoot(rootDir, dest);
         await this.checkWriteProtected(source);
         await this.checkWriteProtected(dest);
 
         const sourceRoot = source.split("/").filter((s) => s)[0];
-        const sourceOnDisk = path.join(rootDir, source);
         const destRoot = dest.split("/").filter((s) => s)[0];
-        const destOnDisk = path.join(rootDir, dest);
 
         if (!await fs.pathExists(sourceOnDisk)) {
             throw new Error("Source doesn't exist");
@@ -344,7 +346,7 @@ class FileManager {
     public async deleteFile(filepath: string): Promise<IFileChangeNotification> {
 
         const root = filepath.split("/").filter((s) => s)[0];
-        const diskPath = path.join(rootDir, filepath);
+        const diskPath = resolveInRoot(rootDir, filepath);
         const stat = await fs.stat(diskPath);
         if (!stat.isFile()) throw new Error("Not a file");
 
