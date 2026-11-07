@@ -1,0 +1,35 @@
+services:
+  marlinraker:
+    build:
+      context: .
+      target: runtime
+    image: marlinraker:local
+    hostname: marlinraker
+    restart: on-failure
+    ports:
+      - "7125:7125"
+    volumes:
+      - marlinraker_files:/marlinraker_files
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+    device_cgroup_rules:
+      - "c 188:* rmw"
+      - "c 166:* rmw"
+
+  dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      target: dev
+    image: marlinraker:dev
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - npm_cache:/home/node/.npm
+    ports:
+      - "7125:7125"
+
+volumes:
+  marlinraker_files:
+  node_modules:
+  npm_cache:

@@ -44,6 +44,29 @@ After [configuring](configuration.md) Marlinraker and connecting your
 printer to the Raspberry Pi with USB you are good to go. 
 Happy printing!
 
+## Installation with Docker
+
+The Docker image contains Marlinraker and the Mainsail web interface. From a
+clone of this repository, start it with [Docker Compose](https://docs.docker.com/compose/):
+
+```bash
+docker compose up -d
+```
+
+Then open `http://<host>:7125/`. The compose file gives the container access
+to USB serial devices (`ttyUSB*` and `ttyACM*`, also after they are plugged
+in again) and keeps the configuration, G-code files and database in the
+`marlinraker_files` volume.
+
+Edit `marlinraker.toml` and `printer.toml` in the Mainsail config editor. Set
+`serial.port` to a stable path such as `/dev/serial/by-id/usb-...` and
+`serial.baud_rate` to your firmware's `BAUDRATE`: opening a serial port resets
+most Marlin boards, and with `"auto"` Marlinraker tries every port and baud
+rate on startup.
+
+Slicers that can upload to OctoPrint, such as OrcaSlicer and PrusaSlicer,
+can use `http://<host>:7125` as an OctoPrint host.
+
 ## Manual installation
 
 !!! warning

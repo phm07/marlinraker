@@ -4,3 +4,4 @@ marlinraker_files/
 build/
 dist/
 *.iml
+test/.tmp/

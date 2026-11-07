@@ -5,6 +5,7 @@ import { config, logger } from "../Server";
 import ParserUtil from "./ParserUtil";
 import MarlinRaker from "../MarlinRaker";
 import TypedEventEmitter from "../util/TypedEventEmitter";
+import { wakeEventLoopOnSerialEvents } from "../util/SerialPortWakeup";
 import { IPrinterEvents } from "./Printer";
 
 interface ICommand {
@@ -83,6 +84,7 @@ abstract class SerialGcodeDevice extends TypedEventEmitter<ISerialGcodeDeviceEve
                 await this.listPossibleSerialPorts();
                 return;
             }
+            wakeEventLoopOnSerialEvents(this.serialPort);
 
             let tryToConnect = true, tries = 0;
             while (tryToConnect) {

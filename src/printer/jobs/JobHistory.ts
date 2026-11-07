@@ -1,7 +1,7 @@
 import { IGcodeMetadata } from "../../files/MetadataManager";
 import MarlinRaker from "../../MarlinRaker";
 import PrintJob from "./PrintJob";
-import fs from "fs-extra";
+import { pathExists } from "../../util/FsUtils";
 import { rootDir } from "../../Server";
 import path from "path";
 import SimpleNotification from "../../api/notifications/SimpleNotification";
@@ -53,7 +53,7 @@ class JobHistory {
         return (await Promise.all(this.history
             .map(async (job) => ({
                 ...job,
-                exists: await fs.pathExists(path.join(rootDir, "gcodes", job.filename))
+                exists: await pathExists(path.join(rootDir, "gcodes", job.filename))
             }) as IHistoryJob)))
             .filter((job) => job.start_time < before && (job.end_time ?? Infinity) > since)
             .slice(start, start + limit).sort(

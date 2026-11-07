@@ -20,6 +20,8 @@ import KlipperCompat from "./compat/KlipperCompat";
 import Utils from "./util/Utils";
 import ObjectManager from "./printer/objects/ObjectManager";
 import TypedEventEmitter from "./util/TypedEventEmitter";
+import WebcamManager from "./webcams/WebcamManager";
+import { RESTART_EXIT_CODE } from "./system/PowerControl";
 
 interface IGcodeLog {
     message: string;
@@ -53,6 +55,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
     public readonly systemInfo: SystemInfo;
     public readonly klipperCompat: KlipperCompat;
     public readonly objectManager: ObjectManager;
+    public readonly webcamManager: WebcamManager;
     public printer?: Printer;
 
     private static instance: MarlinRaker;
@@ -72,6 +75,9 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
         this.updateManager = new UpdateManager(this);
         this.connectionManager = new ConnectionManager();
         this.database = new Database();
+        this.webcamManager = new WebcamManager(this.database, async (webcams) => {
+            await this.socketHandler.broadcast(new SimpleNotification("notify_webcams_changed", [{ webcams }]));
+        });
         this.metadataManager = new MetadataManager(this);
         this.accessManager = new AccessManager();
         this.fileManager = new FileManager(this);
@@ -161,7 +167,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
 
     public async restart(): Promise<void> {
         logger.info("Full restart requested");
-        await this.shutdownGracefully();
+        await this.shutdownGracefully(RESTART_EXIT_CODE);
     }
 
     public async dispatchCommand(commandRaw: string, log = true): Promise<void> {
@@ -209,9 +215,9 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
         await this.printer?.queueGcode(command, false, log);
     }
 
-    public async shutdownGracefully(): Promise<void> {
+    public async shutdownGracefully(exitCode = 0): Promise<void> {
         if (this.shutdownRequested) {
-            process.exit(0);
+            process.exit(exitCode);
             return;
         }
 
@@ -222,7 +228,7 @@ class MarlinRaker extends TypedEventEmitter<IMarlinRakerEvents> {
         }
         await this.socketHandler.shutdown();
         await logger.shutdownGracefully();
-        process.exit(0);
+        process.exit(exitCode);
     }
 }
 
