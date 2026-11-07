@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 
-type TEvents<E> = Record<keyof E, (...args: any[]) => void>;
+type TEvents<E> = Record<keyof E, (...args: never[]) => void>;
 
 declare interface TypedEventEmitter<E extends TEvents<E>> {
     addListener: <T extends keyof E>(eventName: T, listener: E[T]) => this;
@@ -14,12 +14,12 @@ declare interface TypedEventEmitter<E extends TEvents<E>> {
     once: <T extends keyof E>(eventName: T, listener: E[T]) => this;
     prependListener: <T extends keyof E>(eventName: T, listener: E[T]) => this;
     prependOnceListener: <T extends keyof E>(eventName: T, listener: E[T]) => this;
-    rawListeners: (eventName: keyof E) => (...args: any[]) => any;
+    rawListeners: <T extends keyof E>(eventName: T) => E[T][];
     removeAllListeners: (eventName?: keyof E) => this;
     removeListener: <T extends keyof E>(eventName: T, listener: E[T]) => this;
     setMaxListeners: (n: number) => this;
 }
 
-class TypedEventEmitter<E extends TEvents<E>> extends (EventEmitter as new() => {}) {}
+class TypedEventEmitter<E extends TEvents<E>> extends (EventEmitter as new() => object) {}
 
 export default TypedEventEmitter;

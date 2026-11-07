@@ -6,6 +6,7 @@ interface IObject {
     power?: number;
     measured_min_temp?: number;
     measured_max_temp?: number;
+    can_extrude?: boolean;
 }
 
 class TemperatureObject extends PrinterObject<IObject> {
@@ -16,11 +17,13 @@ class TemperatureObject extends PrinterObject<IObject> {
     public power?: number;
     public minTemp?: number;
     public maxTemp?: number;
+    private readonly minExtrudeTemp?: number;
 
-    public constructor(name: string) {
+    public constructor(name: string, minExtrudeTemp?: number) {
         super();
         this.temp = 0;
         this.name = name;
+        this.minExtrudeTemp = minExtrudeTemp;
     }
 
     protected get(): IObject {
@@ -29,7 +32,8 @@ class TemperatureObject extends PrinterObject<IObject> {
             power: this.power,
             target: this.target,
             measured_min_temp: this.minTemp,
-            measured_max_temp: this.maxTemp
+            measured_max_temp: this.maxTemp,
+            ...this.minExtrudeTemp === undefined ? {} : { can_extrude: this.temp >= this.minExtrudeTemp }
         };
     }
 }

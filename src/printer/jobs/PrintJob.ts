@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs-extra";
+import fs from "fs";
 import { logger, rootDir } from "../../Server";
 import LineReader from "../../files/LineReader";
 import { IGcodeMetadata } from "../../files/MetadataManager";
@@ -75,9 +75,9 @@ class PrintJob {
 
         if (this.marlinRaker.jobManager.state !== "printing" || this.printer.hasCommandsInQueue()) return;
 
-        let nextCommand: string | null = null;
+        let nextCommand: string | null;
         do {
-            nextCommand = (await this.lineReader.readLine())?.split(";")?.[0] ?? null;
+            nextCommand = (await this.lineReader.readLine())?.split(";")[0] ?? null;
         } while (nextCommand !== null && !nextCommand.trim());
 
         if (!nextCommand) {

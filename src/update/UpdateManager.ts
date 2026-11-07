@@ -1,13 +1,13 @@
 import { logger, rootDir } from "../Server";
-import HttpsRequest from "./HttpsRequest";
 import path from "path";
 import NamedObjectMap from "../util/NamedObjectMap";
 import SystemUpdatable from "./SystemUpdatable";
 import SimpleNotification from "../api/notifications/SimpleNotification";
-import fs from "fs-extra";
+import fs from "fs";
 import ScriptUpdatable from "./ScriptUpdatable";
 import { Updatable } from "./Updatable";
 import MarlinRaker from "../MarlinRaker";
+import Utils from "../util/Utils";
 
 interface IUpdateStatus {
     busy: boolean;
@@ -25,6 +25,9 @@ interface IRateLimit {
 
 class UpdateManager {
 
+    private static readonly GITHUB_RATE_LIMIT_URL = "https://api.github.com/rate_limit";
+    private static readonly GITHUB_TIMEOUT_MS = 5000;
+
     public readonly updatables: NamedObjectMap<Updatable<unknown>>;
     public busy: boolean;
     private readonly marlinRaker: MarlinRaker;
@@ -36,7 +39,7 @@ class UpdateManager {
         this.scheduledUpdates = [];
         this.updatables = new NamedObjectMap<Updatable<unknown>>();
 
-        if (process.platform === "linux") {
+        if (SystemUpdatable.isSupported()) {
             this.updatables.add(new SystemUpdatable(marlinRaker));
         }
 
@@ -46,7 +49,7 @@ class UpdateManager {
 
     private loadScripts(): void {
         const scriptsDir = path.join(rootDir, "update_scripts");
-        fs.mkdirsSync(scriptsDir);
+        fs.mkdirSync(scriptsDir, { recursive: true });
         for (const file of fs.readdirSync(scriptsDir, { withFileTypes: true })) {
             if (!file.isFile() || file.name.startsWith("_")) continue;
             const updatable = new ScriptUpdatable(this.marlinRaker, file.name.split(".")[0], path.join(scriptsDir, file.name));
@@ -110,10 +113,9 @@ class UpdateManager {
     public async getUpdateStatus(): Promise<IUpdateStatus> {
         const rateLimit = await UpdateManager.getRateLimit();
         const versionInfo: Record<string, unknown> = {};
-        for (const name in this.updatables) {
-            const info = this.updatables.get(name)?.info;
-            if (info) {
-                versionInfo[name] = info;
+        for (const [name, updatable] of this.updatables) {
+            if (updatable.info) {
+                versionInfo[name] = updatable.info;
             }
         }
         return {
@@ -136,22 +138,24 @@ class UpdateManager {
 
     private static async getRateLimit(): Promise<IRateLimit> {
         try {
-            const response = await new HttpsRequest("https://api.github.com/rate_limit").getString();
-            const data = JSON.parse(response);
+            const response = await fetch(UpdateManager.GITHUB_RATE_LIMIT_URL, {
+                headers: { "User-Agent": "marlinraker" },
+                signal: AbortSignal.timeout(UpdateManager.GITHUB_TIMEOUT_MS)
+            });
+            const { rate } = await response.json() as { rate?: Partial<IRateLimit> };
 
-            if ("rate" in data && typeof data.rate === "object"
-                && "limit" in data.rate && typeof data.rate.limit === "number"
-                && "remaining" in data.rate && typeof data.rate.remaining === "number"
-                && "reset" in data.rate && typeof data.rate.reset === "number") {
+            if (typeof rate?.limit === "number"
+                && typeof rate.remaining === "number"
+                && typeof rate.reset === "number") {
 
                 return {
-                    limit: data.rate.limit,
-                    remaining: data.rate.remaining,
-                    reset: data.rate.reset
+                    limit: rate.limit,
+                    remaining: rate.remaining,
+                    reset: rate.reset
                 };
             }
         } catch (e) {
-            logger.error(e);
+            logger.warn(`Could not fetch GitHub rate limit: ${Utils.errorToString(e)}`);
         }
 
         return {

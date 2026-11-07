@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "fs";
 import { exec } from "child_process";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
