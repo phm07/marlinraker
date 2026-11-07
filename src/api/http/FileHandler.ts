@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
-import fs from "fs-extra";
+import fs from "fs/promises";
+import { createReadStream } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { rootDir, router } from "../../Server";
@@ -23,8 +24,12 @@ class FileHandler {
     }
 
     private handleDelete(): void {
-        router.delete("/server/files/:filepath(*)", async (req, res) => {
-            const filepath = req.params.filepath;
+        router.delete("/server/files/*filepath", async (req, res, next) => {
+            const filepath = req.params.filepath.join("/");
+            if (!this.marlinRaker.fileManager.isRoot(filepath.split("/")[0])) {
+                next();
+                return;
+            }
             try {
                 const response = await this.marlinRaker.fileManager.deleteFile(filepath);
                 res.send(response);
@@ -55,7 +60,7 @@ class FileHandler {
                 const computedChecksum = await FileHandler.sha256(source);
                 if (checksum !== computedChecksum) {
                     res.status(422).send();
-                    await fs.remove(source);
+                    await fs.rm(source, { recursive: true, force: true });
                     return;
                 }
             }
@@ -91,7 +96,7 @@ class FileHandler {
             const hash = crypto.createHash("sha256");
             hash.setEncoding("hex");
 
-            const stream = fs.createReadStream(filepath);
+            const stream = createReadStream(filepath);
 
             stream.on("end", () => {
                 hash.end();

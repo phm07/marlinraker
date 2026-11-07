@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "fs";
 import CpuInfo, { ICpuInfo } from "./CpuInfo";
 import SdInfo, { ISdInfo } from "./SdInfo";
 import { IDistribution } from "./Distribution";
@@ -10,7 +10,7 @@ import ServiceManager from "./ServiceManager";
 
 interface IMachineInfo {
     cpu_info: ICpuInfo;
-    sd_info: ISdInfo | {};
+    sd_info: ISdInfo | Record<string, never>;
     distribution: IDistribution;
     network: TNetwork;
 }

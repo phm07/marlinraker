@@ -21,7 +21,7 @@ class SdInfo {
         "74": "PNY"
     };
 
-    public static getSdInfo(): ISdInfo | {} {
+    public static getSdInfo(): ISdInfo | Record<string, never> {
 
         try {
             const cid = SystemInfo.read("/sys/block/mmcblk0/device/cid").trim().toLowerCase();

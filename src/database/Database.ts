@@ -24,7 +24,7 @@ class Database {
     public async getItem(namespace: string, key?: string): Promise<unknown | null> {
         try {
             return await this.jsonDb.getData(Database.getPath(namespace, key));
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -38,7 +38,7 @@ class Database {
         const value = this.getItem(namespace, key);
         try {
             await this.jsonDb.delete(Database.getPath(namespace, key));
-        } catch (e) {
+        } catch {
             return null;
         }
         return value;
