@@ -1,5 +1,5 @@
 import SystemInfo from "./SystemInfo";
-import { procfs } from "@stroncium/procfs";
+import { readNetDev } from "./ProcFs";
 import os from "os";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import VcgenCmd, { IThrottledState } from "./VcgenCmd";
@@ -139,7 +139,7 @@ class ProcStats {
 
         try {
             const now = Date.now() / 1000;
-            const devices = procfs.netDev();
+            const devices = readNetDev();
             for (const device of devices) {
                 let bandwidth = 0;
                 const lastStats = this.lastNetStats[device.name];

@@ -1,6 +1,6 @@
 import PrinterObject from "./PrinterObject";
 import { config } from "../../Server";
-import { TVec3 } from "../../util/Utils";
+import { axisLimits, IAxisLimits } from "../Kinematics";
 import MarlinRaker from "../../MarlinRaker";
 
 interface IObject {
@@ -21,7 +21,7 @@ class ToolheadObject extends PrinterObject<IObject> {
 
     public readonly name = "toolhead";
     private readonly marlinRaker: MarlinRaker;
-    private readonly printVolume: TVec3;
+    private readonly axisLimits: IAxisLimits;
 
     public constructor(marlinRaker: MarlinRaker) {
         super();
@@ -37,10 +37,7 @@ class ToolheadObject extends PrinterObject<IObject> {
             }
         });
 
-        this.printVolume = config.getGeneric<TVec3>("printer.print_volume",
-            [220, 220, 240], (x): x is TVec3 =>
-                typeof x === "object" && Array.isArray(x) && x.length === 3
-        );
+        this.axisLimits = axisLimits(config.geometry);
     }
 
     protected get(): IObject {
@@ -50,8 +47,8 @@ class ToolheadObject extends PrinterObject<IObject> {
             estimated_print_time: 0,
             extruder: "extruder",
             position: this.marlinRaker.printer?.actualPosition ?? [0, 0, 0, 0],
-            axis_minimum: [0, 0, 0, 0],
-            axis_maximum: [...this.printVolume, 0]
+            axis_minimum: this.axisLimits.minimum,
+            axis_maximum: this.axisLimits.maximum
         };
     }
 

@@ -13,6 +13,10 @@ import PrinterObjectsListExecutor from "./executors/PrinterObjectsListExecutor";
 import PrinterObjectsSubscribeExecutor from "./executors/PrinterObjectsSubscribeExecutor";
 import PrinterRestartExecutor from "./executors/PrinterRestartExecutor";
 import ServerTemperatureStoreExecutor from "./executors/ServerTemperatureStoreExecutor";
+import ServerWebcamsDeleteItemExecutor from "./executors/ServerWebcamsDeleteItemExecutor";
+import ServerWebcamsGetItemExecutor from "./executors/ServerWebcamsGetItemExecutor";
+import ServerWebcamsListExecutor from "./executors/ServerWebcamsListExecutor";
+import ServerWebcamsPostItemExecutor from "./executors/ServerWebcamsPostItemExecutor";
 import ServerDatabaseGetItemExecutor from "./executors/ServerDatabaseGetItemExecutor";
 import ServerDatabasePostItemExecutor from "./executors/ServerDatabasePostItemExecutor";
 import PrinterGcodeHelpExecutor from "./executors/PrinterGcodeHelpExecutor";
@@ -57,11 +61,14 @@ import MachineServicesRestartExecutor from "./executors/MachineServicesRestartEx
 import MachineServicesStartExecutor from "./executors/MachineServicesStartExecutor";
 import MachineServicesStopExecutor from "./executors/MachineServicesStopExecutor";
 import PrinterObjectsQueryExecutor from "./executors/PrinterObjectsQueryExecutor";
+import { handleJsonRpcPayload } from "./JsonRpcBatch";
 
 interface ISocketResponse {
     id: number;
     jsonrpc: "2.0";
 }
+
+type TJsonRpcRequest = { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown };
 
 class SocketHandler extends MessageHandler {
 
@@ -122,7 +129,11 @@ class SocketHandler extends MessageHandler {
                 new ServerInfoExecutor(marlinRaker),
                 new ServerJobQueueStatusExecutor(marlinRaker),
                 new ServerRestartExecutor(marlinRaker),
-                new ServerTemperatureStoreExecutor(marlinRaker)
+                new ServerTemperatureStoreExecutor(marlinRaker),
+                new ServerWebcamsDeleteItemExecutor(marlinRaker),
+                new ServerWebcamsGetItemExecutor(marlinRaker),
+                new ServerWebcamsListExecutor(marlinRaker),
+                new ServerWebcamsPostItemExecutor(marlinRaker)
             ] as IMethodExecutor<unknown, unknown>[]
         );
 
@@ -157,12 +168,12 @@ class SocketHandler extends MessageHandler {
             logger.error(`Error while parsing message: ${Utils.errorToString(e)}`);
             return;
         }
-        const response = await this.handle(socket, json);
+        const response = await handleJsonRpcPayload(json, async (request) => this.handle(socket, request as TJsonRpcRequest));
         logger.debug(`Response: ${JSON.stringify(response)}`);
         socket.send(JSON.stringify(response));
     }
 
-    private async handle(socket: WebSocket, message: { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown }): Promise<ISocketResponse | string> {
+    private async handle(socket: WebSocket, message: TJsonRpcRequest): Promise<ISocketResponse | string> {
         if (message.jsonrpc !== "2.0" || typeof message.id !== "number" || typeof message.method !== "string") {
             return {
                 ...new ErrorResponse(400, "Bad Request"),

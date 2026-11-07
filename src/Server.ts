@@ -4,13 +4,11 @@ import MarlinRaker from "./MarlinRaker";
 import { WebSocketServer } from "ws";
 import Config from "./config/Config";
 import path from "path";
-import fs from "fs-extra";
+import fs from "fs/promises";
 import { SerialPort } from "serialport";
-import sourceMapSupport from "source-map-support";
 import Logger, { Level } from "./logger/Logger";
 import cors from "cors";
-
-sourceMapSupport.install({ handleUncaughtExceptions: false });
+import { pathExists } from "./util/FsUtils";
 
 let config: Config;
 let rootDir: string;
@@ -35,7 +33,7 @@ let router: Router;
     /* eslint-enable no-console */
 
     rootDir = path.resolve(process.env.MARLINRAKER_DIR ?? "../marlinraker_files/");
-    await fs.mkdirs(rootDir);
+    await fs.mkdir(rootDir, { recursive: true });
 
     const logFile = path.join(rootDir, "logs/marlinraker.log");
     const isConsole = !process.argv.slice(1).find((s) => s.toLowerCase() === "--silent");
@@ -49,15 +47,15 @@ let router: Router;
     });
 
     const configFile = path.join(rootDir, "config/marlinraker.toml");
-    await fs.mkdirs(path.dirname(configFile));
-    if (!await fs.pathExists(configFile)) {
+    await fs.mkdir(path.dirname(configFile), { recursive: true });
+    if (!await pathExists(configFile)) {
         const defaultConfig = process.env.NODE_ENV === "production"
             ? (await import("../config/marlinraker.toml")).default
             : await fs.readFile("config/marlinraker.toml");
         await fs.writeFile(configFile, defaultConfig);
 
         const printerConfigFile = path.join(rootDir, "config/printer.toml");
-        if (!await fs.pathExists(printerConfigFile)) {
+        if (!await pathExists(printerConfigFile)) {
             const defaultPrinterConfig = process.env.NODE_ENV === "production"
                 ? (await import("../config/printers/generic.toml")).default
                 : await fs.readFile("config/printers/generic.toml");
@@ -94,8 +92,8 @@ let router: Router;
     router = express.Router();
     app.use(router);
 
-    const wwwDir = path.join(rootDir, "www/");
-    await fs.mkdirs(wwwDir);
+    const wwwDir = path.resolve(process.env.MARLINRAKER_WWW_DIR ?? path.join(rootDir, "www/"));
+    await fs.mkdir(wwwDir, { recursive: true });
     const isServeStatic = process.argv.some((s) => s.toLowerCase() === "--serve-static");
     if (isServeStatic) {
         app.use(serveStatic(wwwDir));
@@ -124,13 +122,13 @@ let router: Router;
         });
     };
     ["printer", "api", "access", "machine", "server"].forEach((api) => {
-        app.get(`/${api}/*`, sendApi404);
-        app.post(`/${api}/*`, sendApi404);
+        app.get(`/${api}/*splat`, sendApi404);
+        app.post(`/${api}/*splat`, sendApi404);
     });
 
-    app.get("*", (req, res) => {
+    app.get("/{*splat}", (_, res) => {
         if (isServeStatic) {
-            res.sendFile(path.join(rootDir, "www/index.html"));
+            res.sendFile(path.join(wwwDir, "index.html"));
         } else {
             res.status(404).send();
         }

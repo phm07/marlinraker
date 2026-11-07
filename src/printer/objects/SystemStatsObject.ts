@@ -1,6 +1,6 @@
 import PrinterObject from "./PrinterObject";
 import os from "os";
-import { procfs } from "@stroncium/procfs";
+import { readMemAvailable } from "../../system/ProcFs";
 
 interface IObject {
     sysload: number;
@@ -21,15 +21,15 @@ class SystemStatsObject extends PrinterObject<IObject> {
         const cpuUsage = process.cpuUsage();
         return {
             sysload: os.loadavg()[0],
-            cputime: (cpuUsage.system + cpuUsage.system) / 1e6,
+            cputime: (cpuUsage.user + cpuUsage.system) / 1e6,
             memavail: SystemStatsObject.getMemAvail() / 1000
         };
     }
 
     private static getMemAvail(): number {
         try {
-            return procfs.meminfo().available;
-        } catch (e) {
+            return readMemAvailable() ?? os.freemem();
+        } catch {
             return os.freemem();
         }
     }

@@ -3,6 +3,7 @@ import { THeaters } from "./ParserUtil";
 import TemperatureObject from "./objects/TemperatureObject";
 import MarlinRaker from "../MarlinRaker";
 import TypedEventEmitter from "../util/TypedEventEmitter";
+import { config } from "../Server";
 
 interface ITempRecord {
     temperatures?: number[];
@@ -22,7 +23,7 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
     public readonly klipperHeaterNames: Map<string, string>;
     public readonly availableHeaters: string[];
     public readonly availableSensors: string[];
-    private readonly timer: NodeJS.Timer;
+    private readonly timer: NodeJS.Timeout;
     private readonly tempObjects: Map<string, TemperatureObject>;
     private readonly marlinRaker: MarlinRaker;
     private readonly printer: Printer;
@@ -67,7 +68,10 @@ class HeaterManager extends TypedEventEmitter<IHeaterManagerEvents> {
 
             let tempObject = this.tempObjects.get(klipperName);
             if (!tempObject) {
-                tempObject = new TemperatureObject(klipperName);
+                const minExtrudeTemp = klipperName.startsWith("extruder")
+                    ? config.getNumber("printer.extruder.min_extrude_temp", 180)
+                    : undefined;
+                tempObject = new TemperatureObject(klipperName, minExtrudeTemp);
                 this.tempObjects.set(klipperName, tempObject);
                 this.marlinRaker.objectManager.objects.add(tempObject);
 
