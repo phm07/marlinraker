@@ -7,7 +7,7 @@ class PositionWatcher extends Watcher {
 
     private readonly printer: Printer;
     private readonly autoReport: boolean;
-    private readonly timer?: NodeJS.Timer;
+    private readonly timer?: NodeJS.Timeout;
 
     public constructor(printer: Printer, marlinRaker: MarlinRaker, reportVelocity: boolean) {
         super();

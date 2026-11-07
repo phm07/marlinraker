@@ -98,6 +98,14 @@ bed_mesh = false
 # Set to true if your printer has bed mesh leveling.
 print_volume = [220, 220, 240]
 # x, y and z print volume of your printer.
+kinematics = "cartesian"
+# "cartesian" or "delta". On a delta printer the X and Y axes are
+# centered on the bed, any G28 homes all axes and web interfaces
+# draw a round bed.
+print_radius = 110
+# Delta printers only: printable radius in mm. Defaults to half of
+# the X print volume. The Z print volume is still used as the
+# printable height.
 
 [printer.extruder]
 min_temp = 0
@@ -124,6 +132,21 @@ send_m73 = true
 # printing. Note that some slicers already include M73 G-codes in sliced
 # files. If you notice that the progress indicator is jumping between values,
 # set this option to false.
+```
+
+#### Delta calibration button
+
+Mainsail shows a `DELTA_CALIBRATE` button when the Klipper configuration
+has a `[delta_calibrate]` section. Marlinraker does not add it, because
+`G33` overwrites the delta geometry stored in the EEPROM. If `G33` is safe
+on your printer, enable the button with a pseudo config section and a
+macro:
+
+```toml
+[klipper_pseudo_config.delta_calibrate]
+
+[macros.delta_calibrate]
+gcode = "G33"
 ```
 
 ### Macros

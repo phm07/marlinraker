@@ -35,6 +35,9 @@ abstract class Updatable<TInfo> {
     protected async doUpdate(log: TLogger, command: string, args: string[]): Promise<void> {
 
         const process = spawn(command, args, { shell: true });
+        process.on("error", async (e) => {
+            await log(e.message, true);
+        });
         const outLineReader = readline.createInterface(process.stdout);
         outLineReader.on("line", async (line) => {
             await log(line);

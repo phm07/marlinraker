@@ -26,12 +26,13 @@ class ConfigFileObject extends PrinterObject<IObject> {
 
         if (this.marlinRaker.printer) {
             const limits = this.marlinRaker.printer.limits;
+            const printerSection = (klipperPseudoConfig as { printer?: object }).printer;
             klipperPseudoConfig = {
                 ...klipperPseudoConfig,
                 printer: {
-                    kinematics: "cartesian",
+                    ...printerSection,
                     max_velocity: Math.min(limits.maxFeedrate[0], limits.maxFeedrate[1]),
-                    max_accel: Math.min(limits.maxAccel[1], limits.maxAccel[1]),
+                    max_accel: Math.min(limits.maxAccel[0], limits.maxAccel[1]),
                     max_z_velocity: limits.maxFeedrate[2],
                     max_z_accel: limits.maxAccel[2]
                 }
@@ -40,9 +41,26 @@ class ConfigFileObject extends PrinterObject<IObject> {
 
         return {
             config: klipperPseudoConfig,
-            settings: Utils.toLowerCaseKeys(klipperPseudoConfig),
+            settings: ConfigFileObject.toSettings(klipperPseudoConfig),
             save_config_pending: false
         };
+    }
+
+    private static toSettings(klipperPseudoConfig: object): object {
+        const settings = Utils.toLowerCaseKeys(klipperPseudoConfig) as Record<string, Record<string, unknown> | undefined>;
+        const bedMesh = settings.bed_mesh;
+        if (bedMesh) {
+            bedMesh.mesh_min = ConfigFileObject.parseCoordinates(bedMesh.mesh_min);
+            bedMesh.mesh_max = ConfigFileObject.parseCoordinates(bedMesh.mesh_max);
+            bedMesh.mesh_origin = ConfigFileObject.parseCoordinates(bedMesh.mesh_origin);
+        }
+        return settings;
+    }
+
+    private static parseCoordinates(value: unknown): unknown {
+        return typeof value === "string"
+            ? value.split(",").map((coordinate) => Number.parseFloat(coordinate))
+            : value;
     }
 }
 

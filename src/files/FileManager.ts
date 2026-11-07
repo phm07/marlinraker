@@ -3,10 +3,11 @@ import { IDirectory } from "./IDirectory";
 import { IFile } from "./IFile";
 import path from "path";
 import { rootDir } from "../Server";
-import fs from "fs-extra";
+import fs from "fs/promises";
+import { move, pathExists } from "../util/FsUtils";
 import SimpleNotification from "../api/notifications/SimpleNotification";
 import MarlinRaker from "../MarlinRaker";
-import diskUsage from "diskusage";
+import { isInRoot, resolveInRoot } from "./RootPath";
 
 interface IDiskUsage {
     total: number;
@@ -72,6 +73,7 @@ class FileManager {
     }
 
     public async getFile(filepath: string): Promise<IFile | null> {
+        if (!isInRoot(rootDir, filepath)) return null;
         const parts = filepath.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const filename = parts.pop();
         if (!filename) return null;
@@ -81,6 +83,7 @@ class FileManager {
     }
 
     public async getDirectory(dirname: string): Promise<IDirectory | null> {
+        if (!isInRoot(rootDir, dirname)) return null;
         const pathArr = dirname.split("/").flatMap((s) => s.split("\\")).filter((s) => s);
         const root = this.directories.find((dir) => dir.dirname === pathArr[0]);
         let currentDir = root;
@@ -122,6 +125,10 @@ class FileManager {
         return files;
     }
 
+    public isRoot(name: string): boolean {
+        return this.directories.some((dir) => dir.dirname === name);
+    }
+
     public async getDirectoryInfo(dirname: string): Promise<IDirInfo | null> {
         const dir = await this.getDirectory(dirname);
         if (!dir) return null;
@@ -148,14 +155,13 @@ class FileManager {
 
     public async uploadFile(root: string, filepath: string, filename: string, source: string): Promise<IFileChangeNotification> {
 
+        const destination = resolveInRoot(rootDir, root, filepath, filename);
         const targetDir = path.join(root, filepath).replaceAll("\\", "/");
         await this.checkWriteProtected(targetDir);
 
-        const destination = path.resolve(rootDir, root, filepath, filename);
-
-        await fs.mkdirs(path.dirname(destination));
-        await fs.copy(source, destination);
-        await fs.remove(source);
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        await fs.cp(source, destination, { recursive: true });
+        await fs.rm(source, { recursive: true, force: true });
 
         let size = 0;
         let modified = 0;
@@ -206,11 +212,11 @@ class FileManager {
 
     public async createDirectory(dirpath: string): Promise<IFileChangeNotification> {
 
+        const diskPath = resolveInRoot(rootDir, dirpath);
         const dir = await this.checkWriteProtected(dirpath);
 
         const root = dirpath.split("/").filter((s) => s)[0];
-        const diskPath = path.join(rootDir, dirpath);
-        if (dir || await fs.pathExists(diskPath)) {
+        if (dir || await pathExists(diskPath)) {
             throw new Error("Directory already exists");
         }
 
@@ -238,7 +244,7 @@ class FileManager {
 
         const root = dirpath.split("/").filter((s) => s)[0];
 
-        const diskPath = path.join(rootDir, dirpath);
+        const diskPath = resolveInRoot(rootDir, dirpath);
         const stat = await fs.stat(diskPath);
 
         if (!stat.isDirectory()) throw new Error("Not a directory");
@@ -253,7 +259,7 @@ class FileManager {
             throw new Error("Directory contains files");
         }
 
-        await fs.remove(diskPath);
+        await fs.rm(diskPath, { recursive: true, force: true });
         for (const toDelete of await this.marlinRaker.metadataManager.listDir(path.relative("gcodes", dirpath))) {
             await this.marlinRaker.metadataManager.delete(toDelete);
         }
@@ -281,23 +287,23 @@ class FileManager {
     }
 
     public async moveOrCopy(source: string, dest: string, copy: boolean): Promise<IFileChangeNotification> {
+        const sourceOnDisk = resolveInRoot(rootDir, source);
+        const destOnDisk = resolveInRoot(rootDir, dest);
         await this.checkWriteProtected(source);
         await this.checkWriteProtected(dest);
 
         const sourceRoot = source.split("/").filter((s) => s)[0];
-        const sourceOnDisk = path.join(rootDir, source);
         const destRoot = dest.split("/").filter((s) => s)[0];
-        const destOnDisk = path.join(rootDir, dest);
 
-        if (!await fs.pathExists(sourceOnDisk)) {
+        if (!await pathExists(sourceOnDisk)) {
             throw new Error("Source doesn't exist");
         }
 
-        await fs.mkdirs(path.dirname(destOnDisk));
+        await fs.mkdir(path.dirname(destOnDisk), { recursive: true });
         if (copy) {
-            await fs.copy(sourceOnDisk, destOnDisk);
+            await fs.cp(sourceOnDisk, destOnDisk, { recursive: true });
         } else {
-            await fs.move(sourceOnDisk, destOnDisk);
+            await move(sourceOnDisk, destOnDisk);
             if (sourceRoot === "gcodes") {
                 await this.marlinRaker.metadataManager.cleanupFiles(false);
             }
@@ -340,12 +346,12 @@ class FileManager {
     public async deleteFile(filepath: string): Promise<IFileChangeNotification> {
 
         const root = filepath.split("/").filter((s) => s)[0];
-        const diskPath = path.join(rootDir, filepath);
+        const diskPath = resolveInRoot(rootDir, filepath);
         const stat = await fs.stat(diskPath);
         if (!stat.isFile()) throw new Error("Not a file");
 
         await this.checkWriteProtected(path.dirname(filepath));
-        await fs.remove(diskPath);
+        await fs.rm(diskPath, { recursive: true, force: true });
 
         const notification: IFileChangeNotification = {
             item: {
@@ -362,11 +368,13 @@ class FileManager {
     }
 
     public async getDiskUsage(dirpath: string): Promise<IDiskUsage> {
-        const usage = await diskUsage.check(dirpath);
+        const stats = await fs.statfs(dirpath);
+        const total = stats.blocks * stats.bsize;
+        const free = stats.bavail * stats.bsize;
         return {
-            free: usage.available,
-            total: usage.total,
-            used: usage.total - usage.available
+            free,
+            total,
+            used: total - free
         };
     }
 }

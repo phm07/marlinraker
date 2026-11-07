@@ -10,7 +10,7 @@ abstract class MessageHandler {
         if (!executor) {
             return new ErrorResponse(404, "Method not found");
         }
-        let timeout: NodeJS.Timer | undefined;
+        let timeout: NodeJS.Timeout | undefined;
         return await Promise.race<Response>([
 
             new Promise((resolve) => {
