@@ -2,6 +2,7 @@ import Database from "../database/Database";
 import { SerialPort } from "serialport";
 import readline from "readline";
 import { logger } from "../Server";
+import { wakeEventLoopOnSerialEvents } from "./SerialPortWakeup";
 
 class SerialPortSearch {
 
@@ -79,6 +80,7 @@ class SerialPortSearch {
         if (!isOpen) {
             return false;
         }
+        wakeEventLoopOnSerialEvents(port);
 
         const lineReader = readline.createInterface(port);
         const result = await Promise.race([
