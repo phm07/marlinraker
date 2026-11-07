@@ -30,7 +30,7 @@ class LineReader {
 
     public async readLine(): Promise<string | null> {
         if (this.closed && !this.buffer.length) return null;
-        if (this.paused && this.buffer.length < LineReader.BUFFER_CAP) {
+        if (this.paused && !this.closed && this.buffer.length < LineReader.BUFFER_CAP) {
             this.reader.resume();
         }
         if (this.buffer.length) {
